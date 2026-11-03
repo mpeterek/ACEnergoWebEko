@@ -114,7 +114,11 @@ internal static class AuthenticatedPageChecks
         Check((await Get("/ElectricityPrices/5?Period=2026-10")).Code == HttpStatusCode.OK, "prices exact month");
         Check((await Get("/ElectricityPrices/5?Period=bad")).Code == HttpStatusCode.BadRequest, "prices reject invalid month");
         Check((await Get("/ElectricityPrices/999")).Code == HttpStatusCode.NotFound, "prices unknown meter");
+        var yearPrices = await Get("/ElectricityPriceYear/5?Period=2026-10");
+        Check(yearPrices.Code == HttpStatusCode.OK && yearPrices.Html.Contains("01/2026") && yearPrices.Html.Contains("12/2026"), "annual prices cover January through December");
+        Check((await Get("/ElectricityPriceYear/5?Period=bad")).Code == HttpStatusCode.BadRequest, "annual prices reject invalid period");
         Role("none");
+        Check((await Get("/ElectricityPriceYear/5")).Code == HttpStatusCode.Forbidden, "annual prices require view permission");
         Check((await Get("/ElectricityPrices/5")).Code == HttpStatusCode.Forbidden, "prices require view permission");
         Role("admin");
         Check((await Get("/ElectricityHolidays/5")).Html.Contains("data-holiday-remove"), "administrator has configuration controls");

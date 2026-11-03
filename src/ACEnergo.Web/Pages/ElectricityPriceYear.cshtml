@@ -1,0 +1,18 @@
+@page "{meterId:int}"
+@model ElectricityPriceYearModel
+@{ ViewData["Title"] = "Elektřina – roční přehled cen"; }
+<h1>Roční přehled cen @(Model.Months.FirstOrDefault()?.MeterName)</h1>
+<nav class="page-navigation"><a asp-page="/Electricity">Hlavní měření</a><a asp-page="/ElectricityPrices" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Měsíční ceník</a></nav>
+<section class="panel">
+<form method="get" class="period-form"><label for="year-period">Rok podle vybraného měsíce</label><input id="year-period" class="month-input" type="month" name="Period" value="@Model.Period" required /><button class="button">Načíst rok</button></form>
+</section>
+@if (!ViewData.ModelState.IsValid) { <div asp-validation-summary="All" role="alert"></div> }
+@if (Model.Months.Length == 12)
+{
+<p>Chybějící ceník je označen jako neuložený. Hodnoty se nepřebírají z předchozího měsíce. Tento přehled nesčítá ceny ani nepočítá náklady.</p>
+<section class="panel table-scroll"><table class="data-table"><caption>Rok @Model.Months[0].Month.Year</caption><thead><tr><th scope="col">Položka</th>
+@foreach (var month in Model.Months) { <th scope="col"><a asp-page="/ElectricityPrices" asp-route-meterId="@Model.MeterId" asp-route-Period="@month.Month.ToString("yyyy-MM")">@month.Month.ToString("MM/yyyy")</a>@if(month.IsDefault){<span class="badge">Neuloženo</span>}</th> }
+</tr></thead><tbody>
+@for(var index=0;index<Model.Months[0].Values.Length;index++) { <tr><th scope="row">@Model.Months[0].Values[index].Label</th>@foreach(var month in Model.Months){<td>@month.Values[index].Value</td>}</tr> }
+</tbody></table></section>
+}

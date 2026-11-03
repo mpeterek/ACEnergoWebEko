@@ -181,3 +181,15 @@ Přehled je pouze čtecí; editace cen a navazující výpočty ještě nejsou p
 Původní UpdateCenyRezKapHlMereni přepisuje vybraný měsíc až do konce roku;
 implementace tohoto zápisu bude samostatným navazujícím krokem. Žádná sazba
 ani DPH se v této etapě nepřepočítává.
+
+## Roční přehled cen
+
+Z měsíčního ceníku je dostupný roční přehled všech 12 měsíců zvoleného roku.
+Používá stejná pravidla přesného měsíce a označuje neuložené ceníky.
+Ceny nesčítá a nezaměňuje je za náklady. Je pouze čtecí; každý měsíc lze
+otevřít samostatně. Přehled zatím načítá měsíce jednotlivě (12 připojení).
+Není garantován společný snapshot při souběžné externí změně ceníků.
+
+Úplná Elektřina není dokončena: zbývá editace cen, konfigurace vstupů,
+podružná a fiktivní měření, střediska, závody, účiník, výpočty spotřeb a
+nákladů, grafy a exporty. Analogová měření zůstávají výslovně vyloučena.
