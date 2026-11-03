@@ -203,3 +203,8 @@ se nemění. Chromium ověřilo 168 tlačítek, čtyři kliknutí s přetočení
 barvy, mezerník a Enter, neodeslání formuláře kliknutím, upozornění na změny
 a všech 168 položek FormData. Volitelný test: tools/check-tariff-cycle.cjs.
 Regresní konzolové a HTTP kontroly prošly. Ukládací backend se neměnil.
+
+Login: doplněno tlačítko Zobrazit heslo / Skrýt heslo, type=button,
+aria-controls a aria-pressed. Chromium ověřilo myš, mezerník, zachování hodnoty,
+neodeslání formuláře a šířku 390 px bez přesahu. Výchozí stav je password;
+bez JavaScriptu se nefunkční přepínač nezobrazí. Backend přihlášení se neměnil.

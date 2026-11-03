@@ -3,3 +3,7 @@
 @media (max-width: 600px) {
     .login-panel { margin: 2rem auto; }
 }
+
+.password-field { display: flex; align-items: stretch; gap: .5rem; }
+.password-field input { flex: 1; min-width: 0; }
+.password-toggle { flex: 0 0 auto; font-size: .85rem; padding: .5rem .65rem; }

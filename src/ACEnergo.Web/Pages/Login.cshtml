@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="~/css/pages/login.css" asp-append-version="true" />
 }
 
+@section Scripts {
+    <script src="~/js/pages/login.js" asp-append-version="true" defer></script>
+}
+
 <section class="panel login-panel" aria-labelledby="login-title">
     <p class="eyebrow">VÍTEJTE ZPĚT</p>
     <h1 id="login-title">Přihlášení</h1>
@@ -19,7 +23,10 @@
         <label asp-for="Username">Uživatelské jméno</label>
         <input asp-for="Username" autocomplete="username" required maxlength="255" data-autofocus />
         <label asp-for="Password">Heslo</label>
-        <input asp-for="Password" type="password" autocomplete="current-password" maxlength="255" />
+        <div class="password-field">
+            <input asp-for="Password" type="password" autocomplete="current-password" maxlength="255" />
+            <button class="button password-toggle" type="button" aria-controls="Password" aria-pressed="false" data-password-toggle hidden>Zobrazit heslo</button>
+        </div>
         <button class="button button-primary" type="submit">Přihlásit se</button>
     </form>
 </section>
