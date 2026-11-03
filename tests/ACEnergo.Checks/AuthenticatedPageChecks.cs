@@ -80,6 +80,7 @@ internal static class AuthenticatedPageChecks
         var writes = factory.Holidays.Writes;
         Check(await Post("Add", factory.Holidays.CurrentVersion, Token(empty.Html), ("NewDate", "2026-11-17")) == HttpStatusCode.Found && factory.Holidays.Writes == writes && factory.Holidays.CurrentVersion == originalVersion, "duplicate date POST does not rewrite stored state");
         var tariff = await Get("/ElectricityTariffs/5?Period=2026-10");
+        if (Environment.GetEnvironmentVariable("ACE_TARIFF_HTML") is string tariffPath) await File.WriteAllTextAsync(tariffPath,tariff.Html);
         Check(tariff.Code == HttpStatusCode.OK && Regex.Matches(tariff.Html, "name=\"Cells\\[\\d+\\]\"").Count == 168, "tariff Razor renders 168 editable cells");
         Check(tariff.Html.Contains("/ElectricityHolidays/5") && tariff.Html.Contains("Period=2026-10"), "tariffs link preserves meter and period");
         var defaultTariff = await Get("/ElectricityTariffs/5");

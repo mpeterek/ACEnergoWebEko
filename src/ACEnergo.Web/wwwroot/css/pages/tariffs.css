@@ -11,3 +11,8 @@
 .confirmation-label { margin: 1rem 0; }
 .confirmation-label input { width: auto; margin-right: .5rem; }
 .unsaved-notice { color: var(--color-error); }
+
+.tariff-table td.tariff-interactive { padding: 0; }
+.tariff-cycle { display: block; width: 100%; min-width: 5.5rem; padding: .85rem .35rem; border: 1px solid transparent; border-radius: .25rem; font: inherit; font-weight: 600; cursor: pointer; }
+.tariff-cycle:hover { filter: brightness(.94); }
+.tariff-cycle:focus-visible { outline: 3px solid var(--color-header); outline-offset: -3px; }

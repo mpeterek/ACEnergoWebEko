@@ -38,6 +38,7 @@
     {
         <p class="message-warning" role="status">Pro tento měsíc nejsou uloženy tarify. Zobrazuje se původní výchozí nastavení; zatím nebylo zapsáno do databáze.</p>
     }
+    @if(Model.CanEdit){<p>Kliknutím na buňku přepnete Nízký → Vysoký → Víkend → Nízký. Klávesnicí použijte Tab a Enter nebo mezerník.</p>}
     <form method="post" class="panel tariff-editor" data-tariff-editor>
         <input asp-for="MeterId" type="hidden" />
         <input asp-for="Period" type="hidden" />

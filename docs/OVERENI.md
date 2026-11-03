@@ -193,3 +193,13 @@ pro kontrolní počty byly identifikované odpovídající klíče podle štítk
 pomocný prefix: zachovává přesný parametr Elektřina z původního ASP a spoléhá
 na dekódování OLE DB providerem. Kontrolu nativního filtru je nutno dokončit
 na Windows. Publikace x86 prošla bez chyb.
+
+## Cyklické přepínání tarifů
+
+JavaScript mění každý editovatelný select na barevné tlačítko. Původní
+select zůstává skrytý a nese hodnotu formuláře; bez JS zůstává použitelný
+původní výběr. Pořadí je Nízký → Vysoký → Víkend → Nízký. Read-only zobrazení
+se nemění. Chromium ověřilo 168 tlačítek, čtyři kliknutí s přetočením,
+barvy, mezerník a Enter, neodeslání formuláře kliknutím, upozornění na změny
+a všech 168 položek FormData. Volitelný test: tools/check-tariff-cycle.cjs.
+Regresní konzolové a HTTP kontroly prošly. Ukládací backend se neměnil.
