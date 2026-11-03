@@ -249,3 +249,23 @@ Jde o tři čtecí části migrace, nikoli kompletní převod těchto oddílů. 
 skupin, konfigurace, vazby, výpočty a grafy zůstávají další prací. Analogy
 jsou nadále vyloučené. Nativní načtení je nutno ověřit na Windows; HTTP testy
 používají testovací úložiště a prošly pro všechny tři trasy i oprávnění.
+
+## Složení fiktivního měření elektřiny
+
+Z názvu fiktivního měření v jeho čtecím seznamu vede odkaz na složení.
+Parametrizovaný dotaz nejprve ověří příslušnost rodiče k elektřině, potom
+načte tblKonfigFiktivniPolozky ve vazbě LEFT JOIN na tblKonfigImpuls, seřazené
+podle numImpuls jako v původním menuFiktivniEl.asp. Chybějící definice vstupu
+nezmizí z přehledu: zobrazí se jako Nedefinováno s původním ID/adresou.
+
+Zobrazují se stanice/vstup (dělení a zbytek po 10000), název, jednotky výkonu
+/ energie a uložené koeficienty A, B a P. NULL koeficient není nahrazován nulou;
+je označen jako Neuvedeno. Prázdné složení je výslovně označené. Přístup
+vyžaduje ElekView nebo administrátora; jiné energie a neexistující rodič vrací
+404. Neprovádí se připojení k Energomatu ani migrace analogů.
+
+Původní MDB potvrzuje tabulky a potřebné sloupce. HTTP testy s testovacím
+úložištěm ověřují řádky, prázdné složení, chybějící definici, 404 a oprávnění.
+Sestavení adresy má samostatné testy. Nativní OLE DB dotaz zůstává k ověření
+na Windows. Jde pouze o čtecí složení: editace a výpočty z koeficientů nejsou
+součástí této etapy.

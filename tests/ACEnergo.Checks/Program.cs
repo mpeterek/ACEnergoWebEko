@@ -68,3 +68,8 @@ Equal("Kč/MWh",ElectricityPriceStore.Unit("numCenaTarifVysoky"));
 Equal("MWh",ElectricityPriceStore.Unit("numProcNedocerp",true));
 Equal("%",ElectricityPriceStore.Unit("numProcNedocerp",false));
 Console.WriteLine("PASS price units and variable threshold units.");
+
+Equal("0001/0002",ElectricityFictitiousComposition.Address(10002));
+Equal("0000/0000",ElectricityFictitiousComposition.Address(0));
+Equal("0123/9999",ElectricityFictitiousComposition.Address(1239999));
+Console.WriteLine("PASS station/input address formatting.");

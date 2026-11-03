@@ -1,0 +1,24 @@
+@page "{id:int}"
+@model ElectricityFictitiousModel
+@{ViewData["Title"]="Složení fiktivního měření";}
+@section Styles {
+<link rel="stylesheet" href="~/lib/datatables/dataTables.dataTables.min.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/css/pages/prices.css" asp-append-version="true"/>
+}
+@section Scripts {
+<script src="~/lib/jquery/jquery.min.js" asp-append-version="true" defer></script>
+<script src="~/lib/datatables/dataTables.min.js" asp-append-version="true" defer></script>
+<script src="~/js/pages/prices.js" asp-append-version="true" defer></script>
+}
+<p class="eyebrow">ELEKTŘINA · FIKTIVNÍ MĚŘENÍ</p><h1>@Model.Data?.Name</h1>
+<nav class="page-navigation"><a asp-page="/ElectricityGroups" asp-route-kind="fictitious">Fiktivní měření</a><a asp-page="/Index">Přehled</a></nav>
+@if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
+@if(Model.Data is not null){
+<section class="panel table-scroll"><table class="data-table price-table" data-price-table>
+<caption>Přiřazené vstupy a uložené koeficienty</caption>
+<thead><tr><th scope="col">Stanice / vstup</th><th scope="col">Název</th><th scope="col">Výkon</th><th scope="col">Energie</th><th scope="col">Koeficient A</th><th scope="col">Koeficient B</th><th scope="col">Koeficient P</th></tr></thead>
+<tbody>@foreach(var row in Model.Data.Components){<tr><td>@ElectricityFictitiousComposition.Address(row.Input)</td><td>@row.Name @if(!row.Defined){<span class="badge">Chybějící definice vstupu</span>}</td><td>@row.PowerUnit</td><td>@row.EnergyUnit</td><td>@row.A</td><td>@row.B</td><td>@row.P</td></tr>}</tbody>
+</table></section>
+@if(Model.Data.Components.Length==0){<p role="status">Měření nemá přiřazené žádné vstupy.</p>}
+}
+<p>Složení je pouze pro čtení. Koeficienty se zobrazují beze změn; editace složení a výpočty spotřeb se dále převádějí.</p>

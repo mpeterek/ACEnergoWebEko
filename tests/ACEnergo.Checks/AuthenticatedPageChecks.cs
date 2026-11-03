@@ -143,6 +143,14 @@ internal static class AuthenticatedPageChecks
         Check((await Get("/ElectricityGroups/analog")).Code==HttpStatusCode.NotFound,"group kind whitelist rejects analog");
         Role("none");
         Check((await Get("/ElectricityGroups/centres")).Code==HttpStatusCode.Forbidden,"group catalog requires electricity view permission");
+        Role("view");
+        var composition=await Get("/ElectricityFictitious/1");
+        Check(composition.Code==HttpStatusCode.OK && composition.Html.Contains("0001/0002") && composition.Html.Contains("Koeficient A"),"fictitious composition renders address and coefficients");
+        Check(WebUtility.HtmlDecode(composition.Html).Contains("Chybějící definice vstupu"),"orphan component is visible");
+        Check((await Get("/ElectricityFictitious/2")).Html.Contains("nemá přiřazené"),"empty fictitious composition is explicit");
+        Check((await Get("/ElectricityFictitious/999")).Code==HttpStatusCode.NotFound,"unknown fictitious measurement 404");
+        Role("none");
+        Check((await Get("/ElectricityFictitious/1")).Code==HttpStatusCode.Forbidden,"composition requires electricity permission");
         Role("admin");
         var home=WebUtility.HtmlDecode((await Get("/")).Html);
         Check(!home.Contains("Vaše energie na jednom místě") && home.Contains("/ElectricityGroups/plants"),"dashboard heading removed and group navigation present");
@@ -169,6 +177,8 @@ internal static class AuthenticatedPageChecks
             {
                 services.RemoveAll<IElectricityHolidayStore>();
                 services.AddSingleton<IElectricityHolidayStore>(Holidays);
+                services.RemoveAll<IElectricityFictitiousComposition>();
+                services.AddSingleton<IElectricityFictitiousComposition, FakeComposition>();
                 services.RemoveAll<IElectricityGroupCatalog>();
                 services.AddSingleton<IElectricityGroupCatalog, FakeGroups>();
                 services.RemoveAll<IElectricityMeterConfiguration>();
@@ -224,6 +234,11 @@ internal static class AuthenticatedPageChecks
             var removed = rows.RemoveAll(row => dates.Contains(DateOnly.FromDateTime(row.At)));
             Writes++; return removed;
         }
+    }
+    private sealed class FakeComposition : IElectricityFictitiousComposition {
+        public FictitiousComposition Load(int id)=>id switch {
+            1=>new("Test",[new(10002,"Test input","MW","MWh","1,5","0","1",true),new(20001,"Nedefinováno","—","—","1","0","1",false)]),
+            2=>new("Empty",[]),_=>throw new KeyNotFoundException()};
     }
     private sealed class FakeGroups : IElectricityGroupCatalog {
         public ElectricityGroup[] Load(string kind){ElectricityGroupCatalog.Definition(kind);return [new(1,"Test group","MW","MWh")];}

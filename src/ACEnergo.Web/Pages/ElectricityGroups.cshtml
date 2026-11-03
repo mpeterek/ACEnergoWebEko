@@ -17,7 +17,7 @@
 <section class="panel table-scroll"><table class="data-table price-table" data-price-table>
 <caption>@Model.Heading – uložená konfigurace elektřiny</caption>
 <thead><tr><th scope="col">ID</th><th scope="col">Název</th><th scope="col">Jednotka výkonu</th><th scope="col">Jednotka energie</th></tr></thead>
-<tbody>@foreach(var row in Model.Rows){<tr><td>@row.Id</td><td>@row.Name</td><td>@row.PowerUnit</td><td>@row.EnergyUnit</td></tr>}</tbody>
+<tbody>@foreach(var row in Model.Rows){<tr><td>@row.Id</td><td>@if(Model.Kind=="fictitious"){<a asp-page="/ElectricityFictitious" asp-route-id="@row.Id">@row.Name</a>}else{@row.Name}</td><td>@row.PowerUnit</td><td>@row.EnergyUnit</td></tr>}</tbody>
 </table></section>
 <p>Přehled je pouze čtecí. Složení, editace, vyhodnocení a grafy tohoto oddílu se dále převádějí.</p>
 }
