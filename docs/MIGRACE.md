@@ -209,3 +209,22 @@ Sestavení a testy formuláře/validace proběhly v Linuxu. Skutečný OLE DB z�
 cen a rollback této nové funkce dosud nebyly ověřeny na Windows. První
 uložení a kontrolu měsíců před/za rozsahem proveďte pouze na kopii MDB.
 Výpočty nákladů ani zbývající měřicí moduly tímto nejsou dokončeny.
+
+## Konfigurace existujícího hlavního měření
+
+Nový odkaz Konfigurace vstupů nabízí zobrazení činného/jalového identifikátoru,
+editaci názvu (1–30 znaků) a nenulových přepočtových koeficientů. Záporný
+nenulový koeficient je přípustný podle původního pravidla Not equal to 0.
+Odpojení jalového vstupu nastaví ID 0 a koeficient 1 stejně jako původní ASP.
+NULL u nepřiřazeného jalového vstupu se pouze pro zobrazení interpretuje jako
+nepřiřazený vstup; token stále zahrnuje původní NULL hodnoty. Přiřazený vstup
+s NULL koeficientem je odmítnut jako neplatná konfigurace.
+
+Činná vazba se touto editací nemění. Výběr nového fyzického vstupu, metadata
+jednotek a zakládání měření dosud nejsou převedené. Neobnovuje se komunikace
+s Energomatem. Práva ElekView/ElekConfig, CSRF, token verze, společný zámek
+a ReadCommitted transakce chrání změny. Zdrojová MDB obsahuje očekávaná pole;
+při čtecí analýze byly nalezeny i nepřiřazené jalové vazby NULL.
+
+HTTP testy používají testovací úložiště. Skutečný OLE DB zápis a odpojení vazby
+je ještě potřeba ověřit na testovací kopii MDB ve Windows. Analogy se nemigrují.

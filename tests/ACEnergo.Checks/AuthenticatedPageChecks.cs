@@ -124,6 +124,15 @@ internal static class AuthenticatedPageChecks
         Role("config");
         var priceEdit = await Get("/ElectricityPriceEdit/5?Period=2026-10");
         Check(priceEdit.Code == HttpStatusCode.OK && Regex.Matches(priceEdit.Html,"name=\"Values\\[\\d+\\]\"").Count == 28, "all price editor fields render");
+        Role("view");
+        var meterConfig=await Get("/ElectricityMeter/5");
+        Check(meterConfig.Code==HttpStatusCode.OK && !meterConfig.Html.Contains("name=\"MeterName\""), "meter configuration read-only for viewer");
+        Role("config");
+        meterConfig=await Get("/ElectricityMeter/5");
+        Check(meterConfig.Code==HttpStatusCode.OK && meterConfig.Html.Contains("name=\"Coefficient\""), "meter configuration editable with permission");
+        using(var saved=await client.PostAsync("/ElectricityMeter/5",new FormUrlEncodedContent(new Dictionary<string,string>{
+            ["__RequestVerificationToken"]=Token(meterConfig.Html),["Version"]=new string('A',64),["MeterName"]="Edited",["Coefficient"]="2,5",["ReactiveCoefficient"]="1"})))
+            Check(saved.StatusCode==HttpStatusCode.Found,"meter configuration POST accepts Czech coefficient");
         Role("admin");
         Check((await Get("/ElectricityHolidays/5")).Html.Contains("data-holiday-remove"), "administrator has configuration controls");
         Check(!WebUtility.HtmlDecode((await Get("/")).Html).Contains("Analogová"), "analog module excluded even for admin");
@@ -148,6 +157,8 @@ internal static class AuthenticatedPageChecks
             {
                 services.RemoveAll<IElectricityHolidayStore>();
                 services.AddSingleton<IElectricityHolidayStore>(Holidays);
+                services.RemoveAll<IElectricityMeterConfiguration>();
+                services.AddSingleton<IElectricityMeterConfiguration, FakeMeterConfiguration>();
                 services.RemoveAll<IElectricityPriceEditor>();
                 services.AddSingleton<IElectricityPriceEditor, FakePriceEditor>();
                 services.RemoveAll<IElectricityPriceStore>();
@@ -198,6 +209,12 @@ internal static class AuthenticatedPageChecks
             Validate(meterId, expectedVersion);
             var removed = rows.RemoveAll(row => dates.Contains(DateOnly.FromDateTime(row.At)));
             Writes++; return removed;
+        }
+    }
+    private sealed class FakeMeterConfiguration : IElectricityMeterConfiguration {
+        public MeterConfiguration Load(int id)=>new("Test",101,"1",102,"1",new string('A',64));
+        public void Save(int id,string name,string coefficient,string reactiveCoefficient,bool disconnect,string version){
+            ElectricityMeterConfiguration.Name(name);ElectricityMeterConfiguration.Coefficient(coefficient);
         }
     }
     private sealed class FakePriceEditor : IElectricityPriceEditor {

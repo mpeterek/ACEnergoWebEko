@@ -54,3 +54,10 @@ priceInput[0]="";Equal<object?>(null,ElectricityPriceEditor.Parse(priceInput)[0]
 priceInput[0]="-1";Reject(()=>ElectricityPriceEditor.Parse(priceInput));
 priceInput[0]="1,2.3";Reject(()=>ElectricityPriceEditor.Parse(priceInput));
 Console.WriteLine("PASS price editor comma decimals, NULL and invalid input.");
+
+Equal(2.5m,ElectricityMeterConfiguration.Coefficient("2,5"));
+Equal(-1m,ElectricityMeterConfiguration.Coefficient("-1"));
+Reject(()=>ElectricityMeterConfiguration.Coefficient("0"));
+Reject(()=>ElectricityMeterConfiguration.Coefficient("1.2.3"));
+Reject(()=>ElectricityMeterConfiguration.Name(new string('x',31)));
+Console.WriteLine("PASS meter name and nonzero coefficient validation.");
