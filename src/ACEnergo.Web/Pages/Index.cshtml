@@ -1,0 +1,43 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Přehled";
+}
+
+<p class="eyebrow">PŘEHLED ENERGIÍ</p>
+<h1>Vaše energie na jednom místě</h1>
+<p>Vyberte období a oblast měření.</p>
+<section class="panel" aria-label="Výběr období">
+    <form method="get" class="period-form">
+        <label for="period">Datové období</label>
+        <select id="period" name="period">
+            @foreach (var month in Model.Months)
+            {
+                <option value="@month" selected="@(month == Model.Period)">@month</option>
+            }
+        </select>
+        <button class="button" type="submit">Zobrazit období</button>
+    </form>
+    @if (Model.Months.Length == 0)
+    {
+        <p role="status">Nejsou dostupné měsíční databáze. Ověřte nastavení složky Access:Directory.</p>
+    }
+    @if (Model.Error is not null)
+    {
+        <p class="message-error" role="alert">@Model.Error</p>
+    }
+</section>
+<div class="module-grid">
+    @foreach (var module in Model.Modules.Where(m => User.IsInRole("Administrator") || User.HasClaim("permission", m.Right)))
+    {
+        <article class="panel module-card">
+            <h2>@module.Name</h2>
+            @if (module.Right == "ElekView")
+            {
+                <a asp-page="/Electricity">Seznam hlavních měření</a>
+            }
+            <p>Převod měření, sestav a výpočtů tohoto modulu dosud není dokončen.</p>
+            <span class="badge">Čeká na migraci</span>
+        </article>
+    }
+</div>

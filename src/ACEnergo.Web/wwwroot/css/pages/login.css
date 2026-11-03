@@ -1,0 +1,5 @@
+/* Pouze přihlašovací stránka; společné formuláře jsou v components.css. */
+.login-panel { max-width: 470px; margin: 5rem auto; }
+@media (max-width: 600px) {
+    .login-panel { margin: 2rem auto; }
+}

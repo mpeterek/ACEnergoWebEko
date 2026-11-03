@@ -1,0 +1,25 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Přihlášení";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/login.css" asp-append-version="true" />
+}
+
+<section class="panel login-panel" aria-labelledby="login-title">
+    <p class="eyebrow">VÍTEJTE ZPĚT</p>
+    <h1 id="login-title">Přihlášení</h1>
+    <p>Přihlaste se svým stávajícím účtem ACEnergo.</p>
+    <form method="post" class="stacked-form">
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div asp-validation-summary="All" role="alert"></div>
+        }
+        <label asp-for="Username">Uživatelské jméno</label>
+        <input asp-for="Username" autocomplete="username" required maxlength="255" data-autofocus />
+        <label asp-for="Password">Heslo</label>
+        <input asp-for="Password" type="password" autocomplete="current-password" maxlength="255" />
+        <button class="button button-primary" type="submit">Přihlásit se</button>
+    </form>
+</section>

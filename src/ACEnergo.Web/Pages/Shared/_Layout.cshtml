@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · ACEnergoWebEko</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/components.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+    <script src="~/js/site.js" asp-append-version="true" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Přejít na obsah</a>
+    <partial name="_Header" />
+    <main id="main-content" class="main-content">
+        @RenderBody()
+    </main>
+    <partial name="_Footer" />
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

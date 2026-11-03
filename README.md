@@ -1,1 +1,82 @@
-ACEnergoWebEko
+# ACEnergoWebEko
+
+Probíhající migrace Classic ASP do ASP.NET Core 8 / C# s Razor Pages.
+**Úplná funkční migrace dosud není dokončena.** Přesný rozsah je v
+[docs/MIGRACE.md](docs/MIGRACE.md).
+
+## Visual Studio 2022
+
+Otevřete **ACEnergoWebEko.sln** a jako spouštěcí projekt zvolte **ACEnergo.Web**.
+Podrobný postup, požadavky, lokální MDB a publikace jsou v
+[docs/VISUAL-STUDIO-2022.md](docs/VISUAL-STUDIO-2022.md).
+
+## Vývoj
+
+Je potřeba .NET 8 SDK. V cloudovém prostředí je instalován v `/workspace/dotnet`.
+Používejte existující checkout; cloudový úkol je již izolovaný, další worktree není potřeba.
+
+```sh
+dotnet build src/ACEnergo.Web
+dotnet run --project tests/ACEnergo.Checks
+ASPNETCORE_ENVIRONMENT=Development dotnet run --project src/ACEnergo.Web --urls http://localhost:5080
+# V druhém terminálu; tento smoke test je určen pro Linux bez OLE DB:
+python3 tools/smoke.py
+```
+
+Na Linuxu funguje rozhraní a testy výběru souborů; skutečné OLE DB připojení
+vyžaduje Windows. Není zde testovací účet ani náhradní úložiště skutečných dat.
+
+## Windows 11 / IIS
+
+1. Nainstalujte .NET 8 Hosting Bundle a kompatibilní podporovaný Access OLE DB
+   provider. Architektura procesu a provideru musí souhlasit (typicky x64).
+   Konkrétní provider ověřte na cílovém počítači; výchozí je `Microsoft.ACE.OLEDB.16.0`.
+2. Umístěte **kopie** MDB do `C:\ACEnergoData`, mimo webový kořen. Pro začátek
+   `ACEnergoWebEko.mdb`, `ACWebEkoLogin.mdb`, `ACEnergoWebEko2610.mdb`.
+3. Nastavte `Access__Directory`, případně `Access__Provider` a `AllowedHosts`
+   na skutečný hostname. Nekopírujte MDB do publikačního adresáře.
+4. `dotnet publish src/ACEnergo.Web -c Release -o artifacts/publish`.
+   Publikovaný adresář nastavte jako IIS web/aplikaci. Pool: No Managed Code,
+   správná bitovost, samostatná identita. Nastavte HTTPS binding.
+5. Identitě poolu přidělte nejmenší potřebná práva na složku MDB včetně práv
+   potřebných pro zámkové soubory Access. Nepřidělujte anonymní veřejný přístup.
+   Pro stabilní cookies zapněte načítání uživatelského profilu poolu a ověřte
+   trvalé uložení a ochranu ASP.NET Data Protection klíčů mezi restarty.
+6. Ověřte /Login, přihlášení skutečným účtem, práva a /Electricity. Přihlášení
+   se starým heslem používá existující strukturu MDB; změna úložiště hesel
+   vyžaduje samostatný migrační krok. Web nikdy hesla nezobrazuje.
+
+`/health/live` potvrzuje pouze běh webu, nikoli dostupnost MDB.
+Novou verzi zatím nepoužívejte jako náhradu produkčního Classic ASP:
+vyhodnocení, zápisy a většina modulů ještě nejsou převedeny.
+
+## Opakování inventáře
+
+```sh
+python3 tools/inventory.py '/cesta/k/puvodnimu/ASP' docs/legacy-inventory.json
+```
+
+Inventář neexportuje obsah MDB ani hesla. Původní archiv není součástí nového
+zdrojového projektu; zůstává v přílohách vydání v1.0.
+
+## HTML, CSS a JavaScript
+
+Stránky sdílejí `Pages/Shared/_Layout.cshtml` a dílčí šablony `_Header.cshtml`
+a `_Footer.cshtml`. V jednotlivých `.cshtml` ponechávejte HTML, Razor binding
+a jednoduché podmínky/cykly pro vykreslení. Databázová a výpočetní logika patří
+do služeb; zpracování požadavku do `.cshtml.cs`.
+
+- `wwwroot/css/site.css`: proměnné vzhledu, základ a společné rozvržení.
+- `wwwroot/css/components.css`: sdílené panely, formuláře, tabulky a tlačítka.
+- `wwwroot/css/pages/login.css`: styly specifické pro přihlášení.
+- `wwwroot/js/site.js`: společné chování, načítané s `defer`.
+
+Používejte pojmenované CSS třídy. Nevkládejte `style`, `<style>`, inline
+JavaScript ani atributy `onclick`/`onload` do stránek. Další stránkové CSS
+připojte přes sekci `Styles`; JavaScript přes sekci `Scripts`, vždy jako externí
+soubor s `asp-append-version="true"`. Události připojujte v JS přes
+`addEventListener` a `data-*` atributy. Šablony nepřevádíme na statické HTML:
+Razor zůstává pro bezpečné vykreslování dat a ochranu formulářů.
+
+SDK je připnuté souborem `global.json` na .NET 8.0.427 (povoleny novější patch
+verze stejného SDK pásma). Na Windows instalujte .NET 8 Hosting Bundle.

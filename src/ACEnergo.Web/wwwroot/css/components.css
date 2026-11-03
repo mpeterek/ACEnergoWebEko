@@ -1,0 +1,20 @@
+/* Sdílené komponenty: formuláře, panely, moduly a tabulky. */
+.eyebrow { font-size: .75rem; letter-spacing: .15em; color: var(--color-accent); font-weight: 750; }
+.panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-panel); padding: 1.8rem; margin: 1.5rem 0; box-shadow: 0 8px 24px #163c5a07; }
+.module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); gap: 1.2rem; }
+.module-card { margin: 0; }
+label { display: block; font-weight: 600; margin: 1rem 0 .5rem; }
+input, select, .button { font: inherit; padding: .75rem 1rem; border: 1px solid #b5c5d4; border-radius: .5rem; }
+input { width: 100%; }
+select { max-width: 100%; }
+.button { cursor: pointer; background: #e9eff4; color: var(--color-header); }
+.button-primary { background: var(--color-accent); color: var(--color-surface); }
+.stacked-form .button-primary { width: 100%; margin-top: 1.5rem; }
+.period-form { display: flex; align-items: end; gap: .75rem; flex-wrap: wrap; }
+.period-form label { width: 100%; margin-top: 0; }
+.badge { display: inline-block; border-radius: 1.25rem; background: #fff1d6; color: #805a10; padding: .4rem .8rem; font-size: .8rem; }
+.validation-summary-errors, .message-error { color: var(--color-error); }
+.table-scroll { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; text-align: left; }
+.data-table th, .data-table td { padding: .8rem 1rem; border-bottom: 1px solid var(--color-border); }
+.data-table th { background: var(--color-background); }

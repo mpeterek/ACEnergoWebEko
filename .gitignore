@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+*.mdb
+*.accdb
+*.ldb
+*.laccdb
+artifacts/
+
+# Uživatelská nastavení Visual Studia
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates

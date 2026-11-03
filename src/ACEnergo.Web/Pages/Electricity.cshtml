@@ -1,0 +1,37 @@
+@page
+@model ElectricityModel
+@{
+    ViewData["Title"] = "Elektřina – hlavní měření";
+}
+
+<p class="eyebrow">ELEKTŘINA</p>
+<h1>Hlavní měření</h1>
+<a asp-page="/Index">Zpět na přehled</a>
+<section class="panel" aria-label="Seznam hlavních měření">
+    @if (Model.Error is not null)
+    {
+        <p class="message-error" role="alert">@Model.Error</p>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <table class="data-table">
+                <caption class="visually-hidden">Hlavní měření elektřiny</caption>
+                <thead>
+                    <tr><th scope="col">ID</th><th scope="col">Název měření</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var meter in Model.Meters)
+                    {
+                        <tr><td>@meter.Id</td><td>@meter.Name</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.Meters.Count == 0)
+        {
+            <p>Nejsou definována žádná hlavní měření.</p>
+        }
+    }
+</section>
+<p>Vyhodnocení, grafy a změny konfigurace nejsou v této etapě převedeny.</p>
