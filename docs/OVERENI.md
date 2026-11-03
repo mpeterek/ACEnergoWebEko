@@ -37,3 +37,11 @@ aplikace cílené na net8.0. OLE DB závislost je System.Data.OleDb 8.0.0.
 Grafické Visual Studio 2022, F5 debugger, důvěra certifikátu na Windows a
 IIS nebyly v Linux prostředí spuštěny; jejich postup je popsán v
 docs/VISUAL-STUDIO-2022.md.
+
+## Výběr SDK bez NETSDK1141
+
+Global.json nyní dovoluje roll-forward od SDK 8.0.100 na vyšší hlavní verzi,
+pokud SDK 8 není nainstalováno. Sestavení obou projektů prošlo bez chyb a
+varování se SDK 8.0.427 i v izolovaném výběru, kde bylo dostupné pouze SDK
+10.0.403. Cíl zůstává net8.0; všech 12 kontrol prošlo pod SDK 8.
+SDK 9.0.320 ani Visual Studio uživatele nejsou v cloudu instalovány.

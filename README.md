@@ -12,7 +12,8 @@ Podrobný postup, požadavky, lokální MDB a publikace jsou v
 
 ## Vývoj
 
-Je potřeba .NET 8 SDK. V cloudovém prostředí je instalován v `/workspace/dotnet`.
+Projekt cílí na .NET 8. Lze použít .NET 8 SDK nebo kompatibilní novější SDK.
+V cloudovém prostředí je instalován v `/workspace/dotnet`.
 Používejte existující checkout; cloudový úkol je již izolovaný, další worktree není potřeba.
 
 ```sh
@@ -78,5 +79,8 @@ soubor s `asp-append-version="true"`. Události připojujte v JS přes
 `addEventListener` a `data-*` atributy. Šablony nepřevádíme na statické HTML:
 Razor zůstává pro bezpečné vykreslování dat a ochranu formulářů.
 
-SDK je připnuté souborem `global.json` na .NET 8.0.427 (povoleny novější patch
-verze stejného SDK pásma). Na Windows instalujte .NET 8 Hosting Bundle.
+Soubor `global.json` preferuje dostupné stabilní .NET 8 SDK od verze 8.0.100;
+pokud není dostupné, povoluje přechod na novější hlavní verzi SDK. Cílový
+framework obou projektů zůstává `net8.0`. Použité SDK musí podporovat i vaše
+verze Visual Studia. Pro spuštění je potřeba runtime ASP.NET Core 8; na IIS
+instalujte .NET 8 Hosting Bundle.

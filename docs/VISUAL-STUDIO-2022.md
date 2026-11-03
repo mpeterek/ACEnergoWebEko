@@ -5,9 +5,13 @@
 - Visual Studio **2022**, doporučeno **17.14 s aktuálními aktualizacemi**.
 - Ve Visual Studio Installeru zvolte workload **ASP.NET and web development**
   (Vývoj pro ASP.NET a web).
-- Nainstalujte **.NET SDK 8.0.427**, případně novější patch stejného pásma 8.0.4xx.
-  Požadavek určuje `global.json`; samotný runtime nestačí. SDK pásmo 8.0.4xx
-  vyžaduje Visual Studio alespoň 17.11. Visual Studio 2019 není podporováno.
+- Je potřeba **.NET 8 SDK nebo novější stabilní SDK podporované vaším Visual
+  Studiem**. `global.json` preferuje .NET 8 a při jeho absenci umožní novější
+  hlavní verzi (například nainstalované SDK 9). Projekty stále cílí na `net8.0`.
+  Doporučená verze Visual Studia výše je vhodná i pro SDK pásma 9.0.3xx.
+  Visual Studio 2019 není podporováno.
+- Ke spuštění aplikace nainstalujte **ASP.NET Core Runtime 8** (nebo .NET 8 SDK,
+  které jej obsahuje). Samotné novější SDK nezaručuje přítomnost runtime 8.
 - Pro skutečné čtení MDB je navíc potřeba kompatibilní Windows Access OLE DB
   provider. Sestavení řešení ani zobrazení přihlášení MDB nevyžadují.
 
@@ -86,3 +90,24 @@ User Secrets se na IIS nepřenášejí; použijte konfiguraci prostředí cílov
 
 Projekt obsahuje dosud migrovanou první etapu. Zbývající moduly a ověření MDB
 jsou uvedeny v `docs/MIGRACE.md`; nastavení Visual Studia jejich převod nenahrazuje.
+
+## Chyba NETSDK1141 při načtení řešení
+
+Původní global.json vyžadoval přesně pásmo SDK 8.0.427. Nová verze souboru
+používá minimum 8.0.100 a `rollForward: major`, takže umožní i nainstalované
+SDK 9, pokud SDK 8 není dostupné. Aktualizujte větev nebo nahraďte obsah
+kořenového global.json tímto nastavením a řešení znovu otevřete:
+
+```json
+{
+  "sdk": {
+    "version": "8.0.100",
+    "rollForward": "major",
+    "allowPrerelease": false
+  }
+}
+```
+
+V terminálu ve složce řešení ověřte `dotnet --version` a `dotnet --list-runtimes`.
+Pokud sestavení projde a spuštění požaduje Microsoft.AspNetCore.App 8,
+doinstalujte ASP.NET Core Runtime 8 nebo .NET 8 SDK.
