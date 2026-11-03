@@ -1,0 +1,17 @@
+.main-content.main-content-wide { max-width: 1920px; }
+.price-table { font-variant-numeric: tabular-nums; }
+.price-table tbody tr:nth-child(even) { background: #f5f8fb; }
+.price-table tbody tr:hover { background: #e7f4ef; }
+.price-table caption { text-align: left; font-weight: 700; padding-bottom: .8rem; }
+.price-year { padding: 1rem; }
+.price-year-overflow { overflow-x: auto; }
+.price-year-table { table-layout: fixed; width: 100%; min-width: 1050px; font-size: .82rem; }
+.price-year-table th, .price-year-table td { padding: .48rem .3rem; white-space: normal; overflow-wrap: anywhere; }
+.price-year-table th:first-child { width: 190px; }
+.price-year-table th:nth-child(2) { width: 75px; }
+.price-year-table td:nth-child(n+3) { text-align: right; }
+.price-missing { display: block; color: #805a10; }
+.price-table thead th { background: #18394c; color: #fff; }
+.price-table thead a { color: #b4f3dd; }
+div.dt-container .dt-search input { width: auto; max-width: 100%; }
+@media print { .price-year-table { min-width: 0; font-size: 7pt; } .price-year-table th:first-child { width: 110px; } .price-year-table th:nth-child(2) { width: 45px; } .price-year-overflow { overflow: visible; } .dt-search, .page-navigation, header, footer, .period-form { display: none; } }

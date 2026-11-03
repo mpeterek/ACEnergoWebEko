@@ -1,6 +1,16 @@
 @page "{meterId:int}"
 @model ElectricityPricesModel
 @{ ViewData["Title"] = "Elektřina – ceny a rezervovaná kapacita"; }
+
+@section Styles {
+<link rel="stylesheet" href="~/lib/datatables/dataTables.dataTables.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/pages/prices.css" asp-append-version="true" />
+}
+@section Scripts {
+<script src="~/lib/jquery/jquery.min.js" asp-append-version="true" defer></script>
+<script src="~/lib/datatables/dataTables.min.js" asp-append-version="true" defer></script>
+<script src="~/js/pages/prices.js" asp-append-version="true" defer></script>
+}
 <p class="eyebrow">ELEKTŘINA · HLAVNÍ MĚŘENÍ</p>
 <h1>Ceny a rezervovaná kapacita @(Model.Snapshot?.MeterName)</h1>
 <nav class="page-navigation" aria-label="Navigace měření">
@@ -26,13 +36,13 @@
         <p class="message-warning" role="status">Pro vybraný měsíc není ceník uložený. Zobrazeny jsou původní výchozí nulové hodnoty; nic se nezapisuje do databáze.</p>
     }
     <section class="panel table-scroll">
-        <table class="data-table">
+        <table class="data-table price-table" data-price-table>
             <caption>Ceník pro @Model.Snapshot.Month.ToString("MM/yyyy")</caption>
-            <thead><tr><th scope="col">Položka</th><th scope="col">Hodnota</th></tr></thead>
+            <thead><tr><th scope="col">Položka</th><th scope="col">Hodnota</th><th scope="col">Jednotka / měna</th></tr></thead>
             <tbody>
                 @foreach (var item in Model.Snapshot.Values)
                 {
-                    <tr><th scope="row">@item.Label</th><td>@item.Value</td></tr>
+                    <tr><th scope="row">@item.Label</th><td>@item.Value</td><td>@item.Unit</td></tr>
                 }
             </tbody>
         </table>

@@ -61,3 +61,10 @@ Reject(()=>ElectricityMeterConfiguration.Coefficient("0"));
 Reject(()=>ElectricityMeterConfiguration.Coefficient("1.2.3"));
 Reject(()=>ElectricityMeterConfiguration.Name(new string('x',31)));
 Console.WriteLine("PASS meter name and nonzero coefficient validation.");
+
+Equal("MW",ElectricityPriceStore.Unit("numRezKapacitaRocni"));
+Equal("Kč/MW",ElectricityPriceStore.Unit("numCenaRocniRezKapacita"));
+Equal("Kč/MWh",ElectricityPriceStore.Unit("numCenaTarifVysoky"));
+Equal("MWh",ElectricityPriceStore.Unit("numProcNedocerp",true));
+Equal("%",ElectricityPriceStore.Unit("numProcNedocerp",false));
+Console.WriteLine("PASS price units and variable threshold units.");

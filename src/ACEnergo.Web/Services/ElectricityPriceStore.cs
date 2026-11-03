@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Runtime.Versioning;
 namespace ACEnergo.Web.Services;
 public sealed record PriceField(string Column, string Label);
-public sealed record PriceValue(string Label, string Value);
+public sealed record PriceValue(string Label, string Value, string Unit = "");
 public sealed record PriceSnapshot(string MeterName, DateOnly Month, bool IsDefault, PriceValue[] Values);
 public interface IElectricityPriceStore { PriceSnapshot Load(int meterId, DateOnly month); }
 public sealed class ElectricityPriceStore(DatabaseCatalog catalog, IConfiguration config) : IElectricityPriceStore
@@ -37,6 +37,17 @@ public sealed class ElectricityPriceStore(DatabaseCatalog catalog, IConfiguratio
         new("bNedocerpMWhProc", "Jednotka nedočerpání"),
         new("bPrecerpMWhProc", "Jednotka přečerpání"),
         new("numCenaEkoDan", "Ekologická daň")];
+    public static string Unit(string column, bool? shortfallMwh=false, bool? excessMwh=false) => column switch {
+        "numRezKapacitaRocni" or "numRezKapacitaMesicni" => "MW",
+        "numTolerancePrekroceni" => "%",
+        "numProcNedocerp" => shortfallMwh is null ? "Neuvedeno" : shortfallMwh.Value ? "MWh" : "%",
+        "numProcPrecerp" => excessMwh is null ? "Neuvedeno" : excessMwh.Value ? "MWh" : "%",
+        "numCenaRocniRezKapacita" or "numCenaMesicniRezKapacita" or "numCenaPrekRezKapacity" => "Kč/MW",
+        "numCenaDodavkaJal" => "Kč/MVArh",
+        "numCenaDispecink" or "numCenaZpravaSite" or "numCenaServisOpravy" or "numCenaOdpisy" or "numCenaTechPodpora" => "Kč",
+        _ when column.StartsWith("b", StringComparison.Ordinal) => "—",
+        _ => "Kč/MWh"
+    };
     public static string Display(string column, object? value)
     {
         if (value is null or DBNull) return "Neuvedeno";
@@ -60,8 +71,11 @@ public sealed class ElectricityPriceStore(DatabaseCatalog catalog, IConfiguratio
         command.Parameters.Add("date", OleDbType.Date).Value = month.ToDateTime(TimeOnly.MinValue);
         using var reader = command.ExecuteReader();
         var found = reader is not null && reader.Read();
+        bool? shortfall = found ? reader!["bNedocerpMWhProc"] is DBNull ? null : Convert.ToBoolean(reader["bNedocerpMWhProc"]) : false;
+        bool? excess = found ? reader!["bPrecerpMWhProc"] is DBNull ? null : Convert.ToBoolean(reader["bPrecerpMWhProc"]) : false;
         var values = Fields.Select(field => new PriceValue(field.Label, Display(field.Column,
-            found ? reader![field.Column] : field.Column.StartsWith("b", StringComparison.Ordinal) ? false : 0))).ToArray();
+            found ? reader![field.Column] : field.Column.StartsWith("b", StringComparison.Ordinal) ? false : 0),
+            Unit(field.Column, shortfall, excess))).ToArray();
         if (found && reader!.Read()) throw new InvalidDataException("Duplicitní ceník stejného měření a měsíce.");
         return new(name, month, !found, values);
     }

@@ -151,3 +151,19 @@ období, vybraný měsíc, neplatný měsíc, neexistující měření a oprávn
 Nabídka administrátora již neobsahuje analogová měření. Nativní načtení
 přehledu přes OLE DB je třeba ověřit na Windows; HTTP test používá testovací
 úložiště. Přehled neobsahuje žádnou zapisovací operaci.
+
+## Jednotky a DataTables v cenících
+
+Ceník i editor uvádějí jednotky: MW, Kč/MW, Kč/MWh, Kč/MVArh, Kč a %.
+Meze nedočerpání/přečerpání rozlišují % a MWh podle příslušného přepínače;
+NULL přepínač nezavádí domnělou jednotku. Kapacitní sazby Kč/MW jsou ověřené
+proti násobení kapacity v BilanceMesic.asp a BilanceDen.asp, nikoli proti
+nepřesnému skupinovému nadpisu původního formuláře.
+
+DataTables 2.3.4 a jQuery 3.7.1 jsou lokální s přiloženými licencemi.
+V Chromium byl na skutečně vykresleném Razor HTML s 28 testovacími položkami
+ověřen start DataTables, hledání DPH a všech 14 sloupců (položka, jednotka,
+12 měsíců). Při 1920/1440/1280 px nebyl vodorovný přesah; při 768 px tabulka
+používá horizontální posouvání. Žádný měsíc se neskrývá, stránkování ani
+vnitřní svislé posouvání nejsou zapnuté. Výška celého dokumentu zůstává závislá
+na počtu řádků a velikosti okna. Hodnoty se nekrátí ani nově nezaokrouhlují.

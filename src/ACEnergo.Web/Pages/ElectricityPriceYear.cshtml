@@ -1,6 +1,16 @@
 @page "{meterId:int}"
 @model ElectricityPriceYearModel
-@{ ViewData["Title"] = "Elektřina – roční přehled cen"; }
+@{ ViewData["WideContent"] = true; ViewData["Title"] = "Elektřina – roční přehled cen"; }
+
+@section Styles {
+<link rel="stylesheet" href="~/lib/datatables/dataTables.dataTables.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/pages/prices.css" asp-append-version="true" />
+}
+@section Scripts {
+<script src="~/lib/jquery/jquery.min.js" asp-append-version="true" defer></script>
+<script src="~/lib/datatables/dataTables.min.js" asp-append-version="true" defer></script>
+<script src="~/js/pages/prices.js" asp-append-version="true" defer></script>
+}
 <h1>Roční přehled cen @(Model.Months.FirstOrDefault()?.MeterName)</h1>
 <nav class="page-navigation"><a asp-page="/Electricity">Hlavní měření</a><a asp-page="/ElectricityPrices" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Měsíční ceník</a></nav>
 <section class="panel">
@@ -10,9 +20,9 @@
 @if (Model.Months.Length == 12)
 {
 <p>Chybějící ceník je označen jako neuložený. Hodnoty se nepřebírají z předchozího měsíce. Tento přehled nesčítá ceny ani nepočítá náklady.</p>
-<section class="panel table-scroll"><table class="data-table"><caption>Rok @Model.Months[0].Month.Year</caption><thead><tr><th scope="col">Položka</th>
-@foreach (var month in Model.Months) { <th scope="col"><a asp-page="/ElectricityPrices" asp-route-meterId="@Model.MeterId" asp-route-Period="@month.Month.ToString("yyyy-MM")">@month.Month.ToString("MM/yyyy")</a>@if(month.IsDefault){<span class="badge">Neuloženo</span>}</th> }
+<section class="panel price-year"><div class="price-year-overflow"><table class="data-table price-table price-year-table" data-price-table data-price-year><caption>Rok @Model.Months[0].Month.Year</caption><thead><tr><th scope="col">Položka</th><th scope="col">Jednotka</th>
+@foreach (var month in Model.Months) { <th scope="col"><a asp-page="/ElectricityPrices" asp-route-meterId="@Model.MeterId" asp-route-Period="@month.Month.ToString("yyyy-MM")" title="@month.Month.ToString("MM/yyyy")">@month.Month.ToString("MM")</a>@if(month.IsDefault){<span class="price-missing" title="Ceník není uložen" aria-label="Ceník není uložen">—</span>}</th> }
 </tr></thead><tbody>
-@for(var index=0;index<Model.Months[0].Values.Length;index++) { <tr><th scope="row">@Model.Months[0].Values[index].Label</th>@foreach(var month in Model.Months){<td>@month.Values[index].Value</td>}</tr> }
-</tbody></table></section>
+@for(var index=0;index<Model.Months[0].Values.Length;index++) { <tr><th scope="row">@Model.Months[0].Values[index].Label</th><td>@(Model.Months.Select(m=>m.Values[index].Unit).Distinct().Count()==1 ? Model.Months[0].Values[index].Unit : "Dle měsíce")</td>@foreach(var month in Model.Months){<td>@month.Values[index].Value@if(Model.Months.Select(m=>m.Values[index].Unit).Distinct().Count()>1){<small> @month.Values[index].Unit</small>}</td>}</tr> }
+</tbody></table></div></section>
 }

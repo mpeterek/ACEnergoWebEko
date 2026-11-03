@@ -138,3 +138,10 @@ Přehled je pouze čtecí; editace cen a navazující výpočty ještě nejsou p
 Původní UpdateCenyRezKapHlMereni přepisuje vybraný měsíc až do konce roku;
 implementace tohoto zápisu bude samostatným navazujícím krokem. Žádná sazba
 ani DPH se v této etapě nepřepočítává.
+
+## Tabulky cen
+
+Měsíční i roční ceník používá lokální DataTables s českým hledáním položek.
+Roční přehled má širší plochu a kompaktní záhlaví; na úzké obrazovce zůstává
+posouvání, na široké se zobrazuje všech 12 měsíců vedle sebe. Měna je Kč,
+stejně jako v původním globálním nastavení aplikace. Jednotky jsou i v editoru.

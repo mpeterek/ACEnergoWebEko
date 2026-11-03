@@ -12,7 +12,7 @@
 <body>
     <a class="skip-link" href="#main-content">Přejít na obsah</a>
     <partial name="_Header" />
-    <main id="main-content" class="main-content">
+    <main id="main-content" class="main-content @(ViewData["WideContent"] is true ? "main-content-wide" : "")">
         @RenderBody()
     </main>
     <partial name="_Footer" />

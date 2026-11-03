@@ -115,6 +115,8 @@ internal static class AuthenticatedPageChecks
         Check((await Get("/ElectricityPrices/5?Period=bad")).Code == HttpStatusCode.BadRequest, "prices reject invalid month");
         Check((await Get("/ElectricityPrices/999")).Code == HttpStatusCode.NotFound, "prices unknown meter");
         var yearPrices = await Get("/ElectricityPriceYear/5?Period=2026-10");
+        if (Environment.GetEnvironmentVariable("ACE_PRICE_HTML") is string htmlPath) await File.WriteAllTextAsync(htmlPath, yearPrices.Html);
+        Check(yearPrices.Html.Contains("data-price-year") && yearPrices.Html.Contains("/lib/datatables/dataTables.min.js"), "year table loads local DataTables");
         Check(yearPrices.Code == HttpStatusCode.OK && yearPrices.Html.Contains("01/2026") && yearPrices.Html.Contains("12/2026"), "annual prices cover January through December");
         Check((await Get("/ElectricityPriceYear/5?Period=bad")).Code == HttpStatusCode.BadRequest, "annual prices reject invalid period");
         Role("none");
@@ -224,7 +226,7 @@ internal static class AuthenticatedPageChecks
     private sealed class FakePrices : IElectricityPriceStore
     {
         public PriceSnapshot Load(int meterId, DateOnly month) => meterId == 5
-            ? new("Test", month, false, [new("Cena test", "123,45")]) : throw new KeyNotFoundException();
+            ? new("Test", month, false, ElectricityPriceStore.Fields.Select((f,i)=>new PriceValue(i==0?"Cena test":f.Label, ElectricityPriceStore.Display(f.Column,f.Column.StartsWith("b")?(object)false:1234567.89m),ElectricityPriceStore.Unit(f.Column))).ToArray()) : throw new KeyNotFoundException();
     }
     private sealed class FakeTariffs : IElectricityTariffStore
     {
