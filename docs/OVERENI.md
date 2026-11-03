@@ -45,3 +45,12 @@ pokud SDK 8 není nainstalováno. Sestavení obou projektů prošlo bez chyb a
 varování se SDK 8.0.427 i v izolovaném výběru, kde bylo dostupné pouze SDK
 10.0.403. Cíl zůstává net8.0; všech 12 kontrol prošlo pod SDK 8.
 SDK 9.0.320 ani Visual Studio uživatele nejsou v cloudu instalovány.
+
+## Diagnostika připojení MDB
+
+Sestavení obou projektů bez chyb a varování. Prošlo 18 kontrol včetně rozlišení
+chybějícího souboru, oprávnění, platformy a inicializace; veřejné diagnostické
+texty nepropouštějí původní text výjimky. HTTP test na Linuxu ověřil neúspěšné
+přihlášení, bezpečný vývojový diagnostický blok a zachování ochrany CSRF.
+Přístupová práva a registraci ACE na lokálním Windows uživatele nelze v cloudu
+ověřit; jejich konkrétní stav musí určit vývojová diagnostika a výstup aplikace.

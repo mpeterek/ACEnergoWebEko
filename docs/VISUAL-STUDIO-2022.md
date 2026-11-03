@@ -68,7 +68,7 @@ Release. Ve vestavěném terminálu v kořenu řešení spusťte:
 dotnet run --project tests/ACEnergo.Checks
 ```
 
-Jde o konzolový kontrolní program s 12 kontrolami, nikoli testovací projekt
+Jde o konzolový kontrolní program s 18 kontrolami, nikoli testovací projekt
 pro Test Explorer. HTTP smoke test `tools/smoke.py` je určen pro cloudový
 Linux bez OLE DB; na Windows ověřte přihlášení skutečným účtem a měření.
 
@@ -111,3 +111,29 @@ kořenového global.json tímto nastavením a řešení znovu otevřete:
 V terminálu ve složce řešení ověřte `dotnet --version` a `dotnet --list-runtimes`.
 Pokud sestavení projde a spuštění požaduje Microsoft.AspNetCore.App 8,
 doinstalujte ASP.NET Core Runtime 8 nebo .NET 8 SDK.
+
+## Přihlášení hlásí nedostupnou MDB
+
+Po aktualizaci větve a novém sestavení spusťte vývojový HTTP/HTTPS profil
+a zkuste přihlášení znovu. V prostředí Development se pod formulářem zobrazí
+blok diagnostiky s použitou cestou, providerem, architekturou procesu a typem
+výjimky. V produkci se cesty ani tato diagnostika nezobrazují.
+
+- MDB-FILE: ověřte skutečnou cestu a název ACWebEkoLogin.mdb. Lokální User
+  Secrets a proměnné Access__Directory mohou přepsat appsettings.json.
+- MDB-PERMISSION: ověřte přístup identity procesu k souboru a adresáři.
+- MDB-INIT: zkontrolujte ve Výstupu konkrétní chybu registrace provideru.
+  Proces X64 potřebuje provider X64; běžná instalace 32bit Office sama o sobě
+  nezaručuje dostupnost 64bit ACE. Neinstalujte naslepo ovladač jiné bitovosti.
+- MDB-OLEDB: ve Výstupu zkontrolujte, zda provider odmítl soubor, zamčení,
+  přístupová práva, formát databáze nebo dotaz nad tblLog.
+
+Výchozí provider je Microsoft.ACE.OLEDB.16.0. Pokud je na počítači skutečně
+zaregistrovaný jiný kompatibilní provider, zadejte jej v lokálním Access:Provider.
+Pouhé přejmenování provideru bez jeho instalace nepomůže. Pro doplnění ACE
+použijte podporovaný Microsoft Access Runtime odpovídající bitovosti procesu
+a kompatibilní s instalací Office.
+
+Podrobná výjimka se zapisuje do Visual Studio → Zobrazení → Výstup →
+ASP.NET Core Web Server, případně Debug. Aplikace neloguje zadané heslo ani
+obsah MDB; neposílejte své přihlašovací údaje při hlášení chyby.

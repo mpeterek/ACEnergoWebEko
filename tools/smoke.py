@@ -20,7 +20,11 @@ with opener.open(base+'/Login') as r: body=r.read().decode()
 token=re.search(r'name="__RequestVerificationToken" type="hidden" value="([^"]+)"',body).group(1)
 from urllib.parse import urlencode
 with opener.open(urllib.request.Request(base+'/Login',data=urlencode({'Username':'migration-test-no-user','Password':'invalid','__RequestVerificationToken':token}).encode())) as r:
- assert 'Přihlašovací databáze není dostupná' in html.unescape(r.read().decode());print('PASS unsupported MDB runtime fails closed')
+ body = html.unescape(r.read().decode())
+ assert 'Přihlašovací databáze není dostupná' in body
+ assert 'MDB-PLATFORM:' in body and 'Diagnostika MDB' in body and 'Microsoft.ACE.OLEDB.16.0' in body
+ assert 'style=' not in body.lower() and 'invalid' not in body
+ print('PASS unsupported MDB runtime fails closed with safe development diagnostics')
 
 for path, content_type in [('/css/site.css','text/css'),('/css/components.css','text/css'),('/css/pages/login.css','text/css'),('/js/site.js','javascript')]:
  with opener.open(base+path) as r:

@@ -23,3 +23,18 @@
         <button class="button button-primary" type="submit">Přihlásit se</button>
     </form>
 </section>
+
+@if (Model.DiagnosticException is not null)
+{
+    <aside class="panel" aria-labelledby="diagnostic-title">
+        <h2 id="diagnostic-title">Diagnostika MDB – místní vývoj</h2>
+        <dl class="diagnostic-list">
+            <dt>Skutečně použitý soubor</dt><dd>@Model.DiagnosticPath</dd>
+            <dt>Provider</dt><dd>@Model.DiagnosticProvider</dd>
+            <dt>Architektura procesu</dt><dd>@Model.DiagnosticProcess</dd>
+            <dt>Typ chyby</dt><dd>@Model.DiagnosticException</dd>
+        </dl>
+        <p>Podrobnosti: Visual Studio → Zobrazení → Výstup → ASP.NET Core Web Server (případně Debug).</p>
+        <p>Provider musí být nainstalovaný a mít stejnou bitovost jako proces aplikace.</p>
+    </aside>
+}

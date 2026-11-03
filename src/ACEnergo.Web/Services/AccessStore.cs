@@ -5,6 +5,11 @@ using System.Security.Claims;
 namespace ACEnergo.Web.Services;
 public sealed class AccessStore(DatabaseCatalog catalog, IConfiguration config)
 {
+    private static void EnsureReadable(string path)
+    {
+        // File.Exists potlačuje chyby oprávnění; otevření je umožní správně diagnostikovat.
+        using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+    }
     public static readonly string[] Rights = ["ElekView","ElekConfig","ElekOdbDiagram","AnalogView","AnalogConfig","VodaView","VodaConfig","PlynView","PlynConfig","TeploView","TeploConfig","OstatniView","OstatniConfig"];
     public ClaimsPrincipal? Authenticate(string username, string password)
     {
@@ -21,7 +26,7 @@ public sealed class AccessStore(DatabaseCatalog catalog, IConfiguration config)
     private IReadOnlyList<ElectricityMeter> ElectricityMetersWindows()
     {
         var path = catalog.Resolve("ACEnergoWebEko.mdb");
-        if (!File.Exists(path)) throw new FileNotFoundException("Konfigurační MDB není dostupná.");
+        EnsureReadable(path);
         var cs = new OleDbConnectionStringBuilder { Provider = config["Access:Provider"] ?? "Microsoft.ACE.OLEDB.16.0", DataSource = path };
         cs["Mode"] = "Read";
         using var connection = new OleDbConnection(cs.ConnectionString);
@@ -37,7 +42,7 @@ public sealed class AccessStore(DatabaseCatalog catalog, IConfiguration config)
     private ClaimsPrincipal? AuthenticateWindows(string username, string password)
     {
         var path = catalog.Resolve("ACWebEkoLogin.mdb");
-        if (!File.Exists(path)) throw new FileNotFoundException("Přihlašovací MDB není dostupná.");
+        EnsureReadable(path);
         var cs = new OleDbConnectionStringBuilder { Provider = config["Access:Provider"] ?? "Microsoft.ACE.OLEDB.16.0", DataSource = path };
         cs["Mode"] = "Read";
         using var connection = new OleDbConnection(cs.ConnectionString);

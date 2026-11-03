@@ -17,4 +17,10 @@ try {
  Reject(()=>catalog.Resolve("../ACWebEkoLogin.mdb"));Reject(()=>catalog.Resolve("other.mdb"));
  Equal(13,AccessStore.Rights.Length);
 }finally{Directory.Delete(dir,true);}
-Console.WriteLine($"PASS: {count} database selection and permission-contract checks.");
+Equal(true, AccessFailure.Describe(new FileNotFoundException()).StartsWith("MDB-FILE:"));
+Equal(true, AccessFailure.Describe(new DirectoryNotFoundException()).StartsWith("MDB-FILE:"));
+Equal(true, AccessFailure.Describe(new UnauthorizedAccessException()).StartsWith("MDB-PERMISSION:"));
+Equal(true, AccessFailure.Describe(new PlatformNotSupportedException()).StartsWith("MDB-PLATFORM:"));
+Equal(true, AccessFailure.Describe(new InvalidOperationException("PRIVATE-MESSAGE")).StartsWith("MDB-INIT:"));
+Equal(false, AccessFailure.Describe(new IOException("PRIVATE-MESSAGE")).Contains("PRIVATE-MESSAGE"));
+Console.WriteLine($"PASS: {count} database selection, permission-contract and diagnostic checks.");
