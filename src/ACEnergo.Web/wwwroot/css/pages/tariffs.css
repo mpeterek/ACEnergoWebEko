@@ -1,0 +1,14 @@
+.month-input { width: auto; }
+.tariff-table { min-width: 1800px; }
+.tariff-table caption { text-align: left; padding-bottom: 1rem; }
+.tariff-table th, .tariff-table td { padding: .35rem; white-space: nowrap; }
+.tariff-table select { min-width: 5.5rem; padding: .55rem .2rem; font-size: .85rem; }
+.tariff-value-0 { background: #d9f5d8; color: #17451c; }
+.tariff-value-1 { background: #ffe0e0; color: #751c1c; }
+.tariff-value-2 { background: #dceaff; color: #183b76; }
+.tariff-label { display: block; padding: .5rem; border-radius: .4rem; }
+.tariff-legend { display: flex; flex-wrap: wrap; gap: 1rem; list-style: none; padding: 0; }
+.tariff-legend li { padding: .4rem .8rem; border-radius: .4rem; }
+.confirmation-label { margin: 1rem 0; }
+.confirmation-label input { width: auto; margin-right: .5rem; }
+.unsaved-notice { color: var(--color-error); }

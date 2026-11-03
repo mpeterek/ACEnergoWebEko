@@ -74,3 +74,19 @@ nikoli zatím funkční přihlášení a správnost dotazu tblLog.
 
 Sestavení obou jednotlivých projektů s -r win-x86 následně prošlo bez chyb
 a varování. PE hlavičky obou vývojových apphostů potvrzují I386 (x86).
+
+## Druhá etapa – tarify
+
+- Debug sestavení řešení .NET 8: bez chyb a varování.
+- Základní kontroly: 18 prošlo. Nové kontroly tarifů: 193 prošlo, včetně všech
+  168 výchozích buněk, hranic měsíců, detekce neúplných dat, verzování a
+  serverových handlerů (oprávnění, neplatný formulář, potvrzení, konflikt).
+- HTTP: nová stránka tarifů bez přihlášení přesměruje na Login; původní
+  přihlašovací a CSRF kontroly prošly. Externí CSS a JS tarifů vracejí 200
+  se správným MIME typem; JavaScript prošel node --check.
+- Originální tabulka tblTarifyElektrina byla čtecím parserem ověřena: všechna
+  pole použitá novým kódem existují, 2 940 řádků v 420 úplných skupinách,
+  0 duplicitních klíčů, pouze kódy 0/1/2 a první dny měsíců v půlnoci.
+- Native Access test WindowsTariffCheck je připraven, ale nebyl na Linuxu
+  spuštěn. OLE DB round-trip, SQL aktualizace/vkládání, Serializable transakce
+  a rollback zůstávají k ověření na Windows.

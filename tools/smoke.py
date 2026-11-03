@@ -1,10 +1,10 @@
 import html, http.cookiejar, re, urllib.request, urllib.error
 base='http://localhost:5080'
 opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
-for path in ['/health/live','/Login','/','/Electricity']:
+for path in ['/health/live','/Login','/','/Electricity','/ElectricityTariffs/1']:
  with opener.open(base+path) as r:
   body=r.read().decode();assert r.status==200
-  if path in ['/','/Electricity']:assert '/Login' in r.url
+  if path in ['/','/Electricity','/ElectricityTariffs/1']:assert '/Login' in r.url
   if path=='/Login':
    assert '__RequestVerificationToken' in body and 'type="password"' in body
    assert '/css/site.css?v=' in body and '/css/components.css?v=' in body
@@ -26,7 +26,7 @@ with opener.open(urllib.request.Request(base+'/Login',data=urlencode({'Username'
  assert 'style=' not in body.lower() and 'invalid' not in body
  print('PASS unsupported MDB runtime fails closed with safe development diagnostics')
 
-for path, content_type in [('/css/site.css','text/css'),('/css/components.css','text/css'),('/css/pages/login.css','text/css'),('/js/site.js','javascript')]:
+for path, content_type in [('/css/site.css','text/css'),('/css/components.css','text/css'),('/css/pages/login.css','text/css'),('/js/site.js','javascript'),('/css/pages/tariffs.css','text/css'),('/js/pages/tariffs.js','javascript')]:
  with opener.open(base+path) as r:
   assert r.status==200 and content_type in r.headers['Content-Type'] and r.read()
   print('PASS external asset',path)

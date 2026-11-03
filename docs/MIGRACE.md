@@ -1,6 +1,6 @@
 # Migrace ACEnergoWebEko – stav implementace
 
-Toto je první implementační etapa, nikoli dokončený převod aplikace.
+Projekt obsahuje první etapu a navazující převod tarifů; úplný převod aplikace není dokončen.
 Původní archiv: příloha `ACEnergoWebEko.-.kopie.zip` vydání `v.1.0` na GitHubu.
 Archiv prošel kontrolou CRC. Originály i MDB zůstaly nezměněné mimo nový projekt.
 
@@ -13,7 +13,7 @@ odkazy na tabulky a výskyty ConnectDBase. Jde o statickou analýzu, nikoli důk
 
 | Oblast | ASP souborů | Stav |
 | --- | ---: | --- |
-| Elektřina | 319 | Převeden čtecí seznam hlavních měření; ostatní čeká |
+| Elektřina | 319 | Převeden seznam a týdenní tarify; OLE DB zápisy čekají na ověření na Windows |
 | Plyn | 215 | Čeká |
 | Teplo | 174 | Čeká |
 | Voda | 170 | Čeká |
@@ -36,14 +36,15 @@ odkazy na tabulky a výskyty ConnectDBase. Jde o statickou analýzu, nikoli důk
 - `Elektrina/HlavniMereni/SeznamHlavniElHl.asp`: čtení `strNazev`, `numID`
   z `tblKonfigHlavniElektrina`, řazení numID ASC. Nová stránka vynucuje ElekView
   nebo administrátora; tuto správu administrátorského přístupu ověřit proti menu.
-- MDB nejsou ve wwwroot. Aplikace nyní otevírá databáze pouze ke čtení.
+- MDB nejsou ve wwwroot. Přihlášení a seznamy jsou čtecí; modul tarifů může
+  transakčně zapisovat do konfigurační MDB s oprávněním ElekConfig.
 - Výběr období je validován proti dostupným souborům; vyhodnocení spotřeby
   nad tímto obdobím dosud není implementováno. Nezobrazuje se umělé měření.
 
 ## Dosud chybí pro úplnou migraci
 
 Schéma a integrita MDB ověřené na Access Engine; úspěšné přihlášení se skutečným
-účtem; test oprávnění uživatelů; konfigurace, zápisy a transakce; výpočty spotřeb,
+účtem; test oprávnění uživatelů; ostatní konfigurace a zápisy; Windows ověření transakcí tarifů; výpočty spotřeb,
 tarify, účiník, rezervovaná kapacita, směny, ztráty, DPH, zaokrouhlování; roční
 sestavy a čtení více MDB; všechny grafy, exporty a importy používané bez Energomatu;
 správa uživatelů; úplné mapování starých URL; regresní srovnání s Classic ASP.
@@ -57,3 +58,48 @@ Každou funkci porovnat na stejných kopiích MDB a stejných vstupech, včetně
 Null/Empty, české lokalizace, hranic měsíců/roků, letního času a zaokrouhlování.
 Zápisy porovnat na oddělených kopiích včetně chování při souběhu a zamčení.
 Teprve poté označit příslušný záznam inventáře jako ověřeně migrovaný.
+
+## Druhá etapa – týdenní tarify hlavního měření elektřiny
+
+Převedeny TarifyElHl.asp a Sub_TarifyHlavniElHl.asp; rámce a hlavička jsou
+sloučeny do Razor stránky s oddělenými CSS/JS. Nový odkaz **Tarify** je v
+seznamu hlavních měření. Rozsah:
+
+- 7 dní × 24 hodin; hodnoty 0 nízký, 1 vysoký, 2 víkend.
+- Čtení přesného vybraného měsíce; předchozí tarif se automaticky nedědí.
+- Chybějící měsíc ukáže výchozí rozvrh s výslovnou informací, že není uložený.
+- Původní vysoký tarif má indexy hodin 5–9 a 16–19, tedy intervaly
+  05:00–10:00 a 16:00–20:00; sobota a neděle používají víkendový tarif.
+- Uložení přepíše vybraný měsíc a zbytek stejného roku až do prosince.
+  Tato původní vlastnost je uvedena u tlačítka a vyžaduje potvrzení ve formuláři.
+- Zápis chrání oprávnění ElekConfig nebo administrátor, CSRF, validace všech
+  168 hodnot, kontrola načtené verze celého zapisovaného rozsahu a transakce.
+- Existující denní řádky se aktualizují; chybějící se doplní bez mazání tabulky.
+  Chyba nebo zjištěné duplicity přeruší transakci. Víceprocesový souběh se
+  opírá o Serializable transakce Accessu; vyžaduje ověření na cílovém Windows.
+- Svátky, ceny a vyhodnocení spotřeby do této etapy ještě nepatří.
+
+Čtecím parserem Access Parser 0.0.6 byla v originální konfiguraci ověřena
+existence všech použitých sloupců, 2 940 řádků, 420 úplných měsíčních skupin,
+žádné duplicitní denní klíče a hodnoty tarifů pouze 0/1/2. Data byla pouze čtena.
+To nenahrazuje testy nativních OLE DB příkazů a transakcí na Windows.
+
+### Ověření nativního zápisu před používáním
+
+Zastavte web i další aplikace zapisující do testované MDB. V terminálu VS
+spusťte z kořene řešení (za poslední argument dosaďte skutečné ID hlavního
+měření, které vidíte v seznamu):
+
+```powershell
+dotnet run --project tests/ACEnergo.Checks -- --tariff-mdb "C:\ACEnergoData\ACEnergoWebEko.mdb" 1
+```
+
+Test si vytvoří **dočasnou kopii** konfigurace a zapisuje pouze do této kopie
+pro říjen–prosinec 2098. Ověřuje načtení, opakovaný zápis bez duplicit,
+neovlivnění sousedních období, odmítnutí zastaralé verze a rollback po záměrně
+vyvolané chybě uprostřed SQL zápisů. Potom kopii odstraní a porovná SHA-256
+zdrojového souboru. Vyžaduje funkční Microsoft.ACE.OLEDB.16.0, Windows a
+x86 runtime podle již ověřeného lokálního nastavení.
+
+Tento nativní test se v cloudovém Linuxu nespouští a zatím není označen jako
+prošlý. Pro první ruční použití nové editace použijte také testovací kopie MDB.

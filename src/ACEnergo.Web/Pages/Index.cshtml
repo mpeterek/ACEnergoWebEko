@@ -36,8 +36,16 @@
             {
                 <a asp-page="/Electricity">Seznam hlavních měření</a>
             }
-            <p>Převod měření, sestav a výpočtů tohoto modulu dosud není dokončen.</p>
-            <span class="badge">Čeká na migraci</span>
+            @if (module.Right == "ElekView")
+            {
+                <p>Dostupný je seznam hlavních měření a týdenní tarify. Vyhodnocení a další části se převádějí.</p>
+                <span class="badge">Částečně převedeno</span>
+            }
+            else
+            {
+                <p>Převod měření, sestav a výpočtů tohoto modulu dosud není dokončen.</p>
+                <span class="badge">Čeká na migraci</span>
+            }
         </article>
     }
 </div>

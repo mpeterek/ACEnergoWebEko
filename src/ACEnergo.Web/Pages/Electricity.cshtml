@@ -18,12 +18,12 @@
             <table class="data-table">
                 <caption class="visually-hidden">Hlavní měření elektřiny</caption>
                 <thead>
-                    <tr><th scope="col">ID</th><th scope="col">Název měření</th></tr>
+                    <tr><th scope="col">ID</th><th scope="col">Název měření</th><th scope="col">Nastavení</th></tr>
                 </thead>
                 <tbody>
                     @foreach (var meter in Model.Meters)
                     {
-                        <tr><td>@meter.Id</td><td>@meter.Name</td></tr>
+                        <tr><td>@meter.Id</td><td>@meter.Name</td><td><a asp-page="/ElectricityTariffs" asp-route-meterId="@meter.Id">Tarify</a></td></tr>
                     }
                 </tbody>
             </table>
@@ -34,4 +34,4 @@
         }
     }
 </section>
-<p>Vyhodnocení, grafy a změny konfigurace nejsou v této etapě převedeny.</p>
+<p>Vyhodnocení, grafy a další konfigurace měření se teprve převádějí.</p>

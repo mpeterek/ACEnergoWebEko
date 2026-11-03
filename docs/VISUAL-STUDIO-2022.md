@@ -70,7 +70,7 @@ Release. Ve vestavěném terminálu v kořenu řešení spusťte:
 dotnet run --project tests/ACEnergo.Checks
 ```
 
-Jde o konzolový kontrolní program s 18 kontrolami, nikoli testovací projekt
+Jde o konzolový kontrolní program se základními kontrolami a sadou testů tarifů, nikoli testovací projekt
 pro Test Explorer. HTTP smoke test `tools/smoke.py` je určen pro cloudový
 Linux bez OLE DB; na Windows ověřte přihlášení skutečným účtem a měření.
 

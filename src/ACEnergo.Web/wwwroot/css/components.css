@@ -21,3 +21,6 @@ select { max-width: 100%; }
 
 .diagnostic-list dt { font-weight: 600; margin-top: .75rem; }
 .diagnostic-list dd { margin: .25rem 0; overflow-wrap: anywhere; }
+
+.message-success { color: #175f32; background: #e0f4e6; padding: 1rem; border-radius: .5rem; }
+.message-warning { color: #71500b; background: #fff1d6; padding: 1rem; border-radius: .5rem; }

@@ -1,5 +1,6 @@
 using ACEnergo.Web.Services;
 using Microsoft.Extensions.Configuration;
+if (args.Length > 0 && args[0] == "--tariff-mdb") { WindowsTariffCheck.Run(args); return; }
 var count=0;
 void Equal<T>(T expected,T actual) {if(!EqualityComparer<T>.Default.Equals(expected,actual))throw new Exception($"Expected {expected}, got {actual}");count++;}
 void Reject(Action action){try{action();}catch(ArgumentException){count++;return;}throw new Exception("Invalid input accepted");}
@@ -24,3 +25,5 @@ Equal(true, AccessFailure.Describe(new PlatformNotSupportedException()).StartsWi
 Equal(true, AccessFailure.Describe(new InvalidOperationException("PRIVATE-MESSAGE")).StartsWith("MDB-INIT:"));
 Equal(false, AccessFailure.Describe(new IOException("PRIVATE-MESSAGE")).Contains("PRIVATE-MESSAGE"));
 Console.WriteLine($"PASS: {count} database selection, permission-contract and diagnostic checks.");
+
+TariffChecks.Run();

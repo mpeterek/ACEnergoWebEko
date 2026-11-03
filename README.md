@@ -50,7 +50,9 @@ vyžaduje Windows. Není zde testovací účet ani náhradní úložiště skute
 
 `/health/live` potvrzuje pouze běh webu, nikoli dostupnost MDB.
 Novou verzi zatím nepoužívejte jako náhradu produkčního Classic ASP:
-vyhodnocení, zápisy a většina modulů ještě nejsou převedeny.
+vyhodnocení a většina modulů ještě nejsou převedeny. Zápisy týdenních tarifů
+jsou implementované; před používáním je ověřte na testovacích MDB podle
+`docs/MIGRACE.md`.
 
 ## Opakování inventáře
 
@@ -93,3 +95,13 @@ nativním apphostem. Vyberte spouštěcí profil **ACEnergo.Web (x86 HTTP)**.
 K běhu je potřeba ASP.NET Core Runtime 8 **x86** a existující 32bitový Access
 provider. Publikace pro tento režim: **WinX86Folder**. Úplný postup je v
 [průvodci Visual Studiem](docs/VISUAL-STUDIO-2022.md#potvrzený-32bitový-office-a-ace--aktuální-nastavení).
+
+## Týdenní tarify elektřiny
+
+Po přihlášení otevřete **Elektřina → Seznam hlavních měření → Tarify**.
+Načtěte měsíc a rok; editace je dostupná s oprávněním ElekConfig nebo
+administrátora. Uložení se podle původní logiky týká vybraného měsíce
+a všech následujících měsíců do prosince stejného roku.
+
+Před prvním používáním zápisu na Windows proveďte integrační test na dočasné
+kopii, popsaný v [migračním přehledu](docs/MIGRACE.md#ověření-nativního-zápisu-před-používáním).

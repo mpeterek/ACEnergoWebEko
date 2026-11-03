@@ -1,0 +1,103 @@
+@page "{meterId:int}"
+@using ACEnergo.Web.Domain
+@model ElectricityTariffsModel
+@{
+    ViewData["Title"] = "Elektřina – tarify";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/tariffs.css" asp-append-version="true" />
+}
+@section Scripts {
+    <script src="~/js/pages/tariffs.js" asp-append-version="true" defer></script>
+}
+
+<p class="eyebrow">ELEKTŘINA · HLAVNÍ MĚŘENÍ</p>
+<h1>Tarify @(Model.Snapshot?.MeterName)</h1>
+<nav class="page-navigation" aria-label="Navigace měření">
+    <a asp-page="/Electricity">Zpět na hlavní měření</a>
+</nav>
+@if (Model.Success is not null)
+{
+    <p class="message-success" role="status">@Model.Success</p>
+}
+@if (!ViewData.ModelState.IsValid)
+{
+    <div asp-validation-summary="All" class="message-error" role="alert"></div>
+}
+<section class="panel">
+    <form method="get" class="period-form">
+        <label for="load-period">Období tarifu</label>
+        <input id="load-period" class="month-input" name="Period" type="month" value="@Model.Period" min="2000-01" max="9998-12" required />
+        <button class="button" type="submit">Načíst období</button>
+    </form>
+</section>
+@if (Model.Snapshot is not null)
+{
+    @if (Model.Snapshot.IsDefault)
+    {
+        <p class="message-warning" role="status">Pro tento měsíc nejsou uloženy tarify. Zobrazuje se původní výchozí nastavení; zatím nebylo zapsáno do databáze.</p>
+    }
+    <form method="post" class="panel tariff-editor" data-tariff-editor>
+        <input asp-for="MeterId" type="hidden" />
+        <input asp-for="Period" type="hidden" />
+        <input asp-for="Version" type="hidden" />
+        <div class="table-scroll">
+            <table class="data-table tariff-table">
+                <caption>Týdenní rozvrh tarifů pro @Model.Snapshot.Month.ToString("MM/yyyy"). Hodiny označují interval od–do.</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Den</th>
+                        @for (var hour = 0; hour < 24; hour++)
+                        {
+                            <th scope="col">@hour.ToString("D2")–@((hour + 1).ToString("D2"))</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var day = 0; day < 7; day++)
+                    {
+                        <tr>
+                            <th scope="row">@ElectricityTariffs.Days[day]</th>
+                            @for (var hour = 0; hour < 24; hour++)
+                            {
+                                var index = day * 24 + hour;
+                                <td>
+                                    @if (Model.CanEdit)
+                                    {
+                                        <label class="visually-hidden" for="cell-@index">@ElectricityTariffs.Days[day], @hour–@(hour + 1) hodin</label>
+                                        <select asp-for="Cells[index]" id="cell-@index" class="tariff-cell tariff-value-@Model.Cells[index]" data-tariff-cell>
+                                            @for (var value = 0; value < 3; value++)
+                                            {
+                                                <option value="@value">@ElectricityTariffs.Names[value]</option>
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <span class="tariff-label tariff-value-@Model.Cells[index]">@ElectricityTariffs.Names[Model.Cells[index]]</span>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <ul class="tariff-legend" aria-label="Legenda tarifů">
+            <li class="tariff-value-0">Nízký</li>
+            <li class="tariff-value-1">Vysoký</li>
+            <li class="tariff-value-2">Víkend</li>
+        </ul>
+        @if (Model.CanEdit)
+        {
+            <p id="save-scope" class="message-warning"><strong>Uložení přepíše tarify tohoto měření pro @Model.Snapshot.Month.ToString("MM/yyyy") a všechny následující měsíce do prosince @Model.Snapshot.Month.Year.</strong> Jde o stejné pravidlo jako v původní aplikaci.</p>
+            <label class="confirmation-label"><input type="checkbox" name="ConfirmOverwrite" value="true" required /> Souhlasím s přepsáním tarifů pro uvedené období.</label>
+            <button type="submit" class="button button-primary" aria-describedby="save-scope">Uložit do konce roku</button>
+            <p class="unsaved-notice" data-unsaved-notice hidden>Máte neuložené změny.</p>
+        }
+        else
+        {
+            <p>Tarify můžete zobrazit. Ke změnám je potřeba oprávnění ke konfiguraci elektřiny.</p>
+        }
+    </form>
+}
