@@ -15,3 +15,22 @@
 .price-table thead a { color: #b4f3dd; }
 div.dt-container .dt-search input { width: auto; max-width: 100%; }
 @media print { .price-year-table { min-width: 0; font-size: 7pt; } .price-year-table th:first-child { width: 110px; } .price-year-table th:nth-child(2) { width: 45px; } .price-year-overflow { overflow: visible; } .dt-search, .page-navigation, header, footer, .period-form { display: none; } }
+
+/* DataTables vkládá vlastní padding a flex záhlaví. Stejné okraje pro celé sloupce. */
+.price-year-overflow:has(.dt-container) { overflow: visible; }
+.price-year-overflow .dt-layout-table { overflow-x: auto; }
+.price-year-overflow .dt-layout-table .dt-layout-cell { min-width: 0; }
+.price-year-table.dataTable thead th,
+.price-year-table.dataTable tbody th,
+.price-year-table.dataTable tbody td { padding: .48rem .4rem; }
+.price-year-table.dataTable thead th:nth-child(n+3),
+.price-year-table.dataTable tbody td:nth-child(n+3) { text-align: right; }
+.price-year-table.dataTable thead th:nth-child(n+3) .dt-column-header { justify-content: flex-end; }
+.price-year-table.dataTable thead th:nth-child(n+3) .dt-column-title { flex: 1; text-align: right; }
+.price-year-table.dataTable thead th:nth-child(2) { white-space: nowrap; width: 90px; }
+.price-year .dt-layout-row:not(.dt-layout-table) { flex-wrap: wrap; padding: .35rem; }
+.price-year .dt-layout-row:not(.dt-layout-table) .dt-layout-cell { min-width: 0; max-width: 100%; }
+div.dt-container .dt-search { box-sizing: border-box; max-width: 100%; padding: .35rem; }
+div.dt-container .dt-search label { display: block; margin: 0 0 .4rem; }
+div.dt-container .dt-search input { display: block; box-sizing: border-box; width: min(17rem, 100%); max-width: 100%; margin: 0; }
+@media print { .price-year-overflow .dt-layout-table { overflow: visible; } }

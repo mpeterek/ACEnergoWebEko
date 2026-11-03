@@ -167,3 +167,15 @@ ověřen start DataTables, hledání DPH a všech 14 sloupců (položka, jednotk
 používá horizontální posouvání. Žádný měsíc se neskrývá, stránkování ani
 vnitřní svislé posouvání nejsou zapnuté. Výška celého dokumentu zůstává závislá
 na počtu řádků a velikosti okna. Hodnoty se nekrátí ani nově nezaokrouhlují.
+
+## Oprava záhlaví měsíců a oříznutého hledání
+
+DataTables má vlastní padding a flex obal záhlaví. Hlavičky měsíců i jejich
+hodnoty nyní používají shodné pravé zarovnání a padding. Jednotka má větší
+šířku a její záhlaví se neláme. Posouvání je pouze na řádku tabulky DataTables;
+vyhledávání zůstává mimo ořezávající kontejner, s místem pro focus outline.
+
+Chromium: při 1920/1440/1280/768/390 px rozdíl pravých okrajů měsíčního
+záhlaví a hodnoty 0 px; celé hledací pole včetně 6px focus rezervy zůstalo
+v obrazovce a celý dokument neměl vodorovný přesah. Na úzkých obrazovkách
+se posouvá pouze tabulka. Volitelný test je tools/check-price-layout.cjs.
