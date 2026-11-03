@@ -127,3 +127,17 @@ WindowsTariffCheck podle docs/MIGRACE.md.
 
 Kontrolní projekt včetně WindowsHolidayCheck a HTTP testů se také úspěšně
 sestavil pro win-x86, bez chyb a varování.
+
+## Regrese: chybějící Period při otevření tarifů
+
+HTTP test reprodukoval anglickou validační chybu při GET /ElectricityTariffs/5
+bez query parametru. Ne-nullable bindovaná vlastnost měla implicitní Required,
+i když inicializátor nabízel aktuální měsíc. Period je nyní nullable a výchozí
+měsíc se explicitně nastavuje pouze při GET bez parametru; odpovídající záznam
+ModelState se odstraní, aby skryté pole nepřevzalo prázdnou původní hodnotu.
+
+Prošlo všech 35 autentizovaných HTTP kontrol, včetně otevření bez query,
+platného skutečně vykresleného hidden Period a uložení upravených 168 hodnot
+bez query parametru. POST bez období, s prázdným nebo neplatným obdobím
+vrací 400 bez zápisu; explicitně prázdný GET parametr je také odmítnut.
+Základních 18, tarifních 194 a svátečních 46 kontrol i procesový zámek prošly.

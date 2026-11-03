@@ -1,4 +1,5 @@
 using System.Data.OleDb;
+using System.Globalization;
 using ACEnergo.Web.Domain;
 using ACEnergo.Web.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -11,7 +12,7 @@ namespace ACEnergo.Web.Pages;
 public class ElectricityTariffsModel(IElectricityTariffStore store, ILogger<ElectricityTariffsModel> logger) : PageModel
 {
     [BindProperty(SupportsGet = true)] public int MeterId { get; set; }
-    [BindProperty(SupportsGet = true)] public string Period { get; set; } = DateTime.Today.ToString("yyyy-MM");
+    [BindProperty(SupportsGet = true)] public string? Period { get; set; }
     [BindProperty] public int[] Cells { get; set; } = [];
     [BindProperty] public bool ConfirmOverwrite { get; set; }
     [BindProperty] public string Version { get; set; } = "";
@@ -21,6 +22,13 @@ public class ElectricityTariffsModel(IElectricityTariffStore store, ILogger<Elec
 
     public IActionResult OnGet()
     {
+        // Chybějící query parametr je při otevření stránky očekávaný. Výchozí
+        // období se používá pouze při GET; POST bez období se nesmí uložit.
+        if (Period is null && !Request.Query.ContainsKey(nameof(Period)))
+        {
+            Period = DateTime.Today.ToString("yyyy-MM", CultureInfo.InvariantCulture);
+            ModelState.Remove(nameof(Period));
+        }
         if (!ElectricityTariffs.TryMonth(Period, out var month)) return BadRequest("Neplatné období; použijte RRRR-MM.");
         try
         {

@@ -82,6 +82,31 @@ internal static class AuthenticatedPageChecks
         var tariff = await Get("/ElectricityTariffs/5?Period=2026-10");
         Check(tariff.Code == HttpStatusCode.OK && Regex.Matches(tariff.Html, "name=\"Cells\\[\\d+\\]\"").Count == 168, "tariff Razor renders 168 editable cells");
         Check(tariff.Html.Contains("/ElectricityHolidays/5") && tariff.Html.Contains("Period=2026-10"), "tariffs link preserves meter and period");
+        var defaultTariff = await Get("/ElectricityTariffs/5");
+        Check(defaultTariff.Code == HttpStatusCode.OK && !WebUtility.HtmlDecode(defaultTariff.Html).Contains("The Period field is required."), "tariffs open without explicit period with valid default");
+        var hiddenPeriod = Regex.Match(defaultTariff.Html, "<input[^>]*name=\"Period\"[^>]*value=\"([^\"]*)\"");
+        var defaultPeriod = WebUtility.HtmlDecode(hiddenPeriod.Groups[1].Value);
+        Check(hiddenPeriod.Success && ElectricityTariffs.TryMonth(defaultPeriod, out _), "default month is present in actual hidden POST input");
+        async Task<HttpStatusCode> PostTariff(string? period)
+        {
+            var fields = new List<KeyValuePair<string, string>>
+            {
+                new("Version", new string('A', 64)), new("ConfirmOverwrite", "true"),
+                new("__RequestVerificationToken", Token(defaultTariff.Html))
+            };
+            if (period is not null) fields.Add(new("Period", period));
+            var cells = ElectricityTariffs.Defaults(); cells[0] = 2;
+            fields.AddRange(cells.Select((value, index) => new KeyValuePair<string, string>($"Cells[{index}]", value.ToString())));
+            using var response = await client.PostAsync("/ElectricityTariffs/5", new FormUrlEncodedContent(fields));
+            return response.StatusCode;
+        }
+        Check(await PostTariff(defaultPeriod) == HttpStatusCode.Found && factory.Tariffs.Writes == 1 &&
+            factory.Tariffs.LastMonth.ToString("yyyy-MM") == defaultPeriod && factory.Tariffs.FirstCell == 2,
+            "save default month without relying on query string");
+        Check(await PostTariff(null) == HttpStatusCode.BadRequest && factory.Tariffs.Writes == 1, "missing POST period does not fall back or write");
+        Check(await PostTariff("") == HttpStatusCode.BadRequest && factory.Tariffs.Writes == 1, "empty POST period does not write");
+        Check(await PostTariff("2026-13") == HttpStatusCode.BadRequest && factory.Tariffs.Writes == 1, "invalid POST period does not write");
+        Check((await Get("/ElectricityTariffs/5?Period=")).Code == HttpStatusCode.BadRequest, "explicit empty GET period rejected");
         Role("view"); tariff = await Get("/ElectricityTariffs/5?Period=2026-10");
         Check(tariff.Code == HttpStatusCode.OK && !tariff.Html.Contains("data-tariff-cell"), "viewer tariff grid is read-only");
         Role("admin");
@@ -94,6 +119,7 @@ internal static class AuthenticatedPageChecks
     private sealed class Factory : WebApplicationFactory<AccessStore>
     {
         public FakeHolidays Holidays { get; } = new();
+        public FakeTariffs Tariffs { get; } = new();
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             var root = new DirectoryInfo(AppContext.BaseDirectory);
@@ -107,7 +133,7 @@ internal static class AuthenticatedPageChecks
                 services.RemoveAll<IElectricityHolidayStore>();
                 services.AddSingleton<IElectricityHolidayStore>(Holidays);
                 services.RemoveAll<IElectricityTariffStore>();
-                services.AddSingleton<IElectricityTariffStore, FakeTariffs>();
+                services.AddSingleton<IElectricityTariffStore>(Tariffs);
                 services.AddDataProtection().UseEphemeralDataProtectionProvider();
                 services.AddLogging(logging => logging.ClearProviders());
                 services.AddAuthentication(options =>
@@ -157,6 +183,14 @@ internal static class AuthenticatedPageChecks
     private sealed class FakeTariffs : IElectricityTariffStore
     {
         public TariffSnapshot Load(int meterId, DateOnly month) => new(meterId, "Test", month, ElectricityTariffs.Defaults(), false, new string('A', 64));
-        public void Save(int meterId, DateOnly month, IReadOnlyList<int> cells, string expectedVersion) => throw new Exception("Unexpected tariff write in holiday HTTP checks");
+        public int Writes { get; private set; }
+        public DateOnly LastMonth { get; private set; }
+        public int FirstCell { get; private set; }
+        public void Save(int meterId, DateOnly month, IReadOnlyList<int> cells, string expectedVersion)
+        {
+            if (meterId != 5 || expectedVersion != new string('A', 64)) throw new Exception("Wrong tariff target/version");
+            ElectricityTariffs.Validate(cells);
+            Writes++; LastMonth = month; FirstCell = cells[0];
+        }
     }
 }
