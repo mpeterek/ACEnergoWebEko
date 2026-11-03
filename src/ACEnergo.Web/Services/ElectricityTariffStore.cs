@@ -13,7 +13,7 @@ public interface IElectricityTariffStore
 
 public sealed class ElectricityTariffStore(DatabaseCatalog catalog, IConfiguration configuration) : IElectricityTariffStore
 {
-    // Zápisy z této instance webu se serializují; mezi procesy rozhoduje transakce Accessu.
+    // Zápisy v procesu se serializují; další instance webu koordinuje souborový zámek.
     private static readonly object WriteGate = new();
     private static readonly string[] HourColumns = Enumerable.Range(1, 24).Select(hour => $"numHodina{hour:D2}").ToArray();
     private static readonly string SelectColumns = "[dtDatumPlatnost], [numIndexDne], [strNazevDne], " + string.Join(", ", HourColumns.Select(name => $"[{name}]"));
@@ -91,8 +91,11 @@ public sealed class ElectricityTariffStore(DatabaseCatalog catalog, IConfigurati
     [SupportedOSPlatform("windows")]
     private void SaveWindows(int meterId, DateOnly month, IReadOnlyList<int> cells, string expectedVersion)
     {
+        using var writeLock = TariffWriteLock.Acquire(catalog.Resolve("ACEnergoWebEko.mdb"));
         using var connection = Open(true);
-        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        // ACE nepodporuje Serializable (XACT_E_ISOLATIONLEVEL). ReadCommitted
+        // zachovává atomický commit/rollback; spolupracující procesy chrání writeLock.
+        using var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
         // Dispose necommitnuté transakce provede rollback i při výjimce.
         _ = MeterName(connection, meterId, transaction);
         var rows = Read(connection, meterId, month, transaction);

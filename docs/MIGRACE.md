@@ -75,8 +75,14 @@ seznamu hlavních měření. Rozsah:
 - Zápis chrání oprávnění ElekConfig nebo administrátor, CSRF, validace všech
   168 hodnot, kontrola načtené verze celého zapisovaného rozsahu a transakce.
 - Existující denní řádky se aktualizují; chybějící se doplní bez mazání tabulky.
-  Chyba nebo zjištěné duplicity přeruší transakci. Víceprocesový souběh se
-  opírá o Serializable transakce Accessu; vyžaduje ověření na cílovém Windows.
+  Chyba nebo zjištěné duplicity přeruší transakci. Používá se ReadCommitted,
+  protože místní ACE nepodporuje Serializable. Zápisy jednotlivých instancí
+  této aplikace koordinuje výhradní souborový zámek MDB.tariffs.lock.
+  Po získání zámku se znovu porovná verze tarifů v transakci. Zápis jinými
+  nástroji (Classic ASP, samotný Access) tento pomocný zámek nerespektuje;
+  během migrace je proto nepouštějte současně jako zapisovače stejné MDB.
+  Pomocný soubor je prázdný, po ukončení zápisu zůstává na disku a jeho
+  existence sama o sobě neznamená držený zámek. Za běhu ho nemažte.
 - Svátky, ceny a vyhodnocení spotřeby do této etapy ještě nepatří.
 
 Čtecím parserem Access Parser 0.0.6 byla v originální konfiguraci ověřena

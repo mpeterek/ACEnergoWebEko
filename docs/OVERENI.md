@@ -88,5 +88,20 @@ a varování. PE hlavičky obou vývojových apphostů potvrzují I386 (x86).
   pole použitá novým kódem existují, 2 940 řádků v 420 úplných skupinách,
   0 duplicitních klíčů, pouze kódy 0/1/2 a první dny měsíců v půlnoci.
 - Native Access test WindowsTariffCheck je připraven, ale nebyl na Linuxu
-  spuštěn. OLE DB round-trip, SQL aktualizace/vkládání, Serializable transakce
+  spuštěn. OLE DB round-trip, SQL aktualizace/vkládání, transakce
   a rollback zůstávají k ověření na Windows.
+
+## Oprava nepodporované úrovně izolace ACE
+
+Uživatel na Windows doložil OleDbException 0x8004D008 při BeginTransaction
+se Serializable. Tento pokus ještě nedošel k SQL aktualizacím. Implementace
+byla změněna na ReadCommitted se zachováním jediné transakce, kontroly
+načtené verze a rollbacku. Pro koordinaci více instancí webu používá
+výhradní pomocný souborový zámek nad stejnou MDB. Externí zapisovače
+bez tohoto protokolu zámek nerespektují.
+
+Po opravě prošlo všech 211 stávajících kontrol a nový test výhradního zámku
+mezi dvěma skutečnými procesy, opětovného získání po uzavření a uvolnění po
+výjimce. Publikace Windows x86 prošla. Nativní Access round-trip a rollback
+přes ReadCommitted je nadále potřeba spustit na cílovém Windows testem
+WindowsTariffCheck podle docs/MIGRACE.md.

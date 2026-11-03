@@ -1,5 +1,11 @@
 using ACEnergo.Web.Services;
 using Microsoft.Extensions.Configuration;
+if (args.Length == 2 && args[0] == "--tariff-lock-probe")
+{
+    try { using var held = TariffWriteLock.Acquire(args[1]); }
+    catch (IOException) { Environment.ExitCode = 23; }
+    return;
+}
 if (args.Length > 0 && args[0] == "--tariff-mdb") { WindowsTariffCheck.Run(args); return; }
 var count=0;
 void Equal<T>(T expected,T actual) {if(!EqualityComparer<T>.Default.Equals(expected,actual))throw new Exception($"Expected {expected}, got {actual}");count++;}
@@ -27,3 +33,5 @@ Equal(false, AccessFailure.Describe(new IOException("PRIVATE-MESSAGE")).Contains
 Console.WriteLine($"PASS: {count} database selection, permission-contract and diagnostic checks.");
 
 TariffChecks.Run();
+
+TariffWriteLockChecks.Run();
