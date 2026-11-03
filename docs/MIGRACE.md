@@ -228,3 +228,24 @@ při čtecí analýze byly nalezeny i nepřiřazené jalové vazby NULL.
 
 HTTP testy používají testovací úložiště. Skutečný OLE DB zápis a odpojení vazby
 je ještě potřeba ověřit na testovací kopii MDB ve Windows. Analogy se nemigrují.
+
+## Úvodní přehled a tři čtecí kroky
+
+Odstraněn slogan Vaše energie na jednom místě. Přehled má přímé odkazy
+na hlavní měření, fiktivní měření, střediska a závody. Volba datového období
+se nevydává za globální změnu období všech následujících obrazovek.
+
+1. Fiktivní měření: čtecí seznam ID, názvu a jednotek z tblKonfigFiktivni.
+2. Střediska: odpovídající čtecí seznam z tblKonfigStredisko.
+3. Závody: odpovídající čtecí seznam z tblKonfigZavod.
+
+Všechny tři seznamy používají klíče z tblKonfigEnergie pro strNazevEnergie
+Elektřina, čímž se vylučují jiné energie. Seznamy jsou řazené podle ID a
+mají lokální DataTables pro hledání. Tabulky a všechny vybrané sloupce byly
+ověřené čtecím parserem v originální MDB. Názvy tabulek jsou pevný whitelist;
+URL nemůže zadat libovolnou tabulku. Přístup vyžaduje ElekView nebo admina.
+
+Jde o tři čtecí části migrace, nikoli kompletní převod těchto oddílů. Složení
+skupin, konfigurace, vazby, výpočty a grafy zůstávají další prací. Analogy
+jsou nadále vyloučené. Nativní načtení je nutno ověřit na Windows; HTTP testy
+používají testovací úložiště a prošly pro všechny tři trasy i oprávnění.

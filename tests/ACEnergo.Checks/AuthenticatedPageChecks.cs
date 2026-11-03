@@ -135,7 +135,16 @@ internal static class AuthenticatedPageChecks
         using(var saved=await client.PostAsync("/ElectricityMeter/5",new FormUrlEncodedContent(new Dictionary<string,string>{
             ["__RequestVerificationToken"]=Token(meterConfig.Html),["Version"]=new string('A',64),["MeterName"]="Edited",["Coefficient"]="2,5",["ReactiveCoefficient"]="1"})))
             Check(saved.StatusCode==HttpStatusCode.Found,"meter configuration POST accepts Czech coefficient");
+        foreach(var kind in new[]{"fictitious","centres","plants"}) {
+            var group=await Get("/ElectricityGroups/"+kind);
+            Check(group.Code==HttpStatusCode.OK && group.Html.Contains("Test group") && group.Html.Contains("MWh"), "group catalog renders "+kind);
+        }
+        Check((await Get("/ElectricityGroups/analog")).Code==HttpStatusCode.NotFound,"group kind whitelist rejects analog");
+        Role("none");
+        Check((await Get("/ElectricityGroups/centres")).Code==HttpStatusCode.Forbidden,"group catalog requires electricity view permission");
         Role("admin");
+        var home=WebUtility.HtmlDecode((await Get("/")).Html);
+        Check(!home.Contains("Vaše energie na jednom místě") && home.Contains("/ElectricityGroups/plants"),"dashboard heading removed and group navigation present");
         Check((await Get("/ElectricityHolidays/5")).Html.Contains("data-holiday-remove"), "administrator has configuration controls");
         Check(!WebUtility.HtmlDecode((await Get("/")).Html).Contains("Analogová"), "analog module excluded even for admin");
         Check((await Get("/ElectricityHolidays/999")).Code == HttpStatusCode.NotFound, "unknown meter 404");
@@ -159,6 +168,8 @@ internal static class AuthenticatedPageChecks
             {
                 services.RemoveAll<IElectricityHolidayStore>();
                 services.AddSingleton<IElectricityHolidayStore>(Holidays);
+                services.RemoveAll<IElectricityGroupCatalog>();
+                services.AddSingleton<IElectricityGroupCatalog, FakeGroups>();
                 services.RemoveAll<IElectricityMeterConfiguration>();
                 services.AddSingleton<IElectricityMeterConfiguration, FakeMeterConfiguration>();
                 services.RemoveAll<IElectricityPriceEditor>();
@@ -212,6 +223,9 @@ internal static class AuthenticatedPageChecks
             var removed = rows.RemoveAll(row => dates.Contains(DateOnly.FromDateTime(row.At)));
             Writes++; return removed;
         }
+    }
+    private sealed class FakeGroups : IElectricityGroupCatalog {
+        public ElectricityGroup[] Load(string kind){ElectricityGroupCatalog.Definition(kind);return [new(1,"Test group","MW","MWh")];}
     }
     private sealed class FakeMeterConfiguration : IElectricityMeterConfiguration {
         public MeterConfiguration Load(int id)=>new("Test",101,"1",102,"1",new string('A',64));

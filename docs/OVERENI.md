@@ -179,3 +179,17 @@ Chromium: při 1920/1440/1280/768/390 px rozdíl pravých okrajů měsíčního
 záhlaví a hodnoty 0 px; celé hledací pole včetně 6px focus rezervy zůstalo
 v obrazovce a celý dokument neměl vodorovný přesah. Na úzkých obrazovkách
 se posouvá pouze tabulka. Volitelný test je tools/check-price-layout.cjs.
+
+Úvodní přehled a tři katalogy elektřiny: regresní HTTP testy ověřily odstranění
+sloganu, přítomnost nové navigace, vykreslení každé kategorie s jednotkami,
+odmítnutí neznámého/analogového oddílu a zákaz bez ElekView. Celkem 56
+HTTP kontrol prošlo, ostatní existující kontroly také. Původní MDB čtecím
+parserem potvrzuje numIDEnergie, numCislo, strNazev, strRozmerP a strRozmerV
+ve všech třech tabulkách. Žádné zápisy nejsou v nových katalozích implementovány.
+
+Čtecí parser má omezení u komprimovaného Unicode písmene ř v názvu energie;
+pro kontrolní počty byly identifikované odpovídající klíče podle štítku Elekt…:
+44 fiktivních měření, 44 středisek, 1 závod. Produkční SQL nepoužívá tento
+pomocný prefix: zachovává přesný parametr Elektřina z původního ASP a spoléhá
+na dekódování OLE DB providerem. Kontrolu nativního filtru je nutno dokončit
+na Windows. Publikace x86 prošla bez chyb.

@@ -1,0 +1,23 @@
+@page "{kind}"
+@model ElectricityGroupsModel
+@{ViewData["Title"]=Model.Heading;}
+@section Styles {
+<link rel="stylesheet" href="~/lib/datatables/dataTables.dataTables.min.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/css/pages/prices.css" asp-append-version="true"/>
+}
+@section Scripts {
+<script src="~/lib/jquery/jquery.min.js" asp-append-version="true" defer></script>
+<script src="~/lib/datatables/dataTables.min.js" asp-append-version="true" defer></script>
+<script src="~/js/pages/prices.js" asp-append-version="true" defer></script>
+}
+<p class="eyebrow">ELEKTŘINA</p><h1>@Model.Heading</h1>
+<nav class="page-navigation"><a asp-page="/Index">Přehled</a><a asp-page="/Electricity">Hlavní měření</a></nav>
+@if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
+@if(Model.Loaded){
+<section class="panel table-scroll"><table class="data-table price-table" data-price-table>
+<caption>@Model.Heading – uložená konfigurace elektřiny</caption>
+<thead><tr><th scope="col">ID</th><th scope="col">Název</th><th scope="col">Jednotka výkonu</th><th scope="col">Jednotka energie</th></tr></thead>
+<tbody>@foreach(var row in Model.Rows){<tr><td>@row.Id</td><td>@row.Name</td><td>@row.PowerUnit</td><td>@row.EnergyUnit</td></tr>}</tbody>
+</table></section>
+<p>Přehled je pouze čtecí. Složení, editace, vyhodnocení a grafy tohoto oddílu se dále převádějí.</p>
+}

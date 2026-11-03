@@ -22,6 +22,7 @@ builder.Services.AddScoped<IElectricityHolidayStore, ElectricityHolidayStore>();
 builder.Services.AddScoped<IElectricityPriceStore, ElectricityPriceStore>();
 builder.Services.AddScoped<IElectricityPriceEditor, ElectricityPriceEditor>();
 builder.Services.AddScoped<IElectricityMeterConfiguration, ElectricityMeterConfiguration>();
+builder.Services.AddScoped<IElectricityGroupCatalog, ElectricityGroupCatalog>();
 builder.Services.AddAuthorization(options => options.AddPolicy("ElekConfig", policy => policy.RequireAuthenticatedUser().RequireAssertion(context => context.User.IsInRole("Administrator") || context.User.HasClaim("permission", "ElekConfig"))));
 var app = builder.Build();
 if (!app.Environment.IsDevelopment()) { app.UseExceptionHandler("/Error"); app.UseHsts(); app.UseHttpsRedirection(); }

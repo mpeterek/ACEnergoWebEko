@@ -5,8 +5,8 @@
 }
 
 <p class="eyebrow">PŘEHLED ENERGIÍ</p>
-<h1>Vaše energie na jednom místě</h1>
-<p>Vyberte období a oblast měření.</p>
+<h1>Přehled</h1>
+<p>Vyberte oblast měření. Uložené datové období můžete zkontrolovat níže.</p>
 <section class="panel" aria-label="Výběr období">
     <form method="get" class="period-form">
         <label for="period">Datové období</label>
@@ -16,7 +16,7 @@
                 <option value="@month" selected="@(month == Model.Period)">@month</option>
             }
         </select>
-        <button class="button" type="submit">Zobrazit období</button>
+        <button class="button" type="submit" disabled="@(Model.Months.Length==0)">Vybrat období</button>
     </form>
     @if (Model.Months.Length == 0)
     {
@@ -34,11 +34,16 @@
             <h2>@module.Name</h2>
             @if (module.Right == "ElekView")
             {
-                <a asp-page="/Electricity">Seznam hlavních měření</a>
+                <nav class="dashboard-links" aria-label="Oddíly elektřiny">
+                <a asp-page="/Electricity">Hlavní měření</a>
+                <a asp-page="/ElectricityGroups" asp-route-kind="fictitious">Fiktivní měření</a>
+                <a asp-page="/ElectricityGroups" asp-route-kind="centres">Střediska</a>
+                <a asp-page="/ElectricityGroups" asp-route-kind="plants">Závody</a>
+                </nav>
             }
             @if (module.Right == "ElekView")
             {
-                <p>Dostupný je seznam hlavních měření, týdenní tarify a svátky. Vyhodnocení a další části se převádějí.</p>
+                <p>Hlavní měření: vstupy, ceny, tarify a svátky. Další oddíly nabízejí čtecí přehledy; výpočty a grafy se převádějí.</p>
                 <span class="badge">Částečně převedeno</span>
             }
             else
