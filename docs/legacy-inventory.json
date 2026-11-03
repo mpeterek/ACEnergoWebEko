@@ -25,7 +25,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/HlavickaUvodPodruznaAn.asp",
@@ -34,7 +34,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Inc/Sub_PodruznaMereni.asp",
@@ -48,7 +48,7 @@
         "tblKonfigAnalog"
       ],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/MenuUvodPodruznaAn.asp",
@@ -63,7 +63,7 @@
       ],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Den/AllDataAnalogDen.asp",
@@ -76,7 +76,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Den/GrafAnalogDen.asp",
@@ -85,7 +85,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Den/GrafDataAnalogDen.asp",
@@ -97,7 +97,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Den/TableDataAnalogDen.asp",
@@ -108,7 +108,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Den/TableDataAnalogDen_Excel.asp",
@@ -121,7 +121,7 @@
       ],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Den/VolbaFceAnalogDen.asp",
@@ -130,7 +130,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/FrameVyhodnoceniAnPo.asp",
@@ -139,7 +139,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/HlavickaVyhodnoceniAnPo.asp",
@@ -150,7 +150,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Inc/ReadDataAnalog.asp",
@@ -168,7 +168,7 @@
         "tblKonfigAnalog"
       ],
       "monthly_database": true,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Mesic/AllDataAnalogMesic.asp",
@@ -183,7 +183,7 @@
       ],
       "tables": [],
       "monthly_database": true,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Mesic/GrafAnalogMesic.asp",
@@ -192,7 +192,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Mesic/GrafDataAnalogMesic.asp",
@@ -204,7 +204,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Mesic/TableDataAnalogMesic.asp",
@@ -215,7 +215,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Mesic/TableDataAnalogMesic_Excel.asp",
@@ -228,7 +228,7 @@
       ],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Mesic/VolbaFceAnalogMesic.asp",
@@ -237,7 +237,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Rok/AllDataAnalogRok.asp",
@@ -250,7 +250,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Rok/GrafAnalogRok.asp",
@@ -259,7 +259,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Rok/GrafDataAnalogRok.asp",
@@ -271,7 +271,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Rok/TableDataAnalogRok.asp",
@@ -282,7 +282,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Rok/TableDataAnalogRok_Excel.asp",
@@ -295,7 +295,7 @@
       ],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/Rok/VolbaFceAnalogRok.asp",
@@ -304,7 +304,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/VolbaVyhodnoceniAnPo.asp",
@@ -313,7 +313,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/blank.asp",
@@ -322,7 +322,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Vyhodnoceni/menukalendar.asp",
@@ -331,7 +331,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Analog/PodruznaMereni/Zapati.asp",
@@ -340,7 +340,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "excluded_by_user"
     },
     {
       "path": "Default.asp",
@@ -1251,7 +1251,7 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "read_only_port_editing_pending_windows_validation"
     },
     {
       "path": "Elektrina/HlavniMereni/Konfigurace/KonfiguraceVstupyElHl.asp",

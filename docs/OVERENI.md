@@ -141,3 +141,13 @@ platného skutečně vykresleného hidden Period a uložení upravených 168 hod
 bez query parametru. POST bez období, s prázdným nebo neplatným obdobím
 vrací 400 bez zápisu; explicitně prázdný GET parametr je také odmítnut.
 Základních 18, tarifních 194 a svátečních 46 kontrol i procesový zámek prošly.
+
+## Čtecí přehled cen a vyřazení modulu Analog
+
+Ve skutečné konfigurační MDB byla čtecím parserem ověřena existence všech
+28 použitých polí ceníku (444 řádků). Nové testy kontrolují české desetinné
+hodnoty, NULL a přepínače jednotek; HTTP testy zobrazení bez explicitního
+období, vybraný měsíc, neplatný měsíc, neexistující měření a oprávnění.
+Nabídka administrátora již neobsahuje analogová měření. Nativní načtení
+přehledu přes OLE DB je třeba ověřit na Windows; HTTP test používá testovací
+úložiště. Přehled neobsahuje žádnou zapisovací operaci.

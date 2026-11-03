@@ -1,0 +1,40 @@
+@page "{meterId:int}"
+@model ElectricityPricesModel
+@{ ViewData["Title"] = "Elektřina – ceny a rezervovaná kapacita"; }
+<p class="eyebrow">ELEKTŘINA · HLAVNÍ MĚŘENÍ</p>
+<h1>Ceny a rezervovaná kapacita @(Model.Snapshot?.MeterName)</h1>
+<nav class="page-navigation" aria-label="Navigace měření">
+    <a asp-page="/Electricity">Hlavní měření</a>
+    <a asp-page="/ElectricityTariffs" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Tarify</a>
+</nav>
+<section class="panel">
+    <form method="get" class="period-form">
+        <label for="price-period">Měsíc platnosti</label>
+        <input class="month-input" id="price-period" type="month" name="Period" value="@Model.Period" min="2000-01" max="9998-12" required />
+        <button class="button" type="submit">Načíst ceny</button>
+    </form>
+</section>
+@if (!ViewData.ModelState.IsValid)
+{
+    <div asp-validation-summary="All" class="message-error" role="alert"></div>
+}
+@if (Model.Snapshot is not null)
+{
+    @if (Model.Snapshot.IsDefault)
+    {
+        <p class="message-warning" role="status">Pro vybraný měsíc není ceník uložený. Zobrazeny jsou původní výchozí nulové hodnoty; nic se nezapisuje do databáze.</p>
+    }
+    <section class="panel table-scroll">
+        <table class="data-table">
+            <caption>Ceník pro @Model.Snapshot.Month.ToString("MM/yyyy")</caption>
+            <thead><tr><th scope="col">Položka</th><th scope="col">Hodnota</th></tr></thead>
+            <tbody>
+                @foreach (var item in Model.Snapshot.Values)
+                {
+                    <tr><th scope="row">@item.Label</th><td>@item.Value</td></tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}
+<p>V této etapě je ceník pouze pro čtení. Editace cen a výpočty nákladů ještě nejsou převedeny.</p>

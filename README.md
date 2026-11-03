@@ -118,3 +118,23 @@ Postup nativního testu nad dočasnou kopií MDB je v
 Běžný konzolový test nyní ověřuje i autentizované HTTP formuláře pomocí
 testovacích úložišť; přihlášení a zápisy do skutečných MDB v tomto režimu
 neprovádí. Testovací autentizace je pouze v testovacím projektu, nikoli ve webu.
+
+## Rozsah: analogová měření se nepřevádějí
+
+Na výslovný pokyn uživatele je modul Analog vyřazen z migrace a z nabídky.
+Původní soubory a databáze se nemažou. Přenos starých příznaků Analog při
+přihlášení zůstává kompatibilní s existující tabulkou uživatelů; žádné
+analogové obrazovky, výpočty ani zápisy se neimplementují.
+
+## Přehled cen hlavního měření elektřiny
+
+Nový odkaz **Ceny** v seznamu hlavních měření načítá všech 28 položek
+z tblCenyHlavniElektrina pro přesné ID měření a první den zvoleného měsíce.
+Zachovává původní nulové výchozí hodnoty při chybějícím záznamu, s viditelným
+upozorněním. Existující NULL se zobrazuje jako Neuvedeno. Přepínače jednotek
+rozlišují % a MWh podle původních hodnot 0/1. Čísla se zobrazují česky.
+
+Přehled je pouze čtecí; editace cen a navazující výpočty ještě nejsou převedeny.
+Původní UpdateCenyRezKapHlMereni přepisuje vybraný měsíc až do konce roku;
+implementace tohoto zápisu bude samostatným navazujícím krokem. Žádná sazba
+ani DPH se v této etapě nepřepočítává.

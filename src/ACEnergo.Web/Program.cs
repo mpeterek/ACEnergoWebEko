@@ -19,6 +19,7 @@ builder.Services.AddSingleton<DatabaseCatalog>();
 builder.Services.AddScoped<AccessStore>();
 builder.Services.AddScoped<IElectricityTariffStore, ElectricityTariffStore>();
 builder.Services.AddScoped<IElectricityHolidayStore, ElectricityHolidayStore>();
+builder.Services.AddScoped<IElectricityPriceStore, ElectricityPriceStore>();
 var app = builder.Build();
 if (!app.Environment.IsDevelopment()) { app.UseExceptionHandler("/Error"); app.UseHsts(); app.UseHttpsRedirection(); }
 app.UseStaticFiles(); app.UseRouting(); app.UseRateLimiter(); app.UseAuthentication(); app.UseAuthorization();

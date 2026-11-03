@@ -23,7 +23,7 @@
                 <tbody>
                     @foreach (var meter in Model.Meters)
                     {
-                        <tr><td>@meter.Id</td><td>@meter.Name</td><td><a asp-page="/ElectricityTariffs" asp-route-meterId="@meter.Id">Tarify</a> · <a asp-page="/ElectricityHolidays" asp-route-meterId="@meter.Id">Svátky</a></td></tr>
+                        <tr><td>@meter.Id</td><td>@meter.Name</td><td><a asp-page="/ElectricityTariffs" asp-route-meterId="@meter.Id">Tarify</a> · <a asp-page="/ElectricityHolidays" asp-route-meterId="@meter.Id">Svátky</a> · <a asp-page="/ElectricityPrices" asp-route-meterId="@meter.Id">Ceny</a></td></tr>
                     }
                 </tbody>
             </table>

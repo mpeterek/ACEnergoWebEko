@@ -109,8 +109,16 @@ internal static class AuthenticatedPageChecks
         Check((await Get("/ElectricityTariffs/5?Period=")).Code == HttpStatusCode.BadRequest, "explicit empty GET period rejected");
         Role("view"); tariff = await Get("/ElectricityTariffs/5?Period=2026-10");
         Check(tariff.Code == HttpStatusCode.OK && !tariff.Html.Contains("data-tariff-cell"), "viewer tariff grid is read-only");
+        var prices = await Get("/ElectricityPrices/5");
+        Check(prices.Code == HttpStatusCode.OK && prices.Html.Contains("Cena test") && !WebUtility.HtmlDecode(prices.Html).Contains("The Period field is required."), "prices load without period");
+        Check((await Get("/ElectricityPrices/5?Period=2026-10")).Code == HttpStatusCode.OK, "prices exact month");
+        Check((await Get("/ElectricityPrices/5?Period=bad")).Code == HttpStatusCode.BadRequest, "prices reject invalid month");
+        Check((await Get("/ElectricityPrices/999")).Code == HttpStatusCode.NotFound, "prices unknown meter");
+        Role("none");
+        Check((await Get("/ElectricityPrices/5")).Code == HttpStatusCode.Forbidden, "prices require view permission");
         Role("admin");
         Check((await Get("/ElectricityHolidays/5")).Html.Contains("data-holiday-remove"), "administrator has configuration controls");
+        Check(!WebUtility.HtmlDecode((await Get("/")).Html).Contains("Analogová"), "analog module excluded even for admin");
         Check((await Get("/ElectricityHolidays/999")).Code == HttpStatusCode.NotFound, "unknown meter 404");
         Console.WriteLine($"PASS: {count} authenticated Razor/HTTP, CSRF and authorization checks (test stores only).");
     }
@@ -132,6 +140,8 @@ internal static class AuthenticatedPageChecks
             {
                 services.RemoveAll<IElectricityHolidayStore>();
                 services.AddSingleton<IElectricityHolidayStore>(Holidays);
+                services.RemoveAll<IElectricityPriceStore>();
+                services.AddSingleton<IElectricityPriceStore, FakePrices>();
                 services.RemoveAll<IElectricityTariffStore>();
                 services.AddSingleton<IElectricityTariffStore>(Tariffs);
                 services.AddDataProtection().UseEphemeralDataProtectionProvider();
@@ -179,6 +189,11 @@ internal static class AuthenticatedPageChecks
             var removed = rows.RemoveAll(row => dates.Contains(DateOnly.FromDateTime(row.At)));
             Writes++; return removed;
         }
+    }
+    private sealed class FakePrices : IElectricityPriceStore
+    {
+        public PriceSnapshot Load(int meterId, DateOnly month) => meterId == 5
+            ? new("Test", month, false, [new("Cena test", "123,45")]) : throw new KeyNotFoundException();
     }
     private sealed class FakeTariffs : IElectricityTariffStore
     {

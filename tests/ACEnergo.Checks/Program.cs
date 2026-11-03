@@ -40,3 +40,10 @@ TariffWriteLockChecks.Run();
 HolidayChecks.Run();
 
 await AuthenticatedPageChecks.RunAsync();
+
+Equal("MWh", ElectricityPriceStore.Display("bNedocerpMWhProc", true));
+Equal("%", ElectricityPriceStore.Display("bPrecerpMWhProc", false));
+Equal("Ne", ElectricityPriceStore.Display("bDPH", false));
+Equal("Neuvedeno", ElectricityPriceStore.Display("numCenaTarifVysoky", DBNull.Value));
+Equal("123,45", ElectricityPriceStore.Display("numCenaTarifVysoky", 123.45m));
+Console.WriteLine("PASS: price values, Czech decimals, null and unit flags.");
