@@ -47,3 +47,10 @@ Equal("Ne", ElectricityPriceStore.Display("bDPH", false));
 Equal("Neuvedeno", ElectricityPriceStore.Display("numCenaTarifVysoky", DBNull.Value));
 Equal("123,45", ElectricityPriceStore.Display("numCenaTarifVysoky", 123.45m));
 Console.WriteLine("PASS: price values, Czech decimals, null and unit flags.");
+
+var priceInput=Enumerable.Repeat("0",28).ToArray();priceInput[0]="123,45";
+Equal(123.45m,ElectricityPriceEditor.Parse(priceInput)[0]);
+priceInput[0]="";Equal<object?>(null,ElectricityPriceEditor.Parse(priceInput)[0]);
+priceInput[0]="-1";Reject(()=>ElectricityPriceEditor.Parse(priceInput));
+priceInput[0]="1,2.3";Reject(()=>ElectricityPriceEditor.Parse(priceInput));
+Console.WriteLine("PASS price editor comma decimals, NULL and invalid input.");

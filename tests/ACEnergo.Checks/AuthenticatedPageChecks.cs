@@ -120,6 +120,10 @@ internal static class AuthenticatedPageChecks
         Role("none");
         Check((await Get("/ElectricityPriceYear/5")).Code == HttpStatusCode.Forbidden, "annual prices require view permission");
         Check((await Get("/ElectricityPrices/5")).Code == HttpStatusCode.Forbidden, "prices require view permission");
+        Check((await Get("/ElectricityPriceEdit/5?Period=2026-10")).Code == HttpStatusCode.Forbidden, "price edit needs configuration permission");
+        Role("config");
+        var priceEdit = await Get("/ElectricityPriceEdit/5?Period=2026-10");
+        Check(priceEdit.Code == HttpStatusCode.OK && Regex.Matches(priceEdit.Html,"name=\"Values\\[\\d+\\]\"").Count == 28, "all price editor fields render");
         Role("admin");
         Check((await Get("/ElectricityHolidays/5")).Html.Contains("data-holiday-remove"), "administrator has configuration controls");
         Check(!WebUtility.HtmlDecode((await Get("/")).Html).Contains("Analogová"), "analog module excluded even for admin");
@@ -144,6 +148,8 @@ internal static class AuthenticatedPageChecks
             {
                 services.RemoveAll<IElectricityHolidayStore>();
                 services.AddSingleton<IElectricityHolidayStore>(Holidays);
+                services.RemoveAll<IElectricityPriceEditor>();
+                services.AddSingleton<IElectricityPriceEditor, FakePriceEditor>();
                 services.RemoveAll<IElectricityPriceStore>();
                 services.AddSingleton<IElectricityPriceStore, FakePrices>();
                 services.RemoveAll<IElectricityTariffStore>();
@@ -193,6 +199,10 @@ internal static class AuthenticatedPageChecks
             var removed = rows.RemoveAll(row => dates.Contains(DateOnly.FromDateTime(row.At)));
             Writes++; return removed;
         }
+    }
+    private sealed class FakePriceEditor : IElectricityPriceEditor {
+        public EditablePrices Load(int id,DateOnly month)=>new("Test",Enumerable.Repeat("0",28).ToArray(),new string('A',64));
+        public void Save(int id,DateOnly month,string[] values,string version)=>ElectricityPriceEditor.Parse(values);
     }
     private sealed class FakePrices : IElectricityPriceStore
     {

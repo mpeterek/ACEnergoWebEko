@@ -193,3 +193,19 @@ Není garantován společný snapshot při souběžné externí změně ceníků
 Úplná Elektřina není dokončena: zbývá editace cen, konfigurace vstupů,
 podružná a fiktivní měření, střediska, závody, účiník, výpočty spotřeb a
 nákladů, grafy a exporty. Analogová měření zůstávají výslovně vyloučena.
+
+## Editace cen a kapacit
+
+Z měsíčního ceníku vede odkaz Upravit ceny a kapacity, dostupný pouze pro
+ElekConfig nebo administrátora. Edituje všech 28 položek. Zápis zachovává
+původní rozsah: od vybraného měsíce do prosince stejného roku. Používá
+ReadCommitted, společný zámek, token celého zapisovaného rozsahu a rollback.
+Prázdné položky znamenají NULL; čísla přijímají desetinnou čárku nebo tečku,
+nikoli oddělovače tisíců. Hodnoty se zapisují parametrizovaně, číselné položky
+přes OleDb.Double podle původní číselné databázové vrstvy. Stávající řádky se
+aktualizují, chybějící se doplní. Duplicity zápis přeruší.
+
+Sestavení a testy formuláře/validace proběhly v Linuxu. Skutečný OLE DB zápis
+cen a rollback této nové funkce dosud nebyly ověřeny na Windows. První
+uložení a kontrolu měsíců před/za rozsahem proveďte pouze na kopii MDB.
+Výpočty nákladů ani zbývající měřicí moduly tímto nejsou dokončeny.

@@ -38,4 +38,7 @@
         </table>
     </section>
 }
-<p>V této etapě je ceník pouze pro čtení. Editace cen a výpočty nákladů ještě nejsou převedeny.</p>
+@if(User.IsInRole("Administrator") || User.HasClaim("permission","ElekConfig")){
+<a asp-page="/ElectricityPriceEdit" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Upravit ceny a kapacity</a>
+}
+<p>Výpočty nákladů se dále převádějí.</p>

@@ -1,0 +1,21 @@
+@page "{meterId:int}"
+@model ElectricityPriceEditModel
+@{ ViewData["Title"]="Editace cen"; }
+<h1>Editace cen @(Model.Data?.Name)</h1>
+<a asp-page="/ElectricityPrices" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Zpět na ceník</a>
+@if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
+@if(Model.Data is not null){
+<form method="post" class="panel stacked-form">
+<input asp-for="MeterId" type="hidden" /><input asp-for="Period" type="hidden" /><input asp-for="Version" type="hidden" />
+<p class="message-warning">Uložení přepíše ceny od @Model.Period do prosince stejného roku. Prázdná číselná položka znamená nezadanou hodnotu.</p>
+@for(var i=0;i<ElectricityPriceStore.Fields.Length;i++){
+ var field=ElectricityPriceStore.Fields[i];
+ <label for="price-@i">@field.Label</label>
+ @if(field.Column.StartsWith("b")){
+ <select name="Values[@i]" id="price-@i"><option value="" selected="@(string.IsNullOrEmpty(Model.Values.ElementAtOrDefault(i)))">Neuvedeno</option><option value="0" selected="@(Model.Values.ElementAtOrDefault(i)=="0")">@(field.Column.Contains("MWhProc")?"%":"Ne")</option><option value="1" selected="@(Model.Values.ElementAtOrDefault(i)=="1")">@(field.Column.Contains("MWhProc")?"MWh":"Ano")</option></select>
+ }else{<input name="Values[@i]" id="price-@i" value="@Model.Values.ElementAtOrDefault(i)" inputmode="decimal" />}
+}
+<label><input type="checkbox" name="Confirm" value="true" required /> Potvrzuji přepsání vybraného období až do konce roku.</label>
+<button class="button button-primary">Uložit ceny</button>
+</form>
+}
