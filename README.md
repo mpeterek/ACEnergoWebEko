@@ -105,3 +105,16 @@ a všech následujících měsíců do prosince stejného roku.
 
 Před prvním používáním zápisu na Windows proveďte integrační test na dočasné
 kopii, popsaný v [migračním přehledu](docs/MIGRACE.md#ověření-nativního-zápisu-před-používáním).
+
+## Svátky hlavního měření
+
+Otevřete **Elektřina → Seznam hlavních měření → Svátky**, případně odkaz
+**Svátky tohoto měření** přímo u tarifů. Zobrazí se ručně zadaná data všech
+roků pro dané měření. S oprávněním ElekConfig nebo administrátora můžete
+přidat datum a odebrat označená data. Existující datum se nevkládá podruhé.
+
+Postup nativního testu nad dočasnou kopií MDB je v
+[průvodci migrací](docs/MIGRACE.md#windows-integrační-test-svátků).
+Běžný konzolový test nyní ověřuje i autentizované HTTP formuláře pomocí
+testovacích úložišť; přihlášení a zápisy do skutečných MDB v tomto režimu
+neprovádí. Testovací autentizace je pouze v testovacím projektu, nikoli ve webu.

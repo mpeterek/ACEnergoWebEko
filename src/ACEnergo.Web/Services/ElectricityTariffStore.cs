@@ -13,8 +13,7 @@ public interface IElectricityTariffStore
 
 public sealed class ElectricityTariffStore(DatabaseCatalog catalog, IConfiguration configuration) : IElectricityTariffStore
 {
-    // Zápisy v procesu se serializují; další instance webu koordinuje souborový zámek.
-    private static readonly object WriteGate = new();
+    private readonly ElectricityConfigurationDatabase database = new(catalog, configuration);
     private static readonly string[] HourColumns = Enumerable.Range(1, 24).Select(hour => $"numHodina{hour:D2}").ToArray();
     private static readonly string SelectColumns = "[dtDatumPlatnost], [numIndexDne], [strNazevDne], " + string.Join(", ", HourColumns.Select(name => $"[{name}]"));
 
@@ -29,34 +28,7 @@ public sealed class ElectricityTariffStore(DatabaseCatalog catalog, IConfigurati
         ElectricityTariffs.Validate(cells);
         if (string.IsNullOrEmpty(expectedVersion) || expectedVersion.Length != 64 || !expectedVersion.All(Uri.IsHexDigit)) throw new ArgumentException("Chybí platná verze načteného tarifu.");
         if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("Připojení MDB vyžaduje Windows a Access Database Engine.");
-        lock (WriteGate) SaveWindows(meterId, ElectricityTariffs.MonthStart(month), cells, expectedVersion);
-    }
-
-    [SupportedOSPlatform("windows")]
-    private OleDbConnection Open(bool write)
-    {
-        var path = catalog.Resolve("ACEnergoWebEko.mdb");
-        using (File.Open(path, FileMode.Open, write ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite | FileShare.Delete)) { }
-        var builder = new OleDbConnectionStringBuilder
-        {
-            Provider = configuration["Access:Provider"] ?? "Microsoft.ACE.OLEDB.16.0",
-            DataSource = path,
-            OleDbServices = -2 // Bez resource poolingu: po Dispose se uvolní i souborové prostředky.
-        };
-        builder["Mode"] = write ? "ReadWrite" : "Read";
-        var connection = new OleDbConnection(builder.ConnectionString);
-        try { connection.Open(); return connection; }
-        catch { connection.Dispose(); throw; }
-    }
-
-    [SupportedOSPlatform("windows")]
-    private static string MeterName(OleDbConnection connection, int meterId, OleDbTransaction? transaction = null)
-    {
-        using var command = new OleDbCommand("SELECT [strNazev] FROM [tblKonfigHlavniElektrina] WHERE [numID] = ?", connection, transaction);
-        command.Parameters.Add("meter", OleDbType.Integer).Value = meterId;
-        var result = command.ExecuteScalar();
-        if (result is null) throw new KeyNotFoundException("Hlavní měření neexistuje.");
-        return Convert.ToString(result) ?? "";
+        lock (ElectricityConfigurationDatabase.WriteGate) SaveWindows(meterId, ElectricityTariffs.MonthStart(month), cells, expectedVersion);
     }
 
     [SupportedOSPlatform("windows")]
@@ -81,8 +53,8 @@ public sealed class ElectricityTariffStore(DatabaseCatalog catalog, IConfigurati
     [SupportedOSPlatform("windows")]
     private TariffSnapshot LoadWindows(int meterId, DateOnly month)
     {
-        using var connection = Open(false);
-        var name = MeterName(connection, meterId);
+        using var connection = database.Open(false);
+        var name = ElectricityConfigurationDatabase.MeterName(connection, meterId);
         var rows = Read(connection, meterId, month);
         var grid = ElectricityTariffs.ReadMonth(rows, month);
         return new(meterId, name, month, grid.Cells, grid.IsDefault, ElectricityTariffs.Version(rows));
@@ -91,13 +63,13 @@ public sealed class ElectricityTariffStore(DatabaseCatalog catalog, IConfigurati
     [SupportedOSPlatform("windows")]
     private void SaveWindows(int meterId, DateOnly month, IReadOnlyList<int> cells, string expectedVersion)
     {
-        using var writeLock = TariffWriteLock.Acquire(catalog.Resolve("ACEnergoWebEko.mdb"));
-        using var connection = Open(true);
+        using var writeLock = database.AcquireWriteLock();
+        using var connection = database.Open(true);
         // ACE nepodporuje Serializable (XACT_E_ISOLATIONLEVEL). ReadCommitted
         // zachovává atomický commit/rollback; spolupracující procesy chrání writeLock.
         using var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
         // Dispose necommitnuté transakce provede rollback i při výjimce.
-        _ = MeterName(connection, meterId, transaction);
+        _ = ElectricityConfigurationDatabase.MeterName(connection, meterId, transaction);
         var rows = Read(connection, meterId, month, transaction);
         if (!string.Equals(ElectricityTariffs.Version(rows), expectedVersion, StringComparison.Ordinal)) throw new TariffConflictException();
         foreach (var effective in ElectricityTariffs.WriteMonths(month))

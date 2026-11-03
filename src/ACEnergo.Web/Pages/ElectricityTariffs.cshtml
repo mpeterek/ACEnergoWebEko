@@ -15,6 +15,7 @@
 <h1>Tarify @(Model.Snapshot?.MeterName)</h1>
 <nav class="page-navigation" aria-label="Navigace měření">
     <a asp-page="/Electricity">Zpět na hlavní měření</a>
+    <a asp-page="/ElectricityHolidays" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Svátky tohoto měření</a>
 </nav>
 @if (Model.Success is not null)
 {

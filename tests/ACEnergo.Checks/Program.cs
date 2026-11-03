@@ -6,6 +6,7 @@ if (args.Length == 2 && args[0] == "--tariff-lock-probe")
     catch (IOException) { Environment.ExitCode = 23; }
     return;
 }
+if (args.Length > 0 && args[0] == "--holiday-mdb") { WindowsHolidayCheck.Run(args); return; }
 if (args.Length > 0 && args[0] == "--tariff-mdb") { WindowsTariffCheck.Run(args); return; }
 var count=0;
 void Equal<T>(T expected,T actual) {if(!EqualityComparer<T>.Default.Equals(expected,actual))throw new Exception($"Expected {expected}, got {actual}");count++;}
@@ -35,3 +36,7 @@ Console.WriteLine($"PASS: {count} database selection, permission-contract and di
 TariffChecks.Run();
 
 TariffWriteLockChecks.Run();
+
+HolidayChecks.Run();
+
+await AuthenticatedPageChecks.RunAsync();

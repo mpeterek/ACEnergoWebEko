@@ -73,6 +73,8 @@ internal static class TariffChecks
         Check(editor.OnPost() is RedirectToPageResult && store.Writes == 1, "Valid save uses POST redirect GET");
         store.Conflict = true; editor = Page(true);
         Check(editor.OnPost() is PageResult && editor.Response.StatusCode == 409, "Concurrent modification produces conflict");
+        store.Conflict = false; store.ReadFailure = new InvalidDataException("PRIVATE-DATA"); editor = Page(true);
+        Check(editor.OnGet() is PageResult && editor.Response.StatusCode == 503 && !editor.ModelState.Values.SelectMany(value => value.Errors).Any(error => error.ErrorMessage.Contains("PRIVATE-DATA")), "Invalid tariff rows produce controlled failure");
         Console.WriteLine($"PASS: {count} tariff defaults, dates, version and handler checks.");
     }
 
@@ -82,7 +84,8 @@ internal static class TariffChecks
         public int Reads { get; private set; }
         public int Writes { get; private set; }
         public bool Conflict { get; set; }
-        public TariffSnapshot Load(int meterId, DateOnly month) { Reads++; return snapshot; }
+        public Exception? ReadFailure { get; set; }
+        public TariffSnapshot Load(int meterId, DateOnly month) { Reads++; if (ReadFailure is not null) throw ReadFailure; return snapshot; }
         public void Save(int meterId, DateOnly month, IReadOnlyList<int> cells, string expectedVersion)
         {
             if (Conflict) throw new TariffConflictException();

@@ -65,7 +65,7 @@ public class ElectricityTariffsModel(IElectricityTariffStore store, ILogger<Elec
         return Page();
     }
 
-    private static bool IsDataError(Exception exception) => exception is PlatformNotSupportedException or OleDbException or IOException or UnauthorizedAccessException or InvalidOperationException or FormatException or OverflowException;
+    private static bool IsDataError(Exception exception) => exception is InvalidDataException or PlatformNotSupportedException or OleDbException or IOException or UnauthorizedAccessException or InvalidOperationException or FormatException or OverflowException;
     private void Report(Exception exception)
     {
         logger.LogError(exception, "Tarify: databázová operace selhala pro měření {MeterId}, období {Period}", MeterId, Period);

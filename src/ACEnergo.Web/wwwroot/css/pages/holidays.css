@@ -1,0 +1,9 @@
+.holiday-layout { display: grid; grid-template-columns: minmax(16rem, 1fr) minmax(0, 2fr); gap: 1.5rem; align-items: start; }
+.holiday-layout .panel { margin: 0; }
+.holiday-table caption { text-align: left; padding-bottom: 1rem; }
+.holiday-choice { width: 1.1rem; height: 1.1rem; accent-color: var(--color-accent); }
+.holiday-actions { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-top: 1rem; }
+.holiday-actions button:disabled { opacity: .6; cursor: default; }
+@media (max-width: 750px) {
+    .holiday-layout { grid-template-columns: 1fr; }
+}

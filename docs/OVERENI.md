@@ -105,3 +105,25 @@ mezi dvěma skutečnými procesy, opětovného získání po uzavření a uvoln�
 výjimce. Publikace Windows x86 prošla. Nativní Access round-trip a rollback
 přes ReadCommitted je nadále potřeba spustit na cílovém Windows testem
 WindowsTariffCheck podle docs/MIGRACE.md.
+
+## Třetí etapa – svátky
+
+- Základní kontroly: 18 prošlo. Tarify: 194 kontrol prošlo. Svátky: 46 kontrol
+  dat, verzí, oprávnění a handlerů prošlo. Test souborového zámku mezi procesy
+  zůstal úspěšný. Přibylo ošetření InvalidDataException i v tarifní stránce.
+- Autentizované HTTP testy přes ASP.NET Core testovací host: 28 prošlo.
+  Skutečně se vykreslí Razor a odešlou formuláře, ale používají se testovací
+  úložiště bez MDB. Testy ověřují práva pro čtení/zápis/administrátora, CSRF,
+  neplatné datum, konflikt verze, vykreslení a změnu seznamu, externí soubory,
+  HTML kódování dat a regresně všech 168 editovatelných polí tarifů.
+- Běžné HTTP smoke testy: bez přihlášení se obě stránky přesměrují na Login;
+  přihlášení, CSRF a externí CSS/JS včetně svátků prošly. JS prošel node --check.
+- Čtecí kontrola původní tblSvatky: očekávané tři sloupce, 4 řádky, žádné
+  duplicitní klíče ani časy mimo půlnoc; pouze značka _.
+- Windows x86 publikace: úspěch. EXE je I386 a produkční web neobsahuje
+  testovací závislost Microsoft.AspNetCore.Mvc.Testing.
+- WindowsHolidayCheck je připraven; nativní OLE DB vložení, odebrání,
+  ReadCommitted transakce a rollback zde na Linuxu nebyly provedeny.
+
+Kontrolní projekt včetně WindowsHolidayCheck a HTTP testů se také úspěšně
+sestavil pro win-x86, bez chyb a varování.

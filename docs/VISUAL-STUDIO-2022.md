@@ -70,7 +70,7 @@ Release. Ve vestavěném terminálu v kořenu řešení spusťte:
 dotnet run --project tests/ACEnergo.Checks
 ```
 
-Jde o konzolový kontrolní program se základními kontrolami a sadou testů tarifů, nikoli testovací projekt
+Jde o konzolový kontrolní program se základními kontrolami, testy tarifů a svátků a autentizovanými HTTP testy, nikoli testovací projekt
 pro Test Explorer. HTTP smoke test `tools/smoke.py` je určen pro cloudový
 Linux bez OLE DB; na Windows ověřte přihlášení skutečným účtem a měření.
 
@@ -184,3 +184,13 @@ na IIS nepřenášejí.
 
 Pro jiné prostředí s 64bitovým ACE lze výchozí RID explicitně přepsat
 parametrem `-r win-x64`; musí však souhlasit runtime, provider i nastavení IIS.
+
+## Nová správa svátků
+
+Po Pull a sestavení zvolte **Elektřina → Seznam hlavních měření → Svátky**.
+Přidávání a hromadné odebrání vyžaduje konfiguraci elektřiny nebo
+administrátora. Pouze pro čtení stačí ElekView. Pro nativní zápisový test
+na dočasné kopii použijte postup --holiday-mdb v docs/MIGRACE.md.
+
+Testovací projekt nyní obnovuje Microsoft.AspNetCore.Mvc.Testing 8.0.33
+z NuGet pro HTTP testy. Webový projekt tuto závislost neobsahuje.

@@ -24,3 +24,5 @@ select { max-width: 100%; }
 
 .message-success { color: #175f32; background: #e0f4e6; padding: 1rem; border-radius: .5rem; }
 .message-warning { color: #71500b; background: #fff1d6; padding: 1rem; border-radius: .5rem; }
+
+.page-navigation { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin-bottom: 1rem; }

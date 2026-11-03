@@ -1,6 +1,6 @@
 # Migrace ACEnergoWebEko – stav implementace
 
-Projekt obsahuje první etapu a navazující převod tarifů; úplný převod aplikace není dokončen.
+Projekt obsahuje první etapu a navazující převod tarifů a svátků; úplný převod aplikace není dokončen.
 Původní archiv: příloha `ACEnergoWebEko.-.kopie.zip` vydání `v.1.0` na GitHubu.
 Archiv prošel kontrolou CRC. Originály i MDB zůstaly nezměněné mimo nový projekt.
 
@@ -13,7 +13,7 @@ odkazy na tabulky a výskyty ConnectDBase. Jde o statickou analýzu, nikoli důk
 
 | Oblast | ASP souborů | Stav |
 | --- | ---: | --- |
-| Elektřina | 319 | Převeden seznam a týdenní tarify; OLE DB zápisy čekají na ověření na Windows |
+| Elektřina | 319 | Převeden seznam, týdenní tarify a svátky; nativní integrační testy čekají na Windows |
 | Plyn | 215 | Čeká |
 | Teplo | 174 | Čeká |
 | Voda | 170 | Čeká |
@@ -37,7 +37,8 @@ odkazy na tabulky a výskyty ConnectDBase. Jde o statickou analýzu, nikoli důk
   z `tblKonfigHlavniElektrina`, řazení numID ASC. Nová stránka vynucuje ElekView
   nebo administrátora; tuto správu administrátorského přístupu ověřit proti menu.
 - MDB nejsou ve wwwroot. Přihlášení a seznamy jsou čtecí; modul tarifů může
-  transakčně zapisovat do konfigurační MDB s oprávněním ElekConfig.
+  transakčně zapisovat do konfigurační MDB s oprávněním ElekConfig. Stejně
+  nyní zapisuje také správa svátků.
 - Výběr období je validován proti dostupným souborům; vyhodnocení spotřeby
   nad tímto obdobím dosud není implementováno. Nezobrazuje se umělé měření.
 
@@ -83,7 +84,8 @@ seznamu hlavních měření. Rozsah:
   během migrace je proto nepouštějte současně jako zapisovače stejné MDB.
   Pomocný soubor je prázdný, po ukončení zápisu zůstává na disku a jeho
   existence sama o sobě neznamená držený zámek. Za běhu ho nemažte.
-- Svátky, ceny a vyhodnocení spotřeby do této etapy ještě nepatří.
+- Ceny a vyhodnocení spotřeby do této etapy ještě nepatří. Svátky navazují
+  v níže popsané třetí etapě.
 
 Čtecím parserem Access Parser 0.0.6 byla v originální konfiguraci ověřena
 existence všech použitých sloupců, 2 940 řádků, 420 úplných měsíčních skupin,
@@ -109,3 +111,53 @@ x86 runtime podle již ověřeného lokálního nastavení.
 
 Tento nativní test se v cloudovém Linuxu nespouští a zatím není označen jako
 prošlý. Pro první ruční použití nové editace použijte také testovací kopie MDB.
+
+## Třetí etapa – ručně zadané svátky hlavního měření
+
+Převedeny všechny ASP soubory Elektrina/HlavniMereni/Svatky včetně hlavní
+stránky a Sub_SvatkyElHl.asp. Rámce, ručně skládaný kalendář a klientský
+VBScript nahrazuje jediná Razor stránka, nativní HTML výběr data a externí
+CSS/JS. Odkazy jsou v seznamu hlavních měření a na stránce tarifů.
+
+Zachované chování:
+
+- tblSvatky je v konfigurační ACEnergoWebEko.mdb. Všechny dotazy jsou omezeny
+  explicitním ID hlavního měření, nikoli globální session vybraného měření.
+- Seznam zahrnuje všechny roky a je seřazený podle data. Nejde o automaticky
+  generovaný kalendář státních svátků a nesouvisí s měsíčními MDB.
+- Přidání existujícího data je beze změn. Nový záznam má strTarif = "_".
+- Odebrat lze více vybraných dat najednou. Smažou se všechny řádky stejného
+  data a měření, stejně jako v původní smyčce rs.Delete. Žádné jiné měření
+  ani tabulka tarifů se touto operací nemění. Limit formuláře je 1000 dat.
+- Date input přenáší ISO datum, server ho striktně validuje včetně přestupných
+  let. Podporovaný rozsah odpovídá Access Date/Time: roky 0100 až 9999.
+- Bez ElekConfig nebo administrátora je stránka pouze čtecí. POST má také
+  serverovou kontrolu oprávnění, CSRF a token verze celého seznamu.
+- Zápisy používají ReadCommitted transakci, rollback a stejný pomocný zámek
+  jako tarify. Obě služby nyní sdílejí ElectricityConfigurationDatabase; název
+  souboru .tariffs.lock zůstal kvůli kompatibilitě již nasazených instancí.
+- Návrat do tarifů zachovává ID měření i vybraný měsíc. Kalendář samotný
+  nepoužívá předchozí session ani rámce pro ukládání zvoleného data.
+
+V originální MDB byly čtecím parserem ověřeny sloupce dtDatum, numIDHlavni,
+strTarif a čtyři existující řádky: bez duplicit, s půlnocí a značkou _.
+Parser nepoužívá Windows OLE DB a nemění databázi.
+
+### Windows integrační test svátků
+
+Zastavte web a jiné zapisovače do zdrojové MDB. Z kořene řešení spusťte
+(číslo 1 nahraďte skutečným ID hlavního měření):
+
+```powershell
+dotnet run --project tests/ACEnergo.Checks -- --holiday-mdb "C:\ACEnergoData\ACEnergoWebEko.mdb" 1
+```
+
+Test vytvoří dočasnou kopii konfigurace. Pouze v ní ověří vložení se značkou _,
+opakované vložení bez duplicity, konflikt staré verze, rollback po prvním
+DELETE ve dvoupoložkové dávce a hromadné odebrání. Kontroluje také nezměněné
+tarify a, pokud existuje další hlavní měření, jeho seznam svátků. Při jediném
+měření je tento dílčí test explicitně označen jako SKIP. Dočasnou kopii poté
+smaže a ověří SHA-256 původního souboru.
+
+Tento test vyžaduje Windows, x86 runtime a existující ACE provider. V cloudu
+zatím nebyl spuštěn; nativní zápisy tímto nejsou označeny za ověřené.

@@ -1,0 +1,108 @@
+@page "{meterId:int}"
+@using System.Globalization
+@model ElectricityHolidaysModel
+@{
+    ViewData["Title"] = "Elektřina – svátky";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/holidays.css" asp-append-version="true" />
+}
+@section Scripts {
+    <script src="~/js/pages/holidays.js" asp-append-version="true" defer></script>
+}
+
+<p class="eyebrow">ELEKTŘINA · HLAVNÍ MĚŘENÍ</p>
+<h1>Svátky @(Model.Snapshot?.MeterName)</h1>
+<nav class="page-navigation" aria-label="Navigace měření">
+    <a asp-page="/Electricity">Hlavní měření</a>
+    <a asp-page="/ElectricityTariffs" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Tarify</a>
+    <a asp-page="/ElectricityHolidays" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Znovu načíst seznam</a>
+</nav>
+<p>Ručně zadané svátky tohoto měření pro všechny roky. Seznam není automatický kalendář státních svátků.</p>
+@if (Model.Notice is not null)
+{
+    <p class="message-success" role="status">@Model.Notice</p>
+}
+@if (!ViewData.ModelState.IsValid)
+{
+    <div asp-validation-summary="All" class="message-error" role="alert"></div>
+}
+@if (Model.Snapshot is not null)
+{
+    var dates = Model.Snapshot.Dates;
+    <div class="holiday-layout">
+        <section class="panel">
+            <h2>Přidat svátek</h2>
+            @if (Model.CanEdit)
+            {
+                <form method="post" asp-page-handler="Add" class="stacked-form">
+                    <input asp-for="MeterId" type="hidden" />
+                    <input asp-for="Period" type="hidden" />
+                    <input asp-for="Version" type="hidden" />
+                    <label asp-for="NewDate">Datum</label>
+                    <input asp-for="NewDate" type="date" min="0100-01-01" max="9999-12-31" required />
+                    <button class="button button-primary" type="submit">Přidat svátek</button>
+                </form>
+                <p>Existující datum se znovu nevkládá ani nepřepisuje.</p>
+            }
+            else
+            {
+                <p>Seznam můžete zobrazit. Ke změnám je potřeba oprávnění ke konfiguraci elektřiny.</p>
+            }
+        </section>
+        <section class="panel">
+            <h2>Zadané svátky <span class="badge">@dates.Length</span></h2>
+            @if (dates.Length == 0)
+            {
+                <p role="status">Pro toto měření nejsou zadané žádné svátky.</p>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="Remove" data-holiday-form>
+                    <input asp-for="MeterId" type="hidden" />
+                    <input asp-for="Period" type="hidden" />
+                    <input asp-for="Version" type="hidden" />
+                    <input asp-for="NewDate" type="hidden" />
+                    <div class="table-scroll">
+                        <table class="data-table holiday-table">
+                            <caption>Svátky všech období, seřazené podle data</caption>
+                            <thead>
+                                <tr>
+                                    @if (Model.CanEdit)
+                                    {
+                                        <th scope="col"><input class="holiday-choice" type="checkbox" aria-label="Označit všechny svátky" data-holiday-all hidden /></th>
+                                    }
+                                    <th scope="col">Datum</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (var index = 0; index < dates.Length; index++)
+                                {
+                                    var date = dates[index];
+                                    var iso = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                                    <tr>
+                                        @if (Model.CanEdit)
+                                        {
+                                            <td>
+                                                <input class="holiday-choice" id="holiday-@index" type="checkbox" name="SelectedDates" value="@iso" checked="@((Model.SelectedDates ?? []).Contains(iso, StringComparer.Ordinal))" data-holiday-select />
+                                                <label class="visually-hidden" for="holiday-@index">Označit @date.ToString("dd.MM.yyyy")</label>
+                                            </td>
+                                        }
+                                        <td><time datetime="@iso">@date.ToString("dddd d. MMMM yyyy", CultureInfo.GetCultureInfo("cs-CZ"))</time></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    @if (Model.CanEdit)
+                    {
+                        <div class="holiday-actions">
+                            <button class="button" type="submit" data-holiday-remove>Odstranit vybrané svátky</button>
+                            <span role="status" data-holiday-count>Označte data k odebrání.</span>
+                        </div>
+                    }
+                </form>
+            }
+        </section>
+    </div>
+}

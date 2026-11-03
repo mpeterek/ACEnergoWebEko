@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/ACEnergo.Web/ACEnergo.Web.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.33" PrivateAssets="all" />
   </ItemGroup>
 </Project>

@@ -1491,7 +1491,8 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "ported_pending_windows_validation",
+      "replacement": "Pages/ElectricityHolidays.cshtml; Services/ElectricityHolidayStore.cs; Domain/ElectricityHolidays.cs"
     },
     {
       "path": "Elektrina/HlavniMereni/Svatky/HlavickaSvatkyElHl.asp",
@@ -1500,7 +1501,8 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "ported_pending_windows_validation",
+      "replacement": "Pages/ElectricityHolidays.cshtml; Services/ElectricityHolidayStore.cs; Domain/ElectricityHolidays.cs"
     },
     {
       "path": "Elektrina/HlavniMereni/Svatky/Inc/Sub_SvatkyElHl.asp",
@@ -1516,7 +1518,8 @@
         "tblSvatky"
       ],
       "monthly_database": false,
-      "status": "pending"
+      "status": "ported_pending_windows_validation",
+      "replacement": "Pages/ElectricityHolidays.cshtml; Services/ElectricityHolidayStore.cs; Domain/ElectricityHolidays.cs"
     },
     {
       "path": "Elektrina/HlavniMereni/Svatky/SvatkyElHl.asp",
@@ -1527,7 +1530,8 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "ported_pending_windows_validation",
+      "replacement": "Pages/ElectricityHolidays.cshtml; Services/ElectricityHolidayStore.cs; Domain/ElectricityHolidays.cs"
     },
     {
       "path": "Elektrina/HlavniMereni/Svatky/menukalendar.asp",
@@ -1536,7 +1540,8 @@
       "objects": [],
       "tables": [],
       "monthly_database": false,
-      "status": "pending"
+      "status": "ported_pending_windows_validation",
+      "replacement": "Pages/ElectricityHolidays.cshtml; Services/ElectricityHolidayStore.cs; Domain/ElectricityHolidays.cs"
     },
     {
       "path": "Elektrina/HlavniMereni/Tarify/FrameTarifyElHl.asp",
