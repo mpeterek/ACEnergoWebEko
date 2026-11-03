@@ -54,3 +54,23 @@ texty nepropouštějí původní text výjimky. HTTP test na Linuxu ověřil ne�
 přihlášení, bezpečný vývojový diagnostický blok a zachování ochrany CSRF.
 Přístupová práva a registraci ACE na lokálním Windows uživatele nelze v cloudu
 ověřit; jejich konkrétní stav musí určit vývojová diagnostika a výstup aplikace.
+
+## Windows x86 pro potvrzený 32bitový Office
+
+- Vyhodnocení MSBuild s OS=Windows_NT pro oba projekty: RuntimeIdentifier
+  win-x86, UseAppHost=true, SelfContained=false.
+- Linux sestavení a všech 18 kontrol: úspěch.
+- WinX86Folder publish: úspěch. Nativní ACEnergo.Web.exe má ověřenou PE
+  architekturu I386 (0x014c); aplikace nadále cílí na net8.0.
+- Generovaný IIS web.config spouští ACEnergo.Web.exe, nikoli x64 dotnet s DLL.
+- Windows x86 se sestavuje po jednotlivých projektech; přepínač -r nelze
+  předat celému řešení (NETSDK1134). Na Windows získávají projekty RID
+  automaticky z Directory.Build.props, nikoli z přepínače řešení.
+
+Windows EXE a Office ACE provider nelze spustit na cloudovém Linuxu. Skutečné
+přihlášení je třeba ověřit na PC s existující ACE DLL a runtime ASP.NET Core 8
+x86. Kontrola DLL/registrace uživatelem potvrzuje přítomnost x86 provideru,
+nikoli zatím funkční přihlášení a správnost dotazu tblLog.
+
+Sestavení obou jednotlivých projektů s -r win-x86 následně prošlo bez chyb
+a varování. PE hlavičky obou vývojových apphostů potvrzují I386 (x86).

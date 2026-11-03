@@ -30,7 +30,8 @@ vyžaduje Windows. Není zde testovací účet ani náhradní úložiště skute
 ## Windows 11 / IIS
 
 1. Nainstalujte .NET 8 Hosting Bundle a kompatibilní podporovaný Access OLE DB
-   provider. Architektura procesu a provideru musí souhlasit (typicky x64).
+   provider. Architektura procesu a provideru musí souhlasit. Pro zde potvrzený 32bitový
+   Office je výchozí Windows běh x86; instalujte také ASP.NET Core Runtime 8 x86.
    Konkrétní provider ověřte na cílovém počítači; výchozí je `Microsoft.ACE.OLEDB.16.0`.
 2. Umístěte **kopie** MDB do `C:\ACEnergoData`, mimo webový kořen. Pro začátek
    `ACEnergoWebEko.mdb`, `ACWebEkoLogin.mdb`, `ACEnergoWebEko2610.mdb`.
@@ -84,3 +85,11 @@ pokud není dostupné, povoluje přechod na novější hlavní verzi SDK. Cílov
 framework obou projektů zůstává `net8.0`. Použité SDK musí podporovat i vaše
 verze Visual Studia. Pro spuštění je potřeba runtime ASP.NET Core 8; na IIS
 instalujte .NET 8 Hosting Bundle.
+
+## Windows s 32bitovým Office
+
+Na Windows Directory.Build.props nastavuje oba projekty na `win-x86` s
+nativním apphostem. Vyberte spouštěcí profil **ACEnergo.Web (x86 HTTP)**.
+K běhu je potřeba ASP.NET Core Runtime 8 **x86** a existující 32bitový Access
+provider. Publikace pro tento režim: **WinX86Folder**. Úplný postup je v
+[průvodci Visual Studiem](docs/VISUAL-STUDIO-2022.md#potvrzený-32bitový-office-a-ace--aktuální-nastavení).

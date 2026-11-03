@@ -1,0 +1,9 @@
+<Project>
+  <!-- Windows + 32bit Office/ACE: oba projekty musí spouštět x86 apphost.
+       Linux vývoj zůstává přenositelný. Explicitní -r má přednost. -->
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x86</RuntimeIdentifier>
+    <SelfContained Condition="'$(SelfContained)' == ''">false</SelfContained>
+    <UseAppHost>true</UseAppHost>
+  </PropertyGroup>
+</Project>

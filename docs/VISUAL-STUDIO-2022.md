@@ -24,11 +24,11 @@
 3. Nechte obnovit NuGet balíčky. Pokud obnova neproběhne, pravé tlačítko na
    řešení → **Restore NuGet Packages**. Je potřeba přístup k nuget.org.
 4. Pravé tlačítko na **ACEnergo.Web** → **Set as Startup Project**.
-5. Vyberte profil **ACEnergo.Web (HTTPS)** a spusťte **F5** (ladění) nebo
+5. Vyberte profil **ACEnergo.Web (x86 HTTPS)** a spusťte **F5** (ladění) nebo
    **Ctrl+F5** (bez ladění). Visual Studio otevře `/Login`.
 6. Při prvním HTTPS spuštění potvrďte důvěru vývojovému certifikátu. Pokud
    není připravený, spusťte v terminálu `dotnet dev-certs https --trust`.
-   Alternativně pro místní vývoj vyberte profil **ACEnergo.Web (HTTP)**.
+   Alternativně pro místní vývoj vyberte profil **ACEnergo.Web (x86 HTTP)**.
 
 HTTPS používá port 7080 a HTTP port 5080. Profily běží přímo přes Kestrel;
 IIS Express pro otevření a ladění projektu není potřeba. Je-li port obsazený,
@@ -54,8 +54,10 @@ publikace a User Secrets nejsou šifrovaný produkční trezor. Nevkládejte do
 repozitáře hesla ani skutečné MDB. Přihlašovací údaje zůstávají ve stávající
 `ACWebEkoLogin.mdb`; aplikace nemá výchozí náhradní účet.
 
-Ověřte shodnou bitovost Access provideru a procesu .NET. Standardní 64bit SDK
-spouští 64bit proces; provider pouze pro 32bit proces nebude použitelný.
+Na Windows je nyní výchozí běh win-x86 kvůli potvrzenému 32bitovému Office.
+Directory.Build.props nastavuje RuntimeIdentifier=win-x86 a UseAppHost=true
+pro web i kontrolní program. Takto vytvořený EXE běží 32bitově i při sestavení
+64bitovým SDK; vyžaduje však odpovídající 32bitový .NET runtime.
 Při chybě registrace provideru nejprve ověřte nainstalovaný provider a jeho
 bitovost. Samotná změna textu connection stringu ovladač nenainstaluje.
 
@@ -137,3 +139,48 @@ a kompatibilní s instalací Office.
 Podrobná výjimka se zapisuje do Visual Studio → Zobrazení → Výstup →
 ASP.NET Core Web Server, případně Debug. Aplikace neloguje zadané heslo ani
 obsah MDB; neposílejte své přihlašovací údaje při hlášení chyby.
+
+## Potvrzený 32bitový Office a ACE – aktuální nastavení
+
+Pro místní prostředí s existujícím ACEOLEDB.DLL v Program Files (x86)
+neinstalujte Access Runtime x64 a nepřepisujte registry. Použijte 32bitovou
+aplikaci proti existujícímu 32bitovému provideru.
+
+1. Zastavte aplikaci, proveďte Git → Pull na větvi migration/aspnet-core8-vs2022.
+2. Nainstalujte **ASP.NET Core Runtime 8 – Windows x86** z oficiální stránky
+   https://dotnet.microsoft.com/en-us/download/dotnet/8.0. Nezaměňujte x86
+   za x64 ani .NET runtime za Access Runtime. Ověřte přítomnost runtime:
+
+   ```powershell
+   & "C:\Program Files (x86)\dotnet\dotnet.exe" --list-runtimes
+   ```
+
+   Musí být dostupné Microsoft.NETCore.App 8.0.x a Microsoft.AspNetCore.App
+   8.0.x. Alternativou je instalace .NET 8 SDK pro Windows x86, které zahrnuje
+   i potřebné runtimy. Existující x64 SDK můžete ponechat pro sestavení.
+3. Ve Visual Studiu spusťte **Build → Rebuild Solution**. Samotné přepnutí
+   názvu platformy na x86 není potřeba: architekturu nativního hostitele určuje
+   RuntimeIdentifier v Directory.Build.props.
+4. Vyberte **ACEnergo.Web (x86 HTTP)** a F5. Pokud VS drží starý profil,
+   řešení zavřete a znovu otevřete. Názvy profilů mají x86 význam na Windows;
+   na Linuxu zůstává běh přenositelný a Access není dostupný.
+5. Po přihlášení by provider již měl být načtený; pokud připojení znovu
+   selže, v diagnostice ověřte **X86** a pošlete nový typ chyby. Tím se
+   odliší další případný problém souboru, oprávnění nebo tabulky tblLog.
+
+Při spuštění z terminálu používejte `dotnet run --project src/ACEnergo.Web
+--launch-profile "ACEnergo.Web (x86 HTTP)"`, který zvolí apphost, nebo přímo
+EXE z bin\Debug\net8.0\win-x86. Nespouštějte DLL přes 64bitové dotnet.exe: tím
+byste znovu vynutili proces X64 a obešli x86 apphost.
+
+### IIS s 32bitovým providerem
+
+Publikujte profilem **WinX86Folder** do artifacts/publish-win-x86. Na IIS
+nainstalujte .NET 8 Hosting Bundle včetně x86 komponent. Pro samostatný
+aplikační pool nastavte **Enable 32-Bit Applications = True** a
+**.NET CLR Version = No Managed Code**. Nastavte práva identity poolu k MDB,
+produkční Access:Directory a hostname podle README. Vývojové User Secrets se
+na IIS nepřenášejí.
+
+Pro jiné prostředí s 64bitovým ACE lze výchozí RID explicitně přepsat
+parametrem `-r win-x64`; musí však souhlasit runtime, provider i nastavení IIS.
