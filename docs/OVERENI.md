@@ -320,3 +320,40 @@ Kontrola nevolá žádnou ukládací metodu. Porovnává názvy a ID položek me
 katalogem a detaily; vypíše selhávající kind/ID. Při chybě nebo nulovém počtu
 ověřených záznamů končí nenulovým kódem. Je sestavená, ale zde nebyla spuštěná
 proti ACE. Vyžaduje stejnou bitovost a provider jako aplikace.
+
+## Kompaktní responzivní velikosti
+
+Debug i Release sestavení bez chyb a varování, 148 HTTP kontrol a publikace
+WinX86Folder prošly. Release vytvořil responsive.min.css. Pro kompatibilitu
+s používaným minifikátorem je aritmetika uvnitř clamp zapsaná přes calc.
+
+Nový `tools/check-responsive-layout.cjs` ověřil osm skutečně vykreslených
+stránek (přehled, login, hlavní konfigurace, katalog skupin, detail skupiny,
+editor položek, roční ceny a tarify) při 1920×1080, 1440×900, 1366×600,
+1024×768, 768×1024, 844×390, 390×844 a 320×568. Posledních pět profilů
+simuluje dotyk. Všech 64 kombinací prošlo pro zdrojový i minifikovaný styl:
+žádný vodorovný přesah celé stránky, odpovídající umístění stromu, text 14–15 px,
+nadpisy 20–29 px, dotyková pole 16 px a tlačítka alespoň 44 px. Kontroluje se
+také přepínání hesla a nepřítomnost JavaScriptových chyb.
+
+Samostatné kontroly check-price-layout.cjs a check-tariff-cycle.cjs prošly
+s novými styly. Zarovnání měsíců, hledání DataTables i 168 hodnot tarifů se
+zachovaly. Opraven byl přesah stránky u skrytých popisků tarifních buněk;
+ukotvení scrollovacího kontejneru zachovává popisky pro asistivní technologie.
+
+Reprodukce přípravy HTML (Bash, adresář vytvořit předem):
+
+```bash
+mkdir -p /tmp/acenergo-responsive
+ACE_RESPONSIVE_DIR=/tmp/acenergo-responsive \
+ACE_COMPOSITION_HTML=/tmp/acenergo-responsive/composition.html \
+ACE_PRICE_HTML=/tmp/acenergo-responsive/prices.html \
+ACE_TARIFF_HTML=/tmp/acenergo-responsive/tariffs.html \
+dotnet run --project tests/ACEnergo.Checks --no-restore
+node tools/check-responsive-layout.cjs /tmp/acenergo-responsive
+ACE_RESPONSIVE_MINIFIED=1 node tools/check-responsive-layout.cjs /tmp/acenergo-responsive
+```
+
+Browser kontrola vyžaduje Playwright a Chromium (cestu lze nastavit přes
+CHROMIUM_PATH); druhý běh vyžaduje předchozí Release build. Jde o emulované
+profily Chromia, nikoli o test na fyzických tabletech či telefonech.

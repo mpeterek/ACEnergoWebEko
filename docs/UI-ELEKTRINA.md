@@ -59,3 +59,24 @@ odkazy ze skutečného HTML katalogu na obě stránky střediska 16 nad testovac
 chybějící stránku běžícího procesu; GROUP-NOT-FOUND znamená nenalezenou
 konfiguraci v používané MDB. Druhý záznam uvádí oddíl, ID i cestu k MDB pouze
 v serverovém logu. Pro určení konkrétní příčiny je potřeba tento výstup z PC.
+
+## Responzivní velikosti společné pro stránky
+
+`wwwroot/css/responsive.css` se načítá jako poslední společný styl. Zmenšuje
+písmo, nadpisy, formuláře, tabulky, hlavičku a mezery také na stránkách mimo
+pracovní plochu. Používá rem a respektuje výchozí velikost písma prohlížeče.
+Při běžném základu 16 px má text 14 px, od šířky 1800 px 15 px; nadpisy se
+plynule mění přibližně mezi 20 a 29 px. Nízké notebooky (výška do 700 px)
+šetří místo hlavně zmenšením odsazení. Není zakázáno přiblížení prohlížeče.
+
+Ovládací prvky pro myš mají běžně výšku 34 px, dotykové nebo mobilní alespoň
+44 px. Textová pole na dotykových zařízeních mají 16 px, aby zůstala čitelná
+a zamezila automatickému přiblížení při editaci na mobilu. Pole hesla zachovává
+prostor pro ikonu oka. Tablet od šířky 768 px ponechává oba sloupce; mobil
+nebo nízké okno do 1023×500 px skládá strom nad pracovní obsah a omezuje jeho
+výšku. Široké tabulky posouvají pouze svůj kontejner. Skryté popisky buněk
+jsou ukotvené v něm a nerozšiřují celou stránku.
+
+Nový styl je zahrnutý v bundleconfig.json: Debug používá originál, Release
+vytváří responsive.min.css a produkční prostředí jej načítá. Pravidla
+routování, model binding a databázová logika se v této úpravě nemění.

@@ -230,6 +230,11 @@ internal static class AuthenticatedPageChecks
         Check((await Get("/ElectricityHolidays/5")).Html.Contains("data-holiday-remove"), "administrator has configuration controls");
         Check(!WebUtility.HtmlDecode((await Get("/")).Html).Contains("Analogová"), "analog module excluded even for admin");
         Check((await Get("/ElectricityHolidays/999")).Code == HttpStatusCode.NotFound, "unknown meter 404");
+        if(Environment.GetEnvironmentVariable("ACE_RESPONSIVE_DIR") is string responsiveDirectory){
+            Directory.CreateDirectory(responsiveDirectory);
+            var pages=new[]{("home","/"),("login","/Login"),("meter","/ElectricityMeter/5"),("groups","/ElectricityGroups/centres"),("configuration","/ElectricityGroup/centres/16")};
+            foreach(var (name,url) in pages){var rendered=await Get(url);if(rendered.Code!=HttpStatusCode.OK)throw new Exception("Responsive fixture failed: "+url);await File.WriteAllTextAsync(Path.Combine(responsiveDirectory,name+".html"),rendered.Html);}
+        }
         Console.WriteLine($"PASS: {count} authenticated Razor/HTTP, CSRF and authorization checks (test stores only).");
     }
 

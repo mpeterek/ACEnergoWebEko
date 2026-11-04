@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/components.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
+    <environment include="Development"><link rel="stylesheet" href="~/css/responsive.css" asp-append-version="true" /></environment>
+    <environment exclude="Development"><link rel="stylesheet" href="~/generated/responsive.min.css" asp-append-version="true" /></environment>
     <script src="~/lib/bootstrap/bootstrap.bundle.min.js" asp-append-version="true" defer></script>
     <script src="~/lib/adminlte/adminlte.min.js" asp-append-version="true" defer></script>
     <script src="~/js/site.js" asp-append-version="true" defer></script>

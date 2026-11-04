@@ -18,5 +18,15 @@
       "enabled": true
     },
     "sourceMap": false
+  },
+  {
+    "outputFileName": "wwwroot/generated/responsive.min.css",
+    "inputFiles": [
+      "wwwroot/css/responsive.css"
+    ],
+    "minify": {
+      "enabled": true
+    },
+    "sourceMap": false
   }
 ]
