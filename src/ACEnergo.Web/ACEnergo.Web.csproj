@@ -2,10 +2,12 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <RunBundleMinify Condition="'$(Configuration)' != 'Release'">False</RunBundleMinify>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>ACEnergoWebEko-Development-4e775fdc-659a-4575-bdbc-2847b40aac75</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="BuildBundlerMinifier" Version="3.2.449" PrivateAssets="all" />
     <PackageReference Include="System.Data.OleDb" Version="8.0.0" />
   </ItemGroup>
 </Project>

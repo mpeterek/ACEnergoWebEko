@@ -1,0 +1,22 @@
+[
+  {
+    "outputFileName": "wwwroot/generated/measurement-workspace.min.css",
+    "inputFiles": [
+      "wwwroot/css/pages/measurement-workspace.css"
+    ],
+    "minify": {
+      "enabled": true
+    },
+    "sourceMap": false
+  },
+  {
+    "outputFileName": "wwwroot/generated/measurement-workspace.min.js",
+    "inputFiles": [
+      "wwwroot/js/pages/measurement-workspace.js"
+    ],
+    "minify": {
+      "enabled": true
+    },
+    "sourceMap": false
+  }
+]
