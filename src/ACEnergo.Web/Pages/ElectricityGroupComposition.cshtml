@@ -2,17 +2,6 @@
 @model ElectricityGroupCompositionModel
 @{Layout="/Pages/Shared/_GroupLayout.cshtml";ViewData["WorkspaceData"]=Model.Data;}
 @{ViewData["Title"]=(Model.Kind=="plants"?"Přiřazená střediska":"Přiřazené vstupy")+" · "+Model.Data?.Name;}
-@section Styles {
-<link rel="stylesheet" href="~/lib/datatables/dataTables.dataTables.min.css" asp-append-version="true"/>
-<environment include="Development"><link rel="stylesheet" href="~/css/pages/group-composition.css" asp-append-version="true"/></environment>
-<environment exclude="Development"><link rel="stylesheet" href="~/generated/group-composition.min.css" asp-append-version="true"/></environment>
-}
-@section Scripts {
-<script src="~/lib/jquery/jquery.min.js" asp-append-version="true" defer></script>
-<script src="~/lib/datatables/dataTables.min.js" asp-append-version="true" defer></script>
-<environment include="Development"><script src="~/js/pages/composition-picker.js" asp-append-version="true" defer></script></environment>
-<environment exclude="Development"><script src="~/generated/composition-picker.min.js" asp-append-version="true" defer></script></environment>
-}
 <p class="eyebrow">ELEKTŘINA · @Model.Heading</p>
 <h1>@(Model.Kind=="plants"?"Přiřazená střediska":"Přiřazené vstupy"): @(Model.Data?.Name??Model.Heading)</h1>
 <nav class="page-navigation"><a class="btn btn-outline-primary btn-sm" asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@Model.Id">Základní konfigurace</a><a class="btn btn-outline-primary btn-sm" asp-page="/ElectricityGroups" asp-route-kind="@Model.Kind">@Model.Heading</a><a class="btn btn-outline-primary btn-sm" asp-page="/Index">Přehled</a></nav>

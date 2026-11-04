@@ -1,7 +1,9 @@
 (function ($) {
     'use strict';
+    function initialize() {
     var modal = document.getElementById('composition-picker');
-    if (!modal || !$) { return; }
+    if (!modal || !$ || modal.getAttribute('data-picker-ready')) { return; }
+    modal.setAttribute('data-picker-ready', 'true');
     var category = modal.getAttribute('data-picker-category');
     var term = modal.querySelector('#picker-term');
     var type = modal.querySelector('#picker-type');
@@ -127,4 +129,12 @@
     station.addEventListener('change', function () { load(false); });
     type.addEventListener('change', function () { load(false); });
     more.addEventListener('click', function () { load(true); });
+    modal.addEventListener('acenergo:dispose', function () {
+        if (request) { request.abort(); }
+        if (table) { table.destroy(); }
+        $(modal).off();
+    });
+    }
+    document.addEventListener('acenergo:workspace-ready', initialize);
+    initialize();
 }(window.jQuery));

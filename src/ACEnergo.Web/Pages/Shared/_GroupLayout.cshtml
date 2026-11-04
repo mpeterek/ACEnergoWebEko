@@ -1,14 +1,18 @@
 @{
- Layout="/Pages/Shared/_Layout.cshtml";
+ var vary=Context.Response.Headers["Vary"].ToString();
+ Context.Response.Headers["Vary"]=string.IsNullOrEmpty(vary)?"X-Workspace-Request":vary+", X-Workspace-Request";
+ var fragment=Context.Request.Headers["X-Workspace-Request"]=="1";
+ if(fragment){Context.Response.Headers["Cache-Control"]="no-store";}
+ Layout=fragment?"/Pages/Shared/_WorkspaceFragmentLayout.cshtml":"/Pages/Shared/_Layout.cshtml";
  var kind=Convert.ToString(ViewContext.RouteData.Values["kind"])??"fictitious";
  var id=Convert.ToInt32(ViewContext.RouteData.Values["id"]);
  var page=Convert.ToString(ViewContext.RouteData.Values["page"]);
  var selected=ViewData["WorkspaceData"] as GroupConfiguration;
  ViewData["WideContent"]=true;
 }
-<div class="measurement-workspace">
-<aside aria-label="Strom měření">@await Component.InvokeAsync("GroupTree",new{kind,selectedId=id,selected})</aside>
-<div class="workspace-content">
+<div class="measurement-workspace" data-workspace-kind="@kind">
+<aside aria-label="Strom měření">@await Component.InvokeAsync("GroupTree",new{kind,selectedId=id,selected,selectedOnly=fragment})</aside>
+<div class="workspace-content" aria-busy="false"><p class="workspace-status" data-workspace-status role="status" hidden></p>
 <div class="card">
 <div class="card-header workspace-heading"><strong><i class="fa-solid fa-bolt" aria-hidden="true"></i> Elektřina · @ElectricityGroupCatalog.Definition(kind).Title</strong><a class="btn btn-outline-secondary btn-sm workspace-back" asp-page="/Index"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Zpět na přehled</a></div>
 @if(id!=0){
@@ -26,11 +30,19 @@
 </div></div>
 @section Styles {
 @await RenderSectionAsync("Styles",required:false)
+<link rel="stylesheet" href="~/lib/datatables/dataTables.dataTables.min.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/css/pages/prices.css" asp-append-version="true"/>
+<environment include="Development"><link rel="stylesheet" href="~/css/pages/group-composition.css" asp-append-version="true"/></environment>
+<environment exclude="Development"><link rel="stylesheet" href="~/generated/group-composition.min.css" asp-append-version="true"/></environment>
 <environment include="Development"><link rel="stylesheet" href="~/css/pages/measurement-workspace.css" asp-append-version="true"/></environment>
 <environment exclude="Development"><link rel="stylesheet" href="~/generated/measurement-workspace.min.css" asp-append-version="true"/></environment>
 }
 @section Scripts {
 @await RenderSectionAsync("Scripts",required:false)
+<script src="~/lib/jquery/jquery.min.js" asp-append-version="true" defer></script>
+<script src="~/lib/datatables/dataTables.min.js" asp-append-version="true" defer></script>
+<environment include="Development"><script src="~/js/pages/composition-picker.js" asp-append-version="true" defer></script></environment>
+<environment exclude="Development"><script src="~/generated/composition-picker.min.js" asp-append-version="true" defer></script></environment>
 <environment include="Development"><script src="~/js/pages/measurement-workspace.js" asp-append-version="true" defer></script></environment>
 <environment exclude="Development"><script src="~/generated/measurement-workspace.min.js" asp-append-version="true" defer></script></environment>
 }

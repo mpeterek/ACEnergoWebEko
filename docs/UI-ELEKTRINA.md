@@ -180,3 +180,41 @@ s jednotkami, editace koeficientu nebo příznaku a akce odebrání. Na menšíc
 oknech se rozložení skládá. Potvrzení odebrání i všechny formulářové hodnoty
 zůstávají zachované; upozornění na chybějící hlavní měření závodu je jediné
 nad seznamem místo opakování v každé položce.
+
+## Asynchronní detail se stabilním stromem
+
+Výběr měření a přepínání Konfigurace / Položky v rámci stejného oddílu používá
+XMLHttpRequest. Vymění se pravý panel, zatímco původní DOM stromu zůstane
+zachovaný. Aktualizuje se označení výběru a obsah právě vybrané větve;
+dříve rozbalené větve, filtr a scroll zůstávají. Podpoložka vede přímo na
+odpovídající formulář pomocí fragmentu URL. Přechod do jiného oddílu nebo
+mimo pracovní plochu zůstává běžným odkazem.
+
+Používají se původní Razor adresy a autorizace. Hlavička X-Workspace-Request: 1
+volí zkrácený layout: pravý panel a vybranou větev, bez hlavičky/patičky celé
+aplikace a bez skriptů. Katalog všech měření se při tomto požadavku ve stromové
+komponentě znovu nenačítá. Vary: X-Workspace-Request a Cache-Control: no-store
+oddělují fragment od plného dokumentu a brání použití zastaralého detailu.
+Bez této hlavičky je stejná adresa stále plnohodnotnou stránkou pro přímé
+otevření, bookmark či použití bez JavaScriptu.
+
+Společné CSS/jQuery/DataTables/picker závislosti načítá _GroupLayout jednou.
+DataTables se po výměně panelu inicializuje znovu a předchozí instance se
+odstraní. Picker používá událost acenergo:workspace-ready. Při odchodu se
+ruší jeho čekající požadavky a instance modálu/tabulky. Skripty z přijatého
+HTML se nikdy nevyhodnocují; nové widgety musí přidat závislosti do společného
+layoutu a explicitně se inicializovat na událost pracovní plochy.
+
+URL, titulek a historie se aktualizují pomocí History API. Zpět/Vpřed načítá
+správný panel a ponechává strom. Při rychlém výběru se starší požadavek ruší
+a jeho případný opožděný výsledek se ignoruje. Při chybě se původní detail
+včetně rozepsaného formuláře zachová a nabídne opakování nebo plné otevření.
+Vypršení přihlášení či zamítnutí přístupu přejde na běžnou autorizovanou
+navigaci. Požadavek má timeout 45 sekund.
+
+Filtr, rozbalené větve a pozice se ukládají do sessionStorage po oddílech
+pro aktuální záložku prohlížeče. Vedle scrollTop se ukládá viditelná kotva,
+aby se po plném odeslání formuláře zachovala pozice i při změně výšky jiných
+větví. Pokud je úložiště zakázané, samotná AJAX navigace dál zachovává strom.
+Ukládání zůstává nativním POST se stejnými poli, CSRF tokeny a serverovou
+validací. Rozpracované hodnoty jiného vybraného měření se neukládají automaticky.

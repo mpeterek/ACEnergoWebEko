@@ -427,3 +427,39 @@ rozdílnou barvu aktivní záložky i dosavadní scénáře výběru a odeslán�
 Responzivní kontrola 11 stránek v osmi rozměrech prošla také; navíc hlídá
 maximální výšku vzorového kompaktního řádku. Vlastní picker JS i minifikovaný
 výstup zůstávají ES5 (ověřeno Acorn ecmaVersion=5).
+
+## AJAX pracovní plocha a obnovení stromu
+
+Debug/Release build a 208 HTTP kontrol prošly. Nové kontroly potvrzují,
+že fragment obsahuje jen pravý panel a vybranou větev, žádné skripty ani
+aplikační hlavičku, a vrací Vary/no-store. Hlavička fragmentu neobchází
+ElekView; čtenář stále nedostane editační pole. CSRF tokeny z obou fragmentů
+byly úspěšně použité ve skutečném serverovém POST a přesměrování.
+
+`tools/check-workspace-navigation.cjs` používá skutečné plné a fragmentové
+HTML z HTTP testů a doplněný dlouhý testovací strom. Na desktopu 1440×900
+a mobilu 390×844 ověřil zdrojové i minifikované varianty:
+
+- původní dokument a DOM stromu zůstávají stejné; výběr nevyvolá navigační GET;
+- scroll, hledání a otevřené větve zůstávají zachované;
+- přechod na podpoložku, historie Zpět/Vpřed a picker po AJAX fungují;
+- přechod při otevřeném či právě zavíraném modálu uklidí backdrop a instance;
+- opožděná odpověď nepřepíše novější výběr;
+- chyba ponechá původní formulář i rozepsanou hodnotu;
+- běžný POST obsahuje Version/CSRF a obnoví logickou pozici stromu i při
+  změně výšky dříve otevřených větví v nové plné odpovědi;
+- instance DataTables se nehromadí a nevznikají JS výjimky.
+
+Browser test simuluje plnou HTML odpověď POST; skutečné serverové přesměrování
+po POST a kontrolu tokenů samostatně pokrývají HTTP kontroly. Data jsou testovací,
+nikoli živá MDB. Příprava rozšířených fixtures používá ACE_RESPONSIVE_DIR,
+ACE_COMPOSITION_HTML a ACE_PICKER_DIR jako dříve. Spuštění browser kontroly:
+
+```bash
+node tools/check-workspace-navigation.cjs /tmp/acenergo-responsive /tmp/acenergo-picker
+ACE_WORKSPACE_MINIFIED=1 node tools/check-workspace-navigation.cjs /tmp/acenergo-responsive /tmp/acenergo-picker
+```
+
+Regresní kontroly pickeru na čtyřech rozměrech a jedenácti stránek na osmi
+rozměrech prošly. Nový kód navigace i inicializace pickeru je ES5 (Acorn),
+Release minifikace a publikace win-x86 prošly. Databázové operace se neměnily.

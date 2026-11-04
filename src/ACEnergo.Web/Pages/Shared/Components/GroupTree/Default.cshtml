@@ -9,7 +9,7 @@
 @foreach(var group in Model.Groups){
  var selected=group.Id==Model.SelectedId;
  var displayId=Model.Kind=="fictitious"?group.Id-ElectricityGroupCompositionEditor.FictitiousOffset:group.Id;
- <li data-tree-item data-search-text="@group.Id @displayId @group.Name">
+ <li data-tree-item data-group-id="@group.Id" data-search-text="@group.Id @displayId @group.Name">
  <details open="@selected">
  <summary class="@(selected?"tree-selected":"")"><a asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@group.Id" title="@group.Name" aria-current="@(selected?"page":null)"><span class="tree-id">@displayId.ToString("D4")</span> @group.Name</a></summary>
  @if(selected&&Model.Selected is not null){

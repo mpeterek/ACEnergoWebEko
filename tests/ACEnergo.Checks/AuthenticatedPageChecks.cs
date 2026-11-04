@@ -196,6 +196,31 @@ internal static class AuthenticatedPageChecks
         foreach(var url in new[]{"/ElectricityGroup/centres/999","/ElectricityGroupComposition/centres/999"}){
             var missing=await Get(url);Check(missing.Code==HttpStatusCode.NotFound&&WebUtility.HtmlDecode(missing.Html).Contains("nebyl v používané databázi"),"missing group has explanatory body "+url);
         }
+        foreach(var route in new[]{"/ElectricityGroup/centres/16","/ElectricityGroupComposition/centres/16"}){
+            using var request=new HttpRequestMessage(HttpMethod.Get,route);request.Headers.Add("X-Workspace-Request","1");
+            using var response=await client.SendAsync(request);var html=await response.Content.ReadAsStringAsync();
+            Check(response.Headers.CacheControl?.NoStore==true&&response.Headers.Vary.Contains("X-Workspace-Request")&&response.StatusCode==HttpStatusCode.OK&&html.Contains("workspace-content")&&!html.Contains("class=\"site-header\"")&&!html.Contains("<script"),"workspace fragment excludes document shell and scripts "+route);
+            Check(html.Contains("data-group-id=\"16\"")&&!html.Contains("data-group-id=\"1\""),"fragment contains only selected branch "+route);
+            var compositionRoute=route.Contains("Composition");
+            var fragmentFields=new Dictionary<string,string>{["__RequestVerificationToken"]=Token(html),["Version"]=compositionRoute?factory.CompositionEditor.Load("centres",16).Version:new string('A',64)};
+            if(compositionRoute){fragmentFields["ChildId"]="10002";fragmentFields["Coefficient"]="1";}
+            else{fragmentFields["GroupName"]="Fragment edited";fragmentFields["PowerUnit"]="MW";fragmentFields["EnergyUnit"]="MWh";}
+            using(var fragmentSaved=await client.PostAsync(route+(compositionRoute?"?handler=Update":""),new FormUrlEncodedContent(fragmentFields)))
+                Check(fragmentSaved.StatusCode==HttpStatusCode.Found,"CSRF token from fragment is valid on native POST "+route);
+
+            if(Environment.GetEnvironmentVariable("ACE_RESPONSIVE_DIR") is string fragments){Directory.CreateDirectory(fragments);await File.WriteAllTextAsync(Path.Combine(fragments,route.Contains("Composition")?"fragment-composition.html":"fragment-configuration.html"),html);}
+        }
+        Role("view");
+        using(var fragmentRequest=new HttpRequestMessage(HttpMethod.Get,"/ElectricityGroup/centres/16")){
+            fragmentRequest.Headers.Add("X-Workspace-Request","1");using var fragmentResponse=await client.SendAsync(fragmentRequest);var fragmentHtml=await fragmentResponse.Content.ReadAsStringAsync();
+            Check(fragmentResponse.StatusCode==HttpStatusCode.OK&&!fragmentHtml.Contains("name=\"GroupName\""),"fragment remains read-only for viewer");
+        }
+        Role("none");
+        using(var fragmentRequest=new HttpRequestMessage(HttpMethod.Get,"/ElectricityGroup/centres/16")){
+            fragmentRequest.Headers.Add("X-Workspace-Request","1");using var fragmentResponse=await client.SendAsync(fragmentRequest);
+            Check(fragmentResponse.StatusCode==HttpStatusCode.Forbidden,"fragment header cannot bypass electricity authorization");
+        }
+        Role("config");
         var unknown=await Get("/unregistered-page/centres/16");
         Check(unknown.Code==HttpStatusCode.NotFound&&WebUtility.HtmlDecode(unknown.Html).Contains("Stránka nebyla nalezena"),"missing endpoint has distinct explanatory body");
         foreach(var kind in new[]{"fictitious","centres","plants"}) {
@@ -287,7 +312,7 @@ internal static class AuthenticatedPageChecks
         Check((await Get("/ElectricityHolidays/999")).Code == HttpStatusCode.NotFound, "unknown meter 404");
         if(Environment.GetEnvironmentVariable("ACE_RESPONSIVE_DIR") is string responsiveDirectory){
             Directory.CreateDirectory(responsiveDirectory);
-            var pages=new[]{("home","/"),("login","/Login"),("meter","/ElectricityMeter/5"),("groups","/ElectricityGroups/centres"),("configuration","/ElectricityGroup/centres/16"),("price-editor","/ElectricityPriceEdit/5?Period=2026-10"),("holidays","/ElectricityHolidays/5?Period=2026-10"),("monthly-prices","/ElectricityPrices/5?Period=2026-10")};
+            var pages=new[]{("home","/"),("login","/Login"),("meter","/ElectricityMeter/5"),("groups","/ElectricityGroups/centres"),("configuration","/ElectricityGroup/centres/16"),("configuration-one","/ElectricityGroup/centres/1"),("composition-sixteen","/ElectricityGroupComposition/centres/16"),("price-editor","/ElectricityPriceEdit/5?Period=2026-10"),("holidays","/ElectricityHolidays/5?Period=2026-10"),("monthly-prices","/ElectricityPrices/5?Period=2026-10")};
             foreach(var (name,url) in pages){var rendered=await Get(url);if(rendered.Code!=HttpStatusCode.OK)throw new Exception("Responsive fixture failed: "+url);await File.WriteAllTextAsync(Path.Combine(responsiveDirectory,name+".html"),rendered.Html);}
         }
         Console.WriteLine($"PASS: {count} authenticated Razor/HTTP, CSRF and authorization checks (test stores only).");
