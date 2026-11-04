@@ -25,7 +25,7 @@
         <label asp-for="Password">Heslo</label>
         <div class="password-field">
             <input asp-for="Password" type="password" autocomplete="current-password" maxlength="255" />
-            <button class="button password-toggle" type="button" aria-controls="Password" aria-pressed="false" data-password-toggle hidden>Zobrazit heslo</button>
+            <button class="button password-toggle" type="button" aria-controls="Password" aria-pressed="false" data-password-toggle aria-label="Zobrazit heslo" title="Zobrazit heslo" data-hidden-icon="@Url.Content("~/images/eye-off.svg")" data-visible-icon="@Url.Content("~/images/eye.svg")" hidden><img src="~/images/eye-off.svg" width="24" height="24" alt="" aria-hidden="true" data-password-icon /></button>
         </div>
         <button class="button button-primary" type="submit">Přihlásit se</button>
     </form>

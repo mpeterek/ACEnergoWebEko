@@ -6,7 +6,11 @@ if (passwordToggle instanceof HTMLButtonElement) {
         passwordToggle.addEventListener("click", () => {
             const visible = password.type === "password";
             password.type = visible ? "text" : "password";
-            passwordToggle.textContent = visible ? "Skrýt heslo" : "Zobrazit heslo";
+            const label = visible ? "Skrýt heslo" : "Zobrazit heslo";
+            passwordToggle.setAttribute("aria-label", label);
+            passwordToggle.title = label;
+            const icon = passwordToggle.querySelector("[data-password-icon]");
+            if (icon instanceof HTMLImageElement) icon.src = visible ? passwordToggle.dataset.visibleIcon : passwordToggle.dataset.hiddenIcon;
             passwordToggle.setAttribute("aria-pressed", String(visible));
         });
     }

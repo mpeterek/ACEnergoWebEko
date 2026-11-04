@@ -208,3 +208,9 @@ Login: doplněno tlačítko Zobrazit heslo / Skrýt heslo, type=button,
 aria-controls a aria-pressed. Chromium ověřilo myš, mezerník, zachování hodnoty,
 neodeslání formuláře a šířku 390 px bez přesahu. Výchozí stav je password;
 bez JavaScriptu se nefunkční přepínač nezobrazí. Backend přihlášení se neměnil.
+
+Login – ikona oka: textový přepínač nahrazen ikonou uvnitř pole vpravo.
+Skryté heslo má přeškrtnuté oko, zobrazené běžné oko. Přístupný popisek,
+aria-pressed a ovládání klávesnicí zůstávají. Chromium při šířce 390 px
+ověřilo umístění uvnitř pole, načtení SVG, přepnutí myší a mezerníkem i
+zachování hodnoty. Backend přihlášení se neměnil.

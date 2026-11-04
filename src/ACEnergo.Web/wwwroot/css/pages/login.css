@@ -4,6 +4,8 @@
     .login-panel { margin: 2rem auto; }
 }
 
-.password-field { display: flex; align-items: stretch; gap: .5rem; }
-.password-field input { flex: 1; min-width: 0; }
-.password-toggle { flex: 0 0 auto; font-size: .85rem; padding: .5rem .65rem; }
+.password-field { position: relative; }
+.password-field input { padding-right: 3.5rem; }
+.password-field .password-toggle { position: absolute; right: .35rem; top: 50%; transform: translateY(-50%); width: 2.5rem; height: 2.5rem; padding: .5rem; border: 0; background: transparent; border-radius: .4rem; cursor: pointer; }
+.password-toggle img { display: block; width: 1.5rem; height: 1.5rem; }
+.password-toggle:hover { background: #e9eff4; }
