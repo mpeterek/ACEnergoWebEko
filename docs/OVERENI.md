@@ -463,3 +463,38 @@ ACE_WORKSPACE_MINIFIED=1 node tools/check-workspace-navigation.cjs /tmp/acenergo
 Regresní kontroly pickeru na čtyřech rozměrech a jedenácti stránek na osmi
 rozměrech prošly. Nový kód navigace i inicializace pickeru je ES5 (Acorn),
 Release minifikace a publikace win-x86 prošly. Databázové operace se neměnily.
+
+## Společné ceny elektrického typu
+
+Automatické kontroly `dotnet run --project tests/ACEnergo.Checks` zahrnují
+21 doménových kontrol časové platnosti, duplicit, NULL a DECIMAL(18,5),
+a HTTP formuláře všech tří skupin včetně oprávnění, CSRF, konfliktu verze,
+sdílené historie a AJAX fragmentů. HTTP kontroly používají testovací úložiště,
+nikoli nativní ACE.
+
+Pro prohlížeč vyexportujte HTML při běhu kontrol:
+
+```bash
+ACE_RESPONSIVE_DIR=/tmp/acenergo-responsive ACE_PICKER_DIR=/tmp/acenergo-picker ACE_COMPOSITION_HTML=/tmp/acenergo-responsive/composition.html ACE_PRICE_HTML=/tmp/acenergo-responsive/prices.html ACE_TARIFF_HTML=/tmp/acenergo-responsive/tariffs.html dotnet run --project tests/ACEnergo.Checks
+node tools/check-workspace-navigation.cjs /tmp/acenergo-responsive /tmp/acenergo-picker
+node tools/check-responsive-layout.cjs /tmp/acenergo-responsive
+```
+
+Navigační kontrola zahrnuje ceny → historii → roční přehled, změnu období
+bez obnovení dokumentu, zachování stromu a úklid DataTables. Responzivní
+kontrola zahrnuje nové cenové stránky od 320 do 1920 px. Pro Release assety
+po Release buildu přidejte `ACE_WORKSPACE_MINIFIED=1` nebo
+`ACE_RESPONSIVE_MINIFIED=1`.
+
+Nativní Windows/ACE ověření (aplikaci a původní ASP nejdříve zastavte):
+
+```powershell
+dotnet run --project tests/ACEnergo.Checks -- --group-mdb C:\ACEnergoData\ACEnergoWebEko.mdb
+dotnet run --project tests/ACEnergo.Checks -- --type-price-mdb C:\ACEnergoData\ACEnergoWebEko.mdb
+```
+
+První příkaz pouze čte a zahrnuje nové cenové dotazy všech skupin.
+Druhý zapisuje výhradně do dočasné kopie, zkontroluje přesnost cen,
+NULL, zachování historie, konflikt i duplicitní datum a ověří hash originálu.
+Vyžaduje nejméně jedno elektrické fiktivní měření. Na Linuxu tyto nativní
+kontroly nelze spustit; zelený HTTP test je nenahrazuje.

@@ -350,3 +350,41 @@ Popisky odkazů skupin jsou nyní konkrétnější: **Název a jednotky** a
 Konfigurace a Složení označovaly právě tyto funkce. Adresy zůstávají stejné.
 Při nenalezeném záznamu detail zobrazuje vysvětlení a návrat do seznamu;
 chybějící adresa má vlastní stránku 404 a doporučení restartu po aktualizaci.
+
+## Společné ceny elektřiny podle typu (další etapa)
+
+Pro fiktivní měření, střediska a závody jsou dostupné tři nové obrazovky:
+`ElectricityGroupPrices/{kind}/{id}`, `ElectricityGroupPriceHistory/{kind}/{id}`
+a `ElectricityGroupPriceYear/{kind}/{id}`. Otevírají se přes **Konfigurace ceny**
+v horní liště pracovní plochy. Přepínání obrazovek i načítání období používá
+stávající AJAX pracovní plochu, historii prohlížeče a zachování levého stromu.
+Bez JavaScriptu fungují běžné odkazy a formuláře.
+
+- Zdroj: `Knihovna/CenyEnergie/CenyEnergie.asp`, funkce `NacteniCenTypu`
+  a `ZapisCenTypu`, elektrické formuláře `MenuUvod*` a uživatelský návod.
+- Ceny jsou sdílené podle klíče elektrického typu v `tblKonfigEnergie`, nikoli
+  podle ID konkrétního měření. Stejný ceník používají i podružná měření stejného
+  typu. Hlavní měření mají samostatné ceny a tato etapa je nemění.
+- `numCena` je jednotná cena, `numCena1/2/3` vysoký/nízký/víkendový tarif.
+  `numCena4/5` původní elektrické formuláře nezobrazovaly; nová obrazovka je
+  označuje jako další uložené ceny a zachovává je. `bTarif` určuje režim.
+- Jednotka pochází přímo z `strRozmerP` rodiče (práce/energie v původním ASP),
+  nikoli z odhadu podle názvu typu. Měna je Kč stejně jako u již převedeného
+  hlavního ceníku. Zobrazené posuny den/měsíc/rok jsou pouze čtené z typu.
+- Platí poslední datovaný ceník s `dtDatum <= první den zvoleného měsíce`.
+  Roční přehled přebírá cenu i z předchozího roku; tím se liší od samostatných
+  měsíčních cen hlavních měření. Nejde o výpočet spotřeb ani nákladů.
+- NULL se zachovává a není zobrazován jako nula. Nedatované řádky se zobrazí
+  v historii, ale nejsou platným ceníkem. Rozdílné záznamy stejné nejnovější
+  platnosti znamenají nejednoznačnou cenu; žádný se nevybírá náhodně.
+- Uložení vyžaduje ElekConfig nebo Administrator. Stejně jako ASP přidává
+  historický záznam, neaktualizuje starší řádky. Nová platnost musí být první
+  den měsíce, který ještě neobsahuje záznam. Toto omezení předchází dalším
+  nejednoznačným duplicitám původního ASP; opravy již existujícího měsíce
+  ani mazání historie tato etapa neposkytuje.
+- Zápis ověřuje DECIMAL(18,5) podle skutečného schématu, CSRF, aktuálnost celé
+  historie a přiřazení typu. Používá společný souborový zámek a transakci
+  ReadCommitted. Databázové schéma se nemění.
+
+Vyhodnocení podružných měření, spotřeb, bilancí a grafů se nadále převádí.
+Analogová měření jsou na výslovné přání vynechána.

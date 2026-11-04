@@ -1,0 +1,26 @@
+@page "{kind}/{id:int}"
+@model ElectricityGroupPricesModel
+@using ACEnergo.Web.Domain
+@{Layout="/Pages/Shared/_GroupLayout.cshtml";ViewData["Title"]="Elektřina – ceny typu";}
+<partial name="_TypePriceHeading" model="Model"/>
+@if(TempData["TypePriceSaved"] is string saved){<p class="alert alert-success" role="status">@saved</p>}
+@if(Model.Data is not null){
+<section class="panel"><h2>Cena platná pro @Model.Month.ToString("MM/yyyy")</h2>
+@if(Model.Selection.Ambiguous){<p class="message-error" role="alert">Pro poslední datum platnosti existují rozdílné ceníky. Cenu nelze jednoznačně určit. Zkontrolujte historii cen.</p>}
+else if(Model.Selection.Price is not { } price){<p role="status">Pro vybraný měsíc není platný ceník. Chybějící cena se nenahrazuje nulou.</p>}
+else{
+<p>Platnost od @price.EffectiveAt?.ToString("dd.MM.yyyy HH:mm:ss"). Režim: @(price.Tariff==true?"Tarifní ceny":price.Tariff==false?"Jednotná cena":"Neuvedený").</p>
+<dl class="configuration-summary">@for(var i=0;i<6;i++){<dt>@ElectricityTypePrices.Labels[i]</dt><dd>@ElectricityTypePrices.Display(price.Values[i]) @Model.Unit</dd>}</dl>
+}
+</section>
+@if(Model.CanEdit){
+<section class="panel"><h2>Přidat ceník od @Model.Month.ToString("MM/yyyy")</h2>
+<p>Nová platnost začíná prvním dnem zvoleného měsíce. Starší záznamy zůstávají zachované; cena platí do dalšího ceníku. Již existující měsíc se nepřepisuje.</p>
+<form method="post" class="configuration-form"><input asp-for="Version" type="hidden"/><input asp-for="Period" type="hidden"/>
+<div class="configuration-grid"><div class="configuration-wide"><label asp-for="Tariff">Způsob ocenění</label><select asp-for="Tariff" class="form-select"><option value="">Neuvedeno (NULL)</option><option value="false">Jednotná cena</option><option value="true">Tarifní ceny</option></select></div>
+@for(var i=0;i<6;i++){<div><label for="type-price-@i">@ElectricityTypePrices.Labels[i] (@Model.Unit)</label><input id="type-price-@i" asp-for="Values[i]" type="text" inputmode="decimal" class="form-control" maxlength="20"/></div>}
+</div><p class="configuration-help">Prázdné pole zachová neuvedenou hodnotu (NULL). Další ceny 4 a 5 se v původním elektrickém formuláři nepoužívaly; jejich uložené hodnoty zůstávají dostupné.</p>
+<div class="configuration-actions"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus" aria-hidden="true"></i> Přidat společný ceník</button></div>
+</form></section>
+}
+}

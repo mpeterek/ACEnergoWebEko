@@ -30,11 +30,14 @@ function longTree(html){
     if(url.pathname==='/ElectricityGroup/centres/16')name='configuration';
     if(url.pathname==='/ElectricityGroup/centres/1')name='configuration-one';
     if(url.pathname==='/ElectricityGroupComposition/centres/16')name='composition-sixteen';
+    if(url.pathname==='/ElectricityGroupPrices/centres/16')name='type-prices';
+    if(url.pathname==='/ElectricityGroupPriceHistory/centres/16')name='type-history';
+    if(url.pathname==='/ElectricityGroupPriceYear/centres/16')name='type-year';
     if(name){
      if(req.isNavigationRequest())documentRequests++;
      if(slow&&name==='configuration-one')await new Promise(r=>setTimeout(r,200));
-     const fragment=req.headers()['x-workspace-request']==='1'&&(name==='configuration'||name==='composition-sixteen');
-     const file=fragment?(name==='configuration'?'fragment-configuration':'fragment-composition'):name;
+     const fragment=req.headers()['x-workspace-request']==='1'&&(name==='configuration'||name==='composition-sixteen'||name.startsWith('type-'));
+     const file=fragment?(name.startsWith('type-')?'fragment-'+name:name==='configuration'?'fragment-configuration':'fragment-composition'):name;
      const body=fs.readFileSync(path.join(fixtures,file+'.html'),'utf8');
      return route.fulfill({contentType:'text/html',body:fragment?body:longTree(body)}).catch(()=>{});
     }
@@ -92,6 +95,23 @@ function longTree(html){
    if(documentRequests!==1)throw Error('Selection reloaded the document');
    const tables=await page.evaluate(()=>window.DataTable.settings.length);
    if(tables!==1)throw Error('Leaked DataTables instances: '+tables);
+   // Newly migrated price screens and period selection use the same workspace.
+   await page.locator('.workspace-toolbar a[href*="ElectricityGroupPrices"]').click();
+   await page.waitForSelector('.type-price-navigation');await stable();
+   await page.locator('#type-price-period').fill('2026-12');
+   await page.locator('[data-workspace-form] button').click();
+   await page.waitForFunction(()=>location.search.includes('Period=2026-12')&&document.querySelector('.workspace-content').getAttribute('aria-busy')==='false');await stable();
+   await page.locator('.type-price-navigation a[href*="ElectricityGroupPriceHistory"]').click();
+   await page.waitForSelector('table.dataTable');await stable();
+   if(!await page.locator('h2').last().textContent().then(t=>t.includes('Historie')))throw Error('History route not rendered');
+   await page.locator('.type-price-navigation a[href*="ElectricityGroupPriceYear"]').click();
+   await page.waitForSelector('.price-year-table');await stable();
+   if(await page.evaluate(()=>DataTable.settings.length)!==1)throw Error('Price table instances leaked');
+   await page.goBack();await page.waitForSelector('.type-price-navigation');await stable();
+   await page.locator('.workspace-toolbar a[href="/ElectricityGroup/centres/16"]').click();
+   await page.waitForSelector('input[name="GroupName"]');await stable();
+   await page.locator('input[name="GroupName"]').fill('Unsaved value');
+   if(documentRequests!==1)throw Error('Price navigation reloaded the document');
    // Normal POST and redirect remain untouched; session state must restore the tree.
    const beforeOffset=await page.evaluate(()=>document.querySelector('[data-group-id="16"] summary').getBoundingClientRect().top-document.querySelector('[data-measurement-tree]').getBoundingClientRect().top);
    await page.locator('.configuration-actions button').click();

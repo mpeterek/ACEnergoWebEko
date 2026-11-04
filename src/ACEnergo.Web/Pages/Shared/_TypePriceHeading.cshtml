@@ -1,0 +1,14 @@
+@model ElectricityTypePricePage
+@{var current=Convert.ToString(ViewContext.RouteData.Values["page"]);}
+<h1>@(Model.Group?.Name ?? "Ceny elektřiny")</h1>
+<nav class="type-price-navigation d-flex flex-wrap gap-2 my-3" aria-label="Přehledy cen">
+<a class="btn @(current=="/ElectricityGroupPrices"?"btn-primary":"btn-outline-primary") btn-sm" asp-page="/ElectricityGroupPrices" asp-route-kind="@Model.Kind" asp-route-id="@Model.Id" asp-route-Period="@Model.Period">Ceník a nová platnost</a>
+<a class="btn @(current=="/ElectricityGroupPriceHistory"?"btn-primary":"btn-outline-primary") btn-sm" asp-page="/ElectricityGroupPriceHistory" asp-route-kind="@Model.Kind" asp-route-id="@Model.Id" asp-route-Period="@Model.Period">Historie cen</a>
+<a class="btn @(current=="/ElectricityGroupPriceYear"?"btn-primary":"btn-outline-primary") btn-sm" asp-page="/ElectricityGroupPriceYear" asp-route-kind="@Model.Kind" asp-route-id="@Model.Id" asp-route-Period="@Model.Period">Roční přehled</a>
+</nav>
+@if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
+@if(Model.Data is not null){
+<p class="alert alert-info"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Ceník je společný pro elektřinu typu <strong>@Model.Data.Type</strong>. Používají jej podružná a fiktivní měření, střediska i závody tohoto typu. Ceny hlavních měření mají samostatný ceník.</p>
+<section class="panel"><form method="get" class="period-form" data-workspace-form><label for="type-price-period">Měsíc platnosti / rok přehledu</label><input id="type-price-period" name="Period" type="month" value="@Model.Period" required class="month-input"/><button class="btn btn-outline-primary" type="submit">Načíst období</button></form>
+<dl class="configuration-summary"><dt>Jednotka ceny</dt><dd>@Model.Unit</dd><dt>Posun vyhodnocení (den / měsíc / rok)</dt><dd>@(Model.Data.DayShift ?? "Neuvedeno") / @(Model.Data.MonthShift ?? "Neuvedeno") / @(Model.Data.YearShift ?? "Neuvedeno") hod.</dd></dl></section>
+}

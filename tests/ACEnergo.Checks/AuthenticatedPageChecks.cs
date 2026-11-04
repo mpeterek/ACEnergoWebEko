@@ -315,12 +315,56 @@ internal static class AuthenticatedPageChecks
             var pages=new[]{("home","/"),("login","/Login"),("meter","/ElectricityMeter/5"),("groups","/ElectricityGroups/centres"),("configuration","/ElectricityGroup/centres/16"),("configuration-one","/ElectricityGroup/centres/1"),("composition-sixteen","/ElectricityGroupComposition/centres/16"),("price-editor","/ElectricityPriceEdit/5?Period=2026-10"),("holidays","/ElectricityHolidays/5?Period=2026-10"),("monthly-prices","/ElectricityPrices/5?Period=2026-10")};
             foreach(var (name,url) in pages){var rendered=await Get(url);if(rendered.Code!=HttpStatusCode.OK)throw new Exception("Responsive fixture failed: "+url);await File.WriteAllTextAsync(Path.Combine(responsiveDirectory,name+".html"),rendered.Html);}
         }
+        foreach(var kind in new[]{"fictitious","centres","plants"}) {
+            var newMonth=kind=="fictitious"?10:kind=="centres"?11:12;
+            var savePeriod="2026-"+newMonth;
+            var url="/ElectricityGroupPrices/"+kind+"/1?Period=2026-09";
+            Role("none");Check((await Get(url)).Code==HttpStatusCode.Forbidden,"shared prices require electricity permission "+kind);
+            Role("view");var shared=await Get(url);
+            Check(shared.Code==HttpStatusCode.OK&&!shared.Html.Contains("name=\"Values[0]\""),"shared prices viewer read-only "+kind);
+            Check(WebUtility.HtmlDecode(shared.Html).Contains("Kč / kWh")&&shared.Html.Contains("1,25"),"shared price has work unit and effective older price "+kind);
+            Role("config");shared=await Get(url);
+            async Task<HttpStatusCode> AddTypePrice(string period,string version,bool csrf=true,string price="2,34567") {
+                var fields=new List<KeyValuePair<string,string>>{new("Period",period),new("Version",version),new("Tariff","true")};
+                for(var i=0;i<6;i++)fields.Add(new("Values["+i+"]",i==0?price:i==5?"":"3"));
+                if(csrf)fields.Add(new("__RequestVerificationToken",Token(shared.Html)));
+                using var response=await client.PostAsync("/ElectricityGroupPrices/"+kind+"/1",new FormUrlEncodedContent(fields));return response.StatusCode;
+            }
+            var typePriceWrites=factory.TypePrices.Writes;var version=factory.TypePrices.Load(kind,1).Version;
+            Check(await AddTypePrice(savePeriod,version,false)==HttpStatusCode.BadRequest&&factory.TypePrices.Writes==typePriceWrites,"shared price CSRF "+kind);
+            Role("view");Check(await AddTypePrice(savePeriod,version)==HttpStatusCode.Forbidden&&factory.TypePrices.Writes==typePriceWrites,"shared price forged viewer POST "+kind);
+            Role("config");Check(await AddTypePrice("bad",version)==HttpStatusCode.BadRequest&&factory.TypePrices.Writes==typePriceWrites,"shared price month validation "+kind);
+            Check(await AddTypePrice(savePeriod,version,true,"-1")==HttpStatusCode.BadRequest&&factory.TypePrices.Writes==typePriceWrites,"shared price negative rejected "+kind);
+            Check(await AddTypePrice(savePeriod,new string('B',64))==HttpStatusCode.Conflict&&factory.TypePrices.Writes==typePriceWrites,"shared price stale history "+kind);
+            Check(await AddTypePrice("2025-01",version)==HttpStatusCode.BadRequest&&factory.TypePrices.Writes==typePriceWrites,"shared price preserves existing month "+kind);
+            Check(await AddTypePrice(savePeriod,version)==HttpStatusCode.Found&&factory.TypePrices.Writes==typePriceWrites+1,"shared price adds effective record "+kind);
+            Check(factory.TypePrices.Load(kind,1).History.Single(r=>r.EffectiveAt==new DateTime(2026,newMonth,1)).Values[5] is null,"shared price empty preserves NULL "+kind);
+            Check(factory.TypePrices.Load("plants",1).History.Length==factory.TypePrices.Load("fictitious",1).History.Length,"same type history shared across groups "+kind);
+            var history=await Get("/ElectricityGroupPriceHistory/"+kind+"/1?Period=2026-10");
+            Check(history.Code==HttpStatusCode.OK&&WebUtility.HtmlDecode(history.Html).Contains("Bez data")&&history.Html.Contains("2,34567"),"shared price history includes undated and new rows "+kind);
+            var annual=await Get("/ElectricityGroupPriceYear/"+kind+"/1?Period=2026-10");
+            Check(annual.Code==HttpStatusCode.OK&&annual.Html.Contains("01.01.2025")&&annual.Html.Contains("01.10.2026"),"shared price annual carries earlier year and changes in October "+kind);
+            Check((await Get("/ElectricityGroupPrices/"+kind+"/999")).Code==HttpStatusCode.NotFound,"shared price missing input "+kind);
+            using var request=new HttpRequestMessage(HttpMethod.Get,"/ElectricityGroupPriceYear/"+kind+"/1?Period=2026-10");request.Headers.Add("X-Workspace-Request","1");
+            using var fragment=await client.SendAsync(request);var fragmentHtml=await fragment.Content.ReadAsStringAsync();
+            Check(fragment.StatusCode==HttpStatusCode.OK&&fragmentHtml.Contains("workspace-content")&&!fragmentHtml.Contains("<script")&&fragment.Headers.CacheControl?.NoStore==true,"annual prices workspace fragment contract "+kind);
+            if(Environment.GetEnvironmentVariable("ACE_RESPONSIVE_DIR") is string folder&&kind=="centres") {
+                foreach(var (name,route) in new[]{("type-prices","ElectricityGroupPrices"),("type-history","ElectricityGroupPriceHistory"),("type-year","ElectricityGroupPriceYear")}) {
+                    var html=(await Get("/"+route+"/centres/16?Period=2026-10")).Html;await File.WriteAllTextAsync(Path.Combine(folder,name+".html"),html);
+                    using var req=new HttpRequestMessage(HttpMethod.Get,"/"+route+"/centres/16?Period=2026-10");req.Headers.Add("X-Workspace-Request","1");
+                    using var frag=await client.SendAsync(req);await File.WriteAllTextAsync(Path.Combine(folder,"fragment-"+name+".html"),await frag.Content.ReadAsStringAsync());
+                }
+            }
+        }
+        Role("config");Check((await Get("/ElectricityGroupPrices/analog/1")).Code==HttpStatusCode.NotFound,"shared price whitelist");
+        Check((await Get("/ElectricityGroupPriceYear/centres/1?Period=")).Code==HttpStatusCode.BadRequest,"shared price explicit empty period invalid");
         Console.WriteLine($"PASS: {count} authenticated Razor/HTTP, CSRF and authorization checks (test stores only).");
     }
 
     // Test-only DI and authentication; no test account or authentication switch is added to the web project.
     private sealed class Factory : WebApplicationFactory<AccessStore>
     {
+        public FakeTypePrices TypePrices { get; } = new();
         public FakeHolidays Holidays { get; } = new();
         public FakeTariffs Tariffs { get; } = new();
         public FakeGroupConfiguration GroupConfig { get; } = new();
@@ -349,6 +393,8 @@ internal static class AuthenticatedPageChecks
                 services.AddSingleton<IElectricityMeterConfiguration, FakeMeterConfiguration>();
                 services.RemoveAll<IElectricityPriceEditor>();
                 services.AddSingleton<IElectricityPriceEditor, FakePriceEditor>();
+                services.RemoveAll<IElectricityTypePriceStore>();
+                services.AddSingleton<IElectricityTypePriceStore>(TypePrices);
                 services.RemoveAll<IElectricityPriceStore>();
                 services.AddSingleton<IElectricityPriceStore, FakePrices>();
                 services.RemoveAll<IElectricityTariffStore>();
@@ -453,6 +499,20 @@ internal static class AuthenticatedPageChecks
         public MeterConfiguration Load(int id)=>new("Test",101,"1",102,"1",new string('A',64));
         public void Save(int id,string name,string coefficient,string reactiveCoefficient,bool disconnect,string version){
             ElectricityMeterConfiguration.Name(name);ElectricityMeterConfiguration.Coefficient(coefficient);
+        }
+    }
+    private sealed class FakeTypePrices : IElectricityTypePriceStore {
+        private readonly List<TypePriceRecord> rows=[new(null,Enumerable.Repeat<decimal?>(9,6).ToArray(),null),new(new DateTime(2025,1,1),Enumerable.Repeat<decimal?>(1.25m,6).ToArray(),false)];
+        public int Writes{get;private set;}
+        public TypePriceSnapshot Load(string kind,int id) {
+            ElectricityGroupCatalog.Definition(kind);if(id!=1&&!(kind=="centres"&&id==16))throw new KeyNotFoundException();
+            var version=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(rows)));
+            return new(2,"EP","kWh","0","0","0",rows.OrderByDescending(r=>r.EffectiveAt).ToArray(),version);
+        }
+        public void Add(string kind,int id,DateOnly month,string[] values,bool? tariff,string version){
+            var current=Load(kind,id);if(version!=current.Version)throw new GroupConfigurationConflictException();
+            var parsed=ElectricityTypePrices.Parse(values);ElectricityTypePrices.ValidateNewMonth(current.History,month);
+            rows.Add(new(month.ToDateTime(TimeOnly.MinValue),parsed,tariff));Writes++;
         }
     }
     private sealed class FakePriceEditor : IElectricityPriceEditor {

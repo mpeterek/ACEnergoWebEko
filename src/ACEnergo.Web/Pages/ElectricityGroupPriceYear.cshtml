@@ -1,0 +1,15 @@
+@page "{kind}/{id:int}"
+@model ElectricityGroupPriceYearModel
+@using ACEnergo.Web.Domain
+@{Layout="/Pages/Shared/_GroupLayout.cshtml";ViewData["Title"]="Elektřina – roční ceny typu";var months=Model.Data is null?[]:Model.Months;}
+<partial name="_TypePriceHeading" model="Model"/>
+@if(Model.Data is not null){
+<p>Ceny se přebírají z posledního platného ceníku, i z předchozího roku, stejně jako v původní aplikaci. Přehled nepočítá spotřeby ani náklady. „—“ znamená chybějící ceník, „Sporné“ nejednoznačnou platnost.</p>
+<section class="panel price-year"><div class="price-year-overflow"><table class="data-table price-table price-year-table" data-price-table><caption>Rok @Model.Month.Year · @Model.Data.Type · @Model.Unit</caption><thead><tr><th scope="col">Položka</th><th scope="col">Jednotka</th>
+@for(var m=1;m<=12;m++){<th scope="col"><a asp-page="/ElectricityGroupPrices" asp-route-kind="@Model.Kind" asp-route-id="@Model.Id" asp-route-Period="@(new DateOnly(Model.Month.Year,m,1).ToString("yyyy-MM"))">@m.ToString("D2")</a></th>}
+</tr></thead><tbody>
+<tr><th scope="row">Platnost od</th><td>Datum</td>@foreach(var month in months){<td>@(month.Ambiguous?"Sporné":month.Price?.EffectiveAt?.ToString("dd.MM.yyyy")??"—")</td>}</tr>
+<tr><th scope="row">Režim</th><td>—</td>@foreach(var month in months){<td>@(month.Ambiguous?"Sporné":month.Price is null?"—":month.Price.Tariff==true?"Tarifní":month.Price.Tariff==false?"Jednotná":"Neuvedeno")</td>}</tr>
+@for(var i=0;i<6;i++){<tr><th scope="row">@ElectricityTypePrices.Labels[i]</th><td>@Model.Unit</td>@foreach(var month in months){<td>@(month.Ambiguous?"Sporné":month.Price is null?"—":ElectricityTypePrices.Display(month.Price.Values[i]))</td>}</tr>}
+</tbody></table></div></section>
+}

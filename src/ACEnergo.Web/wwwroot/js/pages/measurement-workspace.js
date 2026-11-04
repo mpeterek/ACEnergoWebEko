@@ -72,7 +72,7 @@
         } catch (ignore) { /* Default server-rendered selection remains usable. */ }
     }
     function eligible(url) {
-        var match = url.pathname.match(/\/Electricity(?:Group|GroupComposition|Groups)\/([^/]+)(?:\/[0-9]+)?\/?$/);
+        var match = url.pathname.match(/\/Electricity(?:Group|GroupComposition|Groups|GroupPrices|GroupPriceHistory|GroupPriceYear)\/([^/]+)(?:\/[0-9]+)?\/?$/);
         return url.origin === window.location.origin && match && match[1] === kind && !url.searchParams.has('handler');
     }
     function initTables() {
@@ -209,6 +209,15 @@
         if (!eligible(url)) { save(); return; }
         event.preventDefault();
         navigate(url, true, tree.contains(link) ? link.href : null);
+    });
+    workspace.addEventListener('submit', function (event) {
+        var form = event.target;
+        if (!form.hasAttribute('data-workspace-form') || form.method.toLowerCase() !== 'get') { return; }
+        var url = new URL(form.action, window.location.href);
+        var fields = new FormData(form);
+        fields.forEach(function (value, name) { url.searchParams.set(name, value); });
+        if (!eligible(url)) { return; }
+        event.preventDefault(); navigate(url, true, null);
     });
     window.addEventListener('popstate', function () {
         var url = new URL(window.location.href);

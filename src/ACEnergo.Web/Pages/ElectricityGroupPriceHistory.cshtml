@@ -1,0 +1,15 @@
+@page "{kind}/{id:int}"
+@model ElectricityGroupPriceHistoryModel
+@using ACEnergo.Web.Domain
+@{Layout="/Pages/Shared/_GroupLayout.cshtml";ViewData["Title"]="Elektřina – historie cen typu";}
+<partial name="_TypePriceHeading" model="Model"/>
+@if(Model.Data is not null){
+<section class="panel table-scroll"><h2>Historie společného ceníku · @Model.Data.Type</h2>
+<p>Záznamy bez data nejsou platným ceníkem. Více rozdílných záznamů stejného data je označeno jako nejednoznačné. Jednotka všech cen: @Model.Unit.</p>
+<table class="data-table price-table" data-price-table><thead><tr><th scope="col">Platnost od</th><th scope="col">Režim</th>@foreach(var label in ElectricityTypePrices.Labels){<th scope="col">@label</th>}<th scope="col">Stav</th></tr></thead><tbody>
+@foreach(var row in Model.Data.History){
+var duplicate=row.EffectiveAt.HasValue&&Model.Data.History.Count(r=>r.EffectiveAt==row.EffectiveAt)>1;
+<tr><td>@(row.EffectiveAt?.ToString("dd.MM.yyyy HH:mm:ss")??"Bez data")</td><td>@(row.Tariff==true?"Tarifní":row.Tariff==false?"Jednotná":"Neuvedeno")</td>@foreach(var value in row.Values){<td>@ElectricityTypePrices.Display(value)</td>}<td>@(!row.EffectiveAt.HasValue?"Neplatný bez data":duplicate?"Více záznamů stejného data":"Uložený")</td></tr>
+}
+</tbody></table></section>
+}

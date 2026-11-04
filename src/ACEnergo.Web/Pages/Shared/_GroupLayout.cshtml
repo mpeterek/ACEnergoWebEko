@@ -18,10 +18,10 @@
 @if(id!=0){
 <div class="card-body workspace-toolbar" role="navigation" aria-label="Činnosti vybraného měření">
 <button class="btn btn-outline-secondary" disabled title="Vyhodnocení tohoto oddílu dosud není převedeno"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Vyhodnocení</button>
-<button class="btn btn-outline-secondary" disabled title="Ceny tohoto oddílu dosud nejsou převedeny"><i class="fa-solid fa-coins" aria-hidden="true"></i> Konfigurace ceny</button>
+<a class="btn @(page?.StartsWith("/ElectricityGroupPrice")==true?"btn-primary":"btn-outline-primary")" asp-page="/ElectricityGroupPrices" asp-route-kind="@kind" asp-route-id="@id"><i class="fa-solid fa-coins" aria-hidden="true"></i> Konfigurace ceny</a>
 <a class="btn @(page=="/ElectricityGroup"?"btn-primary":"btn-outline-primary")" asp-page="/ElectricityGroup" asp-route-kind="@kind" asp-route-id="@id"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Konfigurace vstupu</a>
 <a class="btn @(page=="/ElectricityGroupComposition"?"btn-primary":"btn-outline-primary")" asp-page="/ElectricityGroupComposition" asp-route-kind="@kind" asp-route-id="@id"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> @(kind=="plants"?"Položky závodu":"Položky vstupu")</a>
-<p class="workspace-pending">Vyhodnocení a ceny tohoto oddílu zatím nejsou převedeny. Konfigurace vstupu a jeho položek jsou dostupné.</p>
+<p class="workspace-pending">Vyhodnocení spotřeb a grafy tohoto oddílu se dále převádějí.</p>
 </div>
 }
 </div>
