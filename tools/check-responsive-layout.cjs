@@ -34,12 +34,14 @@ const profiles = [
                     const input = document.querySelector('input:not([type=hidden]):not([type=checkbox])');
                     const button = document.querySelector('.workspace-toolbar .btn, .button');
                     const title = document.querySelector('h1');
+                    const compactRow = document.querySelector('.composition-row');
                     const save = document.querySelector('.configuration-actions button');
                     const form = document.querySelector('.configuration-form');
                     const label = document.querySelector('.measurement-tree summary a');
                     const sidebar = document.querySelector('.measurement-workspace aside');
                     const content = document.querySelector('.workspace-content');
                     return {
+                        rowHeight: compactRow ? compactRow.getBoundingClientRect().height : null,
                         saveWidth: save ? save.getBoundingClientRect().width : null,
                         formWidth: form ? form.getBoundingClientRect().width : null,
                         treeWrap: label ? getComputedStyle(label).whiteSpace : null,
@@ -51,6 +53,7 @@ const profiles = [
                         sideBySide: sidebar && content ? sidebar.getBoundingClientRect().right <= content.getBoundingClientRect().left + 1 : null
                     };
                 });
+                if (measurements.rowHeight && measurements.rowHeight > (profile.width >= 1280 ? 120 : 240)) throw Error('Assigned row is too tall');
                 if (measurements.saveWidth && measurements.formWidth > 300 && measurements.saveWidth > measurements.formWidth * .7) throw Error('Save button is too wide: ' + name);
                 if (measurements.treeWrap && measurements.treeWrap !== 'nowrap') throw Error('Tree label wraps');
                 if (measurements.overflow) throw Error(`${name} overflows at ${profile.width}x${profile.height}`);

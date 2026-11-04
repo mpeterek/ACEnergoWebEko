@@ -409,3 +409,21 @@ po dávkách a ověřuje elektrické signatury, ID a filtr typu. Zde není nativ
 ACE k dispozici; tato část je sestavená, ale proti MDB nebyla spuštěná.
 Browser test používá testovací JSON, nikoli živou MDB. Ukládací operace Add
 se neměnila. Release build, minifikace a publikace Windows x86 prošly.
+
+## Číslování vstupů a kompaktní přiřazené položky
+
+Debug/Release sestavení bez chyb a varování, 200 HTTP kontrol a publikace x86
+prošly. Nové kontroly pokrývají rozklad 10003 a 50000001, oddělení stanice 1
+od stanice 2, nepovolenou/zápornou stanici a zvláštní číslování středisek.
+Čtecí Windows --group-mdb kontrola je rozšířená o metadata stanic a skutečný
+filtr stanice. Nativní dotazy včetně Fix nebyly zde spuštěné proti ACE.
+Čtečka typů se uzavírá před následujícím příkazem pro stanice (bez souběžných
+DataReaderů na jednom připojení).
+
+Modální browser kontrola nad novými JSON fixtures prošla pro čtyři rozměry
+se zdrojovými a minifikovanými soubory. Ověřuje osm sloupců, 0001/0003 a
+5000/0001, filtr stanice, skutečnou inicializaci DataTables a řazení stanice,
+rozdílnou barvu aktivní záložky i dosavadní scénáře výběru a odeslání.
+Responzivní kontrola 11 stránek v osmi rozměrech prošla také; navíc hlídá
+maximální výšku vzorového kompaktního řádku. Vlastní picker JS i minifikovaný
+výstup zůstávají ES5 (ověřeno Acorn ecmaVersion=5).

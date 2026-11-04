@@ -5,6 +5,12 @@
     var category = modal.getAttribute('data-picker-category');
     var term = modal.querySelector('#picker-term');
     var type = modal.querySelector('#picker-type');
+    var station = modal.querySelector('#picker-station');
+    function pad(value) {
+        var text = String(value);
+        while (text.length < 4) { text = '0' + text; }
+        return text;
+    }
     var body = modal.querySelector('[data-picker-rows]');
     var status = modal.querySelector('[data-picker-status]');
     var results = modal.querySelector('#picker-results');
@@ -32,18 +38,24 @@
         more.hidden = true;
         request = $.ajax({
             url: modal.getAttribute('data-picker-url'), dataType: 'json',
-            data: { category: category, term: term.value, inputType: type.value, afterId: afterId }
+            data: { category: category, term: term.value, inputType: type.value, station: station.value, afterId: afterId }
         }).done(function (data) {
             var selected = type.value;
+            var selectedStation = station.value;
             var i;
             type.textContent = '';
             type.appendChild(new Option('Všechny elektrické typy', ''));
             for (i = 0; i < data.types.length; i += 1) { type.appendChild(new Option(data.types[i], data.types[i])); }
             type.value = selected;
+            station.textContent = '';
+            station.appendChild(new Option('Všechny stanice', ''));
+            var stations = data.stations || [];
+            for (i = 0; i < stations.length; i += 1) { station.appendChild(new Option(pad(stations[i]), String(stations[i]))); }
+            station.value = selectedStation;
             for (i = 0; i < data.rows.length; i += 1) {
                 var item = data.rows[i];
                 var row = document.createElement('tr');
-                cell(row, String(item.id)); cell(row, item.name); cell(row, item.type);
+                cell(row, String(item.id)); cell(row, item.station === null ? "—" : pad(item.station)); cell(row, pad(item.input)); cell(row, item.name); cell(row, item.type);
                 cell(row, item.powerUnit); cell(row, item.energyUnit);
                 var action = cell(row, '');
                 if (item.assigned) {
@@ -83,13 +95,15 @@
             tabs[i].tabIndex = active ? 0 : -1;
         }
         category = tab.getAttribute('data-picker-tab');
+        station.value = '';
         results.setAttribute('aria-labelledby', tab.id);
         load(false);
     }
     modal.addEventListener('shown.bs.modal', function () {
         if (!table && window.DataTable) {
             table = new window.DataTable(modal.querySelector('#picker-table'), {
-                paging: false, searching: false, ordering: false, info: false, autoWidth: false,
+                paging: false, searching: false, ordering: true, order: [], info: false, autoWidth: false,
+                columnDefs: [{ targets: 7, orderable: false }],
                 layout: { topStart: null, topEnd: null, bottomStart: null, bottomEnd: null },
                 language: { emptyTable: 'Seznam je prázdný.' }
             });
@@ -110,6 +124,7 @@
         event.preventDefault(); event.stopPropagation(); tabs[index].focus(); activate(tabs[index]);
     });
     $(modal).find('[data-picker-search]').on('submit', function (event) { event.preventDefault(); load(false); });
+    station.addEventListener('change', function () { load(false); });
     type.addEventListener('change', function () { load(false); });
     more.addEventListener('click', function () { load(true); });
 }(window.jQuery));

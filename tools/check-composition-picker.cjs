@@ -25,9 +25,10 @@ const assets = path.resolve('src/ACEnergo.Web/wwwroot');
                     const type = url.searchParams.get('inputType');
                     const term = url.searchParams.get('term') || '';
                     const after = Number(url.searchParams.get('afterId') || 0);
-                    data.rows = data.rows.filter(row => (!type || row.type === type) && (!term || row.name.toLowerCase().includes(term.toLowerCase())) && row.id > after);
+                    const station = url.searchParams.get('station');
+                    data.rows = data.rows.filter(row => (!station || row.station === Number(station)) && (!type || row.type === type) && (!term || row.name.toLowerCase().includes(term.toLowerCase())) && row.id > after);
                     // Synthetic >100 continuation case exercises the client's append/cursor behavior.
-                    if (term === 'more') { data.rows = [{id:after ? 10005 : 10004,name:'Continuation',type:'E',powerUnit:'kW',energyUnit:'kWh',assigned:false}]; data.hasMore = !after; }
+                    if (term === 'more') { data.rows = [{id:after ? 10005 : 10004,station:1,input:after ? 5 : 4,name:'Continuation',type:'E',powerUnit:'kW',energyUnit:'kWh',assigned:false}]; data.hasMore = !after; }
                     return route.fulfill({contentType:'application/json',body:JSON.stringify(data)});
                 }
                 let file = url.pathname === '/' ? html : path.join(assets, url.pathname);
@@ -47,16 +48,29 @@ const assets = path.resolve('src/ACEnergo.Web/wwwroot');
             await page.waitForSelector('#composition-picker.show');
             await page.waitForFunction(()=>document.querySelector('[data-picker-rows]').textContent.includes('Assigned test'));
             await page.waitForFunction(()=>document.querySelector('#picker-term')===document.activeElement);
-            if (await page.locator('[data-picker-rows] tr').count() !== 2) throw Error('Initial list');
+            if (await page.locator('[data-picker-rows] tr').count() !== 3) throw Error('Initial list');
             if (await page.locator('[data-picker-rows] tr').first().locator('button').count()) throw Error('Assigned item selectable');
+            const address = await page.locator('[data-picker-rows] tr').nth(1).locator('td').allTextContents();
+            if(address[0]!=='10003'||address[1]!=='0001'||address[2]!=='0003')throw Error('Physical address columns');
+            if(!await page.locator('#picker-table').evaluate(e=>e.classList.contains('dataTable')))throw Error('DataTables not initialized');
+            await page.locator('#picker-table thead th').nth(1).click();
+            await page.locator('#picker-table thead th').nth(1).click();
+            await page.waitForFunction(()=>document.querySelector('[data-picker-rows] tr td').textContent==='20003');
+            const tabColors=await page.evaluate(()=>[getComputedStyle(document.querySelector('#picker-physical-tab')).backgroundColor,getComputedStyle(document.querySelector('#picker-fictitious-tab')).backgroundColor]);
+            if(tabColors[0]===tabColors[1])throw Error('Active tab not distinguished');
+            await page.locator('#picker-station').selectOption('2');
+            await page.waitForFunction(()=>document.querySelector('#picker-results').getAttribute('aria-busy')==='false'&&document.querySelector('[data-picker-rows]').textContent.includes('20003')&&!document.querySelector('[data-picker-rows]').textContent.includes('10003'));
+            await page.locator('#picker-station').selectOption('');
             await page.locator('#picker-type').selectOption('E');
-            await page.waitForFunction(()=>document.querySelector('#picker-results').getAttribute('aria-busy')==='false'&&document.querySelectorAll('[data-picker-rows] tr').length===1&&document.querySelector('[data-picker-rows]').textContent.includes('Test candidate'));
+            await page.waitForFunction(()=>document.querySelector('#picker-results').getAttribute('aria-busy')==='false'&&document.querySelectorAll('[data-picker-rows] tr').length===2&&document.querySelector('[data-picker-rows]').textContent.includes('Test candidate'));
             await page.locator('#picker-type').selectOption('');
             await page.locator('#picker-fictitious-tab').click();
             await page.waitForFunction(()=>document.querySelector('[data-picker-rows]').textContent.includes('50000001'));
+            const virtualAddress = await page.locator('[data-picker-rows] tr').first().locator('td').allTextContents();
+            if(virtualAddress[1]!=='5000'||virtualAddress[2]!=='0001')throw Error('Virtual address columns');
             if (await page.locator('#picker-results').getAttribute('aria-labelledby') !== 'picker-fictitious-tab') throw Error('ARIA tab relationship');
             await page.locator('#picker-fictitious-tab').press('ArrowLeft');
-            await page.waitForFunction(()=>document.querySelectorAll('[data-picker-rows] tr').length===2);
+            await page.waitForFunction(()=>document.querySelectorAll('[data-picker-rows] tr').length===3);
             await page.locator('#picker-term').fill('missing');
             await page.locator('[data-picker-search] button').click();
             await page.waitForFunction(()=>document.querySelector('[data-picker-status]').textContent.includes('Žádné'));

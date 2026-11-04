@@ -109,3 +109,11 @@ Reject(()=>ElectricityGroupCompositionEditor.ValidatePicker("centres","analog",n
 Reject(()=>ElectricityGroupCompositionEditor.ValidatePicker("centres","physical",null,null,-1));
 Reject(()=>ElectricityGroupCompositionEditor.ValidatePicker("centres","physical",new string('x',81),null,0));
 Console.WriteLine("PASS picker source scope, filter limits and cursor validation.");
+
+Equal((1,3),((int)ElectricityGroupCompositionEditor.AddressParts("physical",10003).Station!,ElectricityGroupCompositionEditor.AddressParts("physical",10003).Input));
+Equal((5000,1),((int)ElectricityGroupCompositionEditor.AddressParts("fictitious",50000001).Station!,ElectricityGroupCompositionEditor.AddressParts("fictitious",50000001).Input));
+Equal<int?>(null,ElectricityGroupCompositionEditor.AddressParts("centres",16).Station);
+Equal(16,ElectricityGroupCompositionEditor.AddressParts("centres",16).Input);
+Reject(()=>ElectricityGroupCompositionEditor.ValidatePicker("plants","centres",null,null,0,1));
+Reject(()=>ElectricityGroupCompositionEditor.ValidatePicker("centres","physical",null,null,0,214749));
+Console.WriteLine("PASS legacy station/input decomposition and station filter scope.");

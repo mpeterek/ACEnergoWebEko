@@ -54,6 +54,13 @@ internal static class WindowsGroupReadCheck
                     var first = composition.Browse(kind, groups[0].Id, category, null, null, 0).Rows.FirstOrDefault();
                     if (first is not null && composition.Browse(kind, groups[0].Id, category, null, first.Type, 0).Rows.Any(row => !string.Equals(row.Type, first.Type, StringComparison.OrdinalIgnoreCase)))
                         throw new Exception("Filtr typu neodpovídá výběru.");
+                    if (first is not null && category != "centres")
+                    {
+                        var station=first.Id/10000;
+                        var stationRows=composition.Browse(kind,groups[0].Id,category,null,null,0,station);
+                        if(stationRows.Rows.Any(row=>row.Id/10000!=station)||stationRows.Stations is null||!stationRows.Stations.Contains(station))
+                            throw new Exception("Filtr nebo seznam stanic neodpovídá číslování vstupů.");
+                    }
                     Console.WriteLine($"PASS: nativní výběr {kind}/{category}, konečný kurzor {afterId}.");
                 }
                 catch (Exception ex) { failed++; Console.WriteLine($"FAIL: výběr {kind}/{category}: {ex}"); }

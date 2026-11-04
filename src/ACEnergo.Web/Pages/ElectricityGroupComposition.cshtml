@@ -23,26 +23,26 @@
 @if(Model.CanEdit){<button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#composition-picker"><i class="fa-solid fa-plus" aria-hidden="true"></i> Vybrat ze seznamu</button>}
 </div>
 @if(Model.Snapshot.Rows.Length==0){<p>Konfigurace nemá přiřazené žádné položky.</p>}
+@if(Model.Kind=="plants"&&Model.Snapshot.MainMeter<=0){<p class="text-secondary">Přepočet ztrát vyžaduje přiřazené hlavní měření závodu.</p>}
 @foreach(var row in Model.Snapshot.Rows){
  var definition=Model.Data.Components.FirstOrDefault(component=>component.Input==row.Id);
- <article class="composition-item" id="component-@row.Id">
- <h3>@ElectricityGroupCompositionEditor.ComponentLabel(Model.Kind!,row.Id) · @(definition?.Name??"Nedefinováno")</h3>
- <p>Výkon: @(definition?.PowerUnit??"Neuvedeno") · Energie: @(definition?.EnergyUnit??"Neuvedeno")</p>
+ <article class="composition-item composition-row" id="component-@row.Id">
+ <div class="composition-identity"><h3>@ElectricityGroupCompositionEditor.ComponentLabel(Model.Kind!,row.Id) · @(definition?.Name??"Nedefinováno")</h3>
+ <p>Výkon: @(definition?.PowerUnit??"Neuvedeno") · Energie: @(definition?.EnergyUnit??"Neuvedeno")</p></div>
  @if(Model.CanEdit){
  <form method="post" asp-page-handler="Update" class="composition-form">
  <input type="hidden" name="Version" value="@Model.Version"/><input type="hidden" name="ChildId" value="@row.Id"/>
  @if(Model.Kind=="plants"){
- @if(Model.Snapshot.MainMeter<=0){<p>Přepočet ztrát vyžaduje přiřazené hlavní měření závodu.</p>}
- <label class="composition-check"><input type="checkbox" name="Recalculate" value="true" checked="@(row.Recalculate==true)"/> Zahrnout do přepočtu ztrát</label>
+ <label class="composition-check"><input type="checkbox" name="Recalculate" value="true" checked="@(row.Recalculate==true)"/> Přepočet ztrát</label>
  }else{
  <label for="coef-@row.Id">Koeficient P</label><input id="coef-@row.Id" name="Coefficient" value="@row.Coefficient" inputmode="decimal" required/>
  }
- <button class="button button-primary" type="submit">Uložit položku</button>
+ <button class="button button-primary" type="submit">Uložit</button>
  </form>
  <form method="post" asp-page-handler="Remove" class="composition-remove">
  <input type="hidden" name="Version" value="@Model.Version"/><input type="hidden" name="ChildId" value="@row.Id"/>
- <label class="composition-check"><input type="checkbox" name="ConfirmRemoval" value="true" required/> Potvrdit odebrání této vazby</label>
- <button class="button" type="submit">Odebrat položku</button>
+ <label class="composition-check"><input type="checkbox" name="ConfirmRemoval" value="true" required/> Potvrdit odebrání</label>
+ <button class="button" type="submit">Odebrat</button>
  </form>
  }else{<p>@(Model.Kind=="plants"?"Přepočet ztrát: "+(row.Recalculate is null?"Neuvedeno":row.Recalculate.Value?"Ano":"Ne"):"Koeficient P: "+(row.Coefficient??"Neuvedeno"))</p>}
  </article>
@@ -78,13 +78,14 @@
 }
 <form class="picker-filters" data-picker-search>
 <div><label for="picker-term">Název nebo ID</label><input id="picker-term" type="search" maxlength="80" class="form-control"/></div>
+<div data-picker-station-field hidden="@(Model.Kind=="plants")"><label for="picker-station">Číslo stanice</label><select id="picker-station" class="form-select"><option value="">Všechny stanice</option></select></div>
 <div><label for="picker-type">Typ vstupu</label><select id="picker-type" class="form-select"><option value="">Všechny elektrické typy</option></select></div>
 <button class="btn btn-outline-primary" type="submit">Vyhledat</button>
 </form>
 <form method="post" asp-page-handler="Add" id="picker-add-form"><input type="hidden" name="Version" value="@Model.Version"/></form>
 <div id="picker-results" role="@(Model.Kind=="centres"?"tabpanel":null)" aria-labelledby="@(Model.Kind=="centres"?"picker-physical-tab":null)" aria-busy="false">
 <p data-picker-status role="status" class="text-secondary">Seznam se načte po otevření okna.</p>
-<div class="table-responsive picker-table-scroll"><table id="picker-table" class="table table-hover align-middle"><caption class="visually-hidden">Dostupné položky elektřiny podle typu vstupu</caption><thead><tr><th>ID</th><th>Název</th><th>Typ</th><th>Výkon</th><th>Energie</th><th>Výběr</th></tr></thead><tbody data-picker-rows></tbody></table></div>
+<div class="table-responsive picker-table-scroll"><table id="picker-table" class="table table-hover align-middle"><caption class="visually-hidden">Dostupné položky elektřiny podle typu vstupu</caption><thead><tr><th>ID</th><th>Adresa stanice</th><th>@(Model.Kind=="plants"?"Č. střediska":"Č. vstupu")</th><th>Název</th><th>Typ</th><th>Výkon</th><th>Energie</th><th>Výběr</th></tr></thead><tbody data-picker-rows></tbody></table></div>
 <button class="btn btn-outline-secondary" type="button" data-picker-more hidden>Načíst další položky</button>
 </div>
 </div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button></div>

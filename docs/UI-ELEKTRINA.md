@@ -148,3 +148,35 @@ po načtení další dávky přejde na první novou dostupnou položku. Tím zů
 klávesnice uvnitř okna i po zmizení tlačítka pro pokračování. Zohledněna je
 vlastní obsluha fokusu AdminLTE. Vlastní JS je ES5 a nové soubory se minifikují
 v Release přes stávající bundleconfig.json.
+
+## Adresy vstupů, stanice a hustší řádky
+
+Modální DataTables má hned za ID sloupce Adresa stanice a Č. vstupu. Podle
+Knihovna/Utility.asp / StrFormatStaniceVstup se číslo stanice získá celočíselným
+dělením ID číslem 10000 a číslo vstupu zbytkem po dělení. Obě části se doplní
+na čtyři místa: 10003 → 0001 / 0003; 50000001 → 5000 / 0001. U fiktivních
+vstupů zůstává původní ID nezměněné. Původní strom středisek pro ně používal
+značku (Fikt); samostatné číslování skupin zůstává v hlavním stromu zachované.
+Střediska vybíraná do závodu nemají hardwarovou stanici: zobrazí se — a jejich
+vlastní číslo střediska, jak odpovídá původním SeznamStrediskaPolozky.asp a
+SeznamZavodyPolozky.asp.
+
+Filtr Číslo stanice obsahuje stanice dostupné v celé elektrické kategorii,
+nejen v prvních 100 řádcích. Server používá rozsah ID od stanice×10000 do
+(stanice+1)×10000, s horní hranicí vyloučenou. Parametry rozsahu jsou Double,
+aby bezpečně pokryly hranice celého rozsahu Int32 a nevyžadovaly typ BigInt
+v MDB. Metadata stanic používají DISTINCT Fix(ID/10000) nad stejným filtrem
+energie a archivace. Při přepnutí podružné/fiktivní záložky se stanice resetuje.
+U výběru středisek je tento filtr skrytý a na serveru odmítnutý.
+
+DataTables nyní umožňuje řazení sloupců; akční sloupec řazení nemá. Řadí se
+načtené dávky; filtr stanice, typu i názvu zůstává serverový nad celou kategorií.
+Aktivní záložka má tmavomodré pozadí, bílý tučný text a výraznou dolní hranu.
+Modál má menší písmo, odsazení buněk a filtrů. Na dotykových zařízeních se
+zachovává minimální výška ovládání a čitelnost textových polí.
+
+Přiřazené položky všech tří oddílů používají společné kompaktní řádky: název
+s jednotkami, editace koeficientu nebo příznaku a akce odebrání. Na menších
+oknech se rozložení skládá. Potvrzení odebrání i všechny formulářové hodnoty
+zůstávají zachované; upozornění na chybějící hlavní měření závodu je jediné
+nad seznamem místo opakování v každé položce.

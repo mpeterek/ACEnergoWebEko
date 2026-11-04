@@ -237,18 +237,26 @@ internal static class AuthenticatedPageChecks
             var endpoint="/ElectricityGroupComposition/"+kind+"/1?handler=Candidates&category="+category;
             var result=await Get(endpoint);
             using var json=System.Text.Json.JsonDocument.Parse(result.Html);
-            Check(result.Code==HttpStatusCode.OK&&json.RootElement.GetProperty("rows").GetArrayLength()==2,"picker initially lists items "+kind);
+            Check(result.Code==HttpStatusCode.OK&&json.RootElement.GetProperty("rows").GetArrayLength()==3,"picker initially lists items "+kind);
             Check(json.RootElement.GetProperty("rows")[0].GetProperty("assigned").GetBoolean(),"assigned picker entry flagged "+kind);
             Check((await Get(endpoint+"&inputType=E")).Html.Contains("Test candidate")&&!(await Get(endpoint+"&inputType=E")).Html.Contains("Assigned test"),"picker filters actual type "+kind);
             Role("view");Check((await Get(endpoint)).Code==HttpStatusCode.Forbidden,"viewer cannot query picker "+kind);Role("config");
             Check((await Get(endpoint+"&afterId=-1")).Code==HttpStatusCode.BadRequest,"negative picker cursor rejected "+kind);
         }
+        var physicalAddresses=await Get("/ElectricityGroupComposition/centres/1?handler=Candidates&category=physical&station=1");
+        using(var addressJson=System.Text.Json.JsonDocument.Parse(physicalAddresses.Html)){
+            var rows=addressJson.RootElement.GetProperty("rows");
+            Check(rows.GetArrayLength()==2&&rows[1].GetProperty("id").GetInt32()==10003&&rows[1].GetProperty("station").GetInt32()==1&&rows[1].GetProperty("input").GetInt32()==3,"physical address decomposition and station filter");
+        }
+        Check((await Get("/ElectricityGroupComposition/centres/1?handler=Candidates&category=physical&station=2")).Html.Contains("20003")&&!(await Get("/ElectricityGroupComposition/centres/1?handler=Candidates&category=physical&station=2")).Html.Contains("10003"),"second station isolated");
+        Check((await Get("/ElectricityGroupComposition/centres/1?handler=Candidates&category=physical&station=-1")).Code==HttpStatusCode.BadRequest,"invalid station rejected");
+        Check((await Get("/ElectricityGroupComposition/plants/1?handler=Candidates&category=centres&station=1")).Code==HttpStatusCode.BadRequest,"centres have no hardware station filter");
         var virtualPicker=await Get("/ElectricityGroupComposition/centres/1?handler=Candidates&category=fictitious");
         Check(virtualPicker.Code==HttpStatusCode.OK&&virtualPicker.Html.Contains("50000001")&&!virtualPicker.Html.Contains("10003"),"virtual tab isolated from physical rows");
         Check((await Get("/ElectricityGroupComposition/fictitious/1?handler=Candidates&category=fictitious")).Code==HttpStatusCode.BadRequest,"virtual source disallowed on fictitious group");
         Check((await Get("/ElectricityGroupComposition/centres/1?handler=Candidates&category=analog")).Code==HttpStatusCode.BadRequest,"analog source rejected");
         Check((await Get("/ElectricityGroupComposition/centres/999?handler=Candidates&category=physical")).Code==HttpStatusCode.NotFound,"picker unknown parent 404");
-        Check((await Get("/ElectricityGroupComposition/centres/1?handler=Candidates&category=physical&afterId=10003")).Html.Contains("\"rows\":[]"),"picker keyset cursor applied");
+        Check((await Get("/ElectricityGroupComposition/centres/1?handler=Candidates&category=physical&afterId=20003")).Html.Contains("\"rows\":[]"),"picker keyset cursor applied");
         if(Environment.GetEnvironmentVariable("ACE_PICKER_DIR") is string pickerDirectory){
             Directory.CreateDirectory(pickerDirectory);
             foreach(var category in new[]{"physical","fictitious"})await File.WriteAllTextAsync(Path.Combine(pickerDirectory,category+".json"),(await Get("/ElectricityGroupComposition/centres/1?handler=Candidates&category="+category)).Html);
@@ -380,10 +388,10 @@ internal static class AuthenticatedPageChecks
             var version=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(rows)));
             return new(id==16?"Středisko 16":"Test <group>",version,rows.ToArray(),5);
         }
-        public CompositionPicker Browse(string kind,int id,string category,string? search,string? inputType,int afterId){
-            _=Load(kind,id);ElectricityGroupCompositionEditor.ValidatePicker(kind,category,search,inputType,afterId);
-            var rows=category=="fictitious"?new[]{new CompositionCandidate(50000001,"Virtual test","kW","kWh","EP")}:new[]{new CompositionCandidate(10002,"Assigned test","MW","MWh","EP"),new CompositionCandidate(10003,"Test candidate","MW","MWh","E")};
-            return new(rows.Where(row=>row.Id>afterId&&(string.IsNullOrEmpty(inputType)||row.Type==inputType)&&(string.IsNullOrEmpty(search)||row.Name.Contains(search,StringComparison.OrdinalIgnoreCase))).ToArray(),false,["E","EP"]);
+        public CompositionPicker Browse(string kind,int id,string category,string? search,string? inputType,int afterId,int? station=null){
+            _=Load(kind,id);ElectricityGroupCompositionEditor.ValidatePicker(kind,category,search,inputType,afterId,station);
+            var rows=category=="fictitious"?new[]{new CompositionCandidate(50000001,"Virtual test","kW","kWh","EP")}:new[]{new CompositionCandidate(10002,"Assigned test","MW","MWh","EP"),new CompositionCandidate(10003,"Test candidate","MW","MWh","E"),new CompositionCandidate(20003,"Other station","kW","kWh","E")};
+            return new(rows.Where(row=>(station is null||row.Id/10000==station)&&row.Id>afterId&&(string.IsNullOrEmpty(inputType)||row.Type==inputType)&&(string.IsNullOrEmpty(search)||row.Name.Contains(search,StringComparison.OrdinalIgnoreCase))).ToArray(),false,["E","EP"],category=="centres"?[]:category=="fictitious"?[5000]:[1,2]);
         }
         public CompositionSearch Search(string kind,int id,string search){_=Load(kind,id);return new([new(10003,"Test candidate","MW","MWh","Vstup")],false);}
         private void Validate(string kind,int id,string version){if(Load(kind,id).Version!=version)throw new GroupConfigurationConflictException();}
