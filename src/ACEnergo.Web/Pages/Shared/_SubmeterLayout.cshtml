@@ -6,13 +6,14 @@
  var selected=ViewData["Submeter"] as SubmeterDefinition;
  var id=selected?.Input.Id??0;
  var page=Convert.ToString(ViewContext.RouteData.Values["page"]);
+ var prices=page=="/ElectricitySubmeter"&&Context.Request.Query["Section"]=="prices";
  ViewData["WideContent"]=true;
 }
 <div class="measurement-workspace" data-workspace-kind="submeters">
 <aside aria-label="Strom podružných měření">@await Component.InvokeAsync("SubmeterTree",new{selected,selectedOnly=fragment,station=ViewData["Station"] as int?,inputType=ViewData["InputType"] as string,search=ViewData["Search"] as string,afterId=ViewData["AfterId"] as int? ??0})</aside>
 <div class="workspace-content" aria-busy="false"><p class="workspace-status" data-workspace-status role="status" hidden></p>
 <div class="card"><div class="card-header workspace-heading"><strong><i class="fa-solid fa-bolt" aria-hidden="true"></i> Elektřina · Podružná měření</strong><a class="btn btn-outline-secondary btn-sm workspace-back" asp-page="/Index"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Zpět na přehled</a></div>
-@if(id>0){<nav class="card-body workspace-toolbar" aria-label="Činnosti vybraného měření"><a class="btn @(page=="/ElectricitySubmeter"?"btn-primary":"btn-outline-primary")" asp-page="/ElectricitySubmeter" asp-route-id="@id"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Informace o vstupu</a><a class="btn @(page=="/ElectricitySubmeterEvaluation"?"btn-primary":"btn-outline-primary")" asp-page="/ElectricitySubmeterEvaluation" asp-route-id="@id"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Vyhodnocení</a></nav>}
+@if(id>0){<nav class="card-body workspace-toolbar" aria-label="Činnosti vybraného měření"><a class="btn @(page=="/ElectricitySubmeter"&&!prices?"btn-primary":"btn-outline-primary")" asp-page="/ElectricitySubmeter" asp-route-id="@id"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Informace</a><a class="btn @(page=="/ElectricitySubmeterEvaluation"?"btn-primary":"btn-outline-primary")" asp-page="/ElectricitySubmeterEvaluation" asp-route-id="@id"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Vyhodnocení</a><a class="btn @(prices?"btn-primary":"btn-outline-primary")" asp-page="/ElectricitySubmeter" asp-route-id="@id" asp-route-Section="prices"><i class="fa-solid fa-coins" aria-hidden="true"></i> Ceník</a></nav>}
 </div>@RenderBody()
 </div></div>
 @section Styles{

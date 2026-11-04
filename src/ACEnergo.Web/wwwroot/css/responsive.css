@@ -51,6 +51,7 @@ input, select, textarea, .form-control, .form-select { min-width: 0; }
 .measurement-tree summary { padding: .35rem .25rem; }
 .tree-components li { margin: .4rem 0; }
 .workspace-tree h2 { font-size: .95rem; }
+.workspace-content h1, .workspace-heading strong { min-width:0; overflow-wrap:anywhere; }
 .workspace-content, .workspace-heading, .period-form, .composition-form, .composition-search { min-width: 0; }
 .composition-item { padding: .7rem 0; }
 .composition-form, .composition-remove, .composition-search { margin: .65rem 0; gap: .5rem; }
@@ -109,8 +110,9 @@ input, select, textarea, .form-control, .form-select { min-width: 0; }
 .configuration-help { font-size:.85rem; color:var(--color-muted); margin:.5rem 0 0; }
 .configuration-actions { display:flex; justify-content:flex-end; border-top:1px solid var(--color-border); margin-top:1rem; padding-top:.85rem; }
 .configuration-actions .btn { width:auto; }
-.configuration-summary { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:.5rem 1rem; }
-.configuration-summary dd { margin:0; overflow-wrap:anywhere; }
+.configuration-summary { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); gap:.5rem 1rem; }
+.configuration-summary dt, .configuration-summary dd { min-width:0; overflow-wrap:anywhere; }
+.configuration-summary dd { margin:0; }
 @media(max-width:575px){ .configuration-grid { grid-template-columns:minmax(0,1fr); } .configuration-summary { grid-template-columns:minmax(0,1fr); gap:.25rem; } }
 
 .stacked-form .button-primary { width:auto; }

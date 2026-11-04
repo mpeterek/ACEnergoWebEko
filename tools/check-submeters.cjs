@@ -19,8 +19,8 @@ const fixtures=path.resolve(process.argv[2]),assets=path.resolve('src/ACEnergo.W
     }
     let name=null;
     if(url.pathname==='/ElectricitySubmeters')name='submeters';
-    if(url.pathname==='/ElectricitySubmeter/10003')name='submeter';
-    if(url.pathname==='/ElectricitySubmeterEvaluation/10003')name='submeter-'+(url.searchParams.get('Mode')||'month');
+    if(url.pathname==='/ElectricitySubmeter/10003')name=url.searchParams.get('Section')==='prices'?'submeter-prices':'submeter';
+    if(url.pathname==='/ElectricitySubmeterEvaluation/10003')name='submeter-'+(url.searchParams.get('Mode')||'month')+(url.searchParams.get('View')&&url.searchParams.get('View')!=='overview'&&!(url.searchParams.get('Mode')==='year'&&url.searchParams.get('View')==='costs')?'-'+url.searchParams.get('View'):'');
     if(name){
      if(req.isNavigationRequest())documents++;
      const fragment=req.headers()['x-workspace-request']==='1';
@@ -49,19 +49,41 @@ const fixtures=path.resolve(process.argv[2]),assets=path.resolve('src/ACEnergo.W
    await link.click();await page.waitForSelector('h1');await page.waitForFunction(()=>document.querySelector('h1').textContent.includes('submeter'));await stable();
    if(await page.locator('submeter').count())throw Error('Unsafe database name');
    await page.locator('.workspace-toolbar a[href*="Evaluation"]').click();
-   await page.waitForSelector('[data-evaluation-table].dataTable');await stable();
-   if(await page.locator('[data-evaluation-table] tbody tr').count()>24)throw Error('Evaluation table not paged');
+   await page.waitForSelector('.consumption-chart svg');await stable();
+   if(await page.locator('table').count())throw Error('Overview mixes tables and charts');
    const exportHref=await page.locator('[data-native-navigation]').getAttribute('href');
    if(!exportHref.includes('handler=Export')||!exportHref.includes('Date='))throw Error('CSV loses evaluation parameters');
    for(const mode of ['day','year','month']){
     await page.locator('#Mode').selectOption(mode);await page.locator('#Date').fill('2026-10-01');
     await page.locator('[data-workspace-form] button').click();
     await page.waitForFunction(mode=>location.search.includes('Mode='+mode)&&document.querySelector('.workspace-content').getAttribute('aria-busy')==='false',mode);await stable();
-    if(await page.evaluate(()=>DataTable.settings.length)!==1)throw Error('Leaked DataTables');
+    if(await page.evaluate(()=>DataTable.settings.length)!==0)throw Error('Leaked DataTables in overview');
     if(!await page.locator('.consumption-chart svg').isVisible())throw Error('Missing chart');
    }
    await page.goBack();await page.waitForFunction(()=>location.search.includes('Mode=year')&&document.querySelector('.workspace-content').getAttribute('aria-busy')==='false');await stable();
    if(documents!==1)throw Error('Evaluation caused a document reload');
+   await page.locator('.evaluation-views a[href*="View=values"]').click();
+   await page.waitForSelector('[data-evaluation-table].dataTable');await stable();
+   if(await page.locator('svg').count()||await page.locator('[data-evaluation-table] thead th').count()!==5)throw Error('Measurement table mixes financial columns or chart');
+   if(await page.locator('[data-evaluation-table] tbody tr').count()>24)throw Error('Evaluation table not paged');
+   await page.locator('.evaluation-views a[href*="View=overview"]').click();await page.waitForSelector('.consumption-chart svg');await stable();
+   await page.locator('#Mode').selectOption('month');await page.locator('[data-workspace-form] button').click();await page.waitForFunction(()=>location.search.includes('Mode=month')&&document.querySelector('.workspace-content').getAttribute('aria-busy')==='false');
+   await page.locator('.evaluation-views a[href*="View=costs"]').click();await page.waitForSelector('[data-evaluation-table]');await stable();
+   if(await page.locator('svg').count()||await page.locator('table').count()!==1||!await page.locator('[data-evaluation-table] thead').textContent().then(t=>t.includes('Kč')))throw Error('Costs not separated from overview');
+   await page.locator('#Mode').selectOption('year');await page.locator('[data-workspace-form] button').click();await page.waitForSelector('.consumption-chart svg');await stable();
+   if(await page.locator('input[name="View"]').inputValue()!=='overview')throw Error('Year retained an unavailable costs view');
+   await page.locator('.workspace-toolbar a[href*="Section=prices"]').click();await page.waitForSelector('[data-price-table]');await stable();
+   if(await page.locator('.configuration-summary').count())throw Error('Prices mixed into input information');
+   await page.locator('.workspace-toolbar a[href$="/10003"]').first().click();await page.waitForSelector('.configuration-summary');await stable();
+   if(await page.locator('table').count())throw Error('Input information contains prices');
+   await page.locator('h1').evaluate(el=>el.textContent='Dlouhy_nazev_mereni_bez_mezer_123456789012345678901234567890');
+   // Long real names/units must wrap inside their own cells on tablet and mobile.
+   const overlap=await page.locator('.configuration-summary').evaluate(el=>{
+    const label=el.querySelector('dt'),value=el.querySelector('dd');label.textContent='Velmi dlouhý popisek konfigurace a jednotky měření';value.textContent='Velmi_dlouha_hodnota_bez_mezer_123456789012345678901234567890';
+    const bounds=el.getBoundingClientRect(),a=label.getBoundingClientRect(),b=value.getBoundingClientRect();
+    return a.right>bounds.right+1||b.right>bounds.right+1||(Math.min(a.right,b.right)-Math.max(a.left,b.left)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>1);
+   });
+   if(overlap)throw Error('Configuration labels overlap values');
    // Catalogue filtering, retry, stale response cancellation and station address.
    await page.locator('[data-submeter-station]').selectOption('2');await page.waitForFunction(()=>document.querySelectorAll('[data-tree-item]').length===1);
    if(!await page.locator('[data-tree-item] summary').textContent().then(s=>s.includes('0002/0003')))throw Error('Station address wrong');

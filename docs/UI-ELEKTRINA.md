@@ -218,3 +218,26 @@ aby se po plném odeslání formuláře zachovala pozice i při změně výšky 
 větví. Pokud je úložiště zakázané, samotná AJAX navigace dál zachovává strom.
 Ukládání zůstává nativním POST se stejnými poli, CSRF tokeny a serverovou
 validací. Rozpracované hodnoty jiného vybraného měření se neukládají automaticky.
+
+## Přehledné rozdělení podružných měření
+
+Horní navigace má tři samostatné části: **Informace**, **Vyhodnocení** a
+**Ceník**. Informace o vstupu neobsahují cenovou tabulku; čtecí ceník
+zůstává na stejné adrese vstupu s parametrem `Section=prices`.
+
+Vyhodnocení má volby **Přehled**, **Spotřeba v tabulce** a **Náklady**
+(parametr `View=overview|values|costs`). Výchozí přehled zobrazuje spotřebu,
+maximum a graf. Tabulka spotřeb obsahuje pouze naměřené údaje a úplnost
+archivu. Náklady a případný tarifní rozpad jsou samostatným zobrazením;
+jednotkové ceny jsou dostupné v ceníku. Rok nabízí přehled a tabulku;
+přechod z nákladů na rok zobrazí přehled.
+
+Nastavení podrobnosti, výběr tarifů a technické vysvětlení jsou ve sbalených
+sekcích. Na přehledu se upozorňuje na neúplnost archivu, cenová upozornění
+se zobrazují u nákladů. Výpočty, export, oprávnění a databázové operace se
+nemění. Záložky a formuláře zachovávají AJAX navigaci i běžné odkazy bez JS.
+
+Sdílený seznam popisků a hodnot používá sloupce, které mohou zalamovat
+obsah, a dlouhé nadpisy měření zůstávají uvnitř panelu. Ověření zahrnuje
+dlouhé názvy a hodnoty na tabletu a mobilu, přepínání všech zobrazení,
+roční přehled po nákladech a zachování levého stromu.

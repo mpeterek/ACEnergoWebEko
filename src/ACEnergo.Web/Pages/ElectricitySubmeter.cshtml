@@ -1,11 +1,15 @@
 @page "{id:int}"
 @model ElectricitySubmeterModel
 @using ACEnergo.Web.Domain
-@{Layout="/Pages/Shared/_SubmeterLayout.cshtml";ViewData["Title"]="Elektřina – informace o podružném vstupu";}
+@{Layout="/Pages/Shared/_SubmeterLayout.cshtml";ViewData["Title"]=Model.Section=="prices"?"Elektřina – ceník vstupu":"Elektřina – informace o podružném vstupu";}
 <h1>@(Model.Data?.Input.Name??"Podružné měření")</h1>
 @if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
 @if(Model.Data is {} data){
+@if(Model.Section!="prices"){
 <section class="panel"><h2>Informace o vstupu</h2><dl class="configuration-summary"><dt>ID</dt><dd>@data.Input.Id</dd><dt>Adresa stanice / číslo vstupu</dt><dd>@ElectricityFictitiousComposition.Address(data.Input.Id)</dd><dt>Typ energie</dt><dd>@data.Input.Type</dd><dt>Jednotka práce</dt><dd>@(data.Input.WorkUnit??"Neuvedeno")</dd><dt>Jednotka výkonu</dt><dd>@(data.Input.PowerUnit??"Neuvedeno")</dd><dt>Posun vyhodnocení den / měsíc / rok</dt><dd>@data.DayShift / @data.MonthShift / @data.YearShift hod.</dd></dl></section>
+}else{
 <section class="panel table-scroll"><h2>Společné ceny typu @data.Input.Type</h2><p>Ceny používají všechny vstupy stejného elektrického typu. Jednotka ceny: Kč / @(data.Input.WorkUnit??"neuvedená jednotka").</p>
 <table class="data-table price-table" data-price-table><thead><tr><th scope="col">Platnost od</th><th scope="col">Režim</th><th scope="col">Jednotná</th><th scope="col">Vysoký tarif</th><th scope="col">Nízký tarif</th><th scope="col">Víkendový tarif</th></tr></thead><tbody>@foreach(var row in data.Prices){<tr><td>@(row.EffectiveAt?.ToString("dd.MM.yyyy HH:mm:ss")??"Bez data")</td><td>@(row.Tariff==true?"Tarifní":row.Tariff==false?"Jednotná":"Neuvedeno")</td>@for(var i=0;i<4;i++){<td>@ElectricityTypePrices.Display(row.Values[i])</td>}</tr>}</tbody></table></section>
+}
+
 }

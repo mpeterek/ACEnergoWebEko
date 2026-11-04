@@ -14,6 +14,7 @@ public class ElectricitySubmeterEvaluationModel(IElectricitySubmeterEvaluation e
     [BindProperty(SupportsGet=true)]public string? Date{get;set;}
     [BindProperty(SupportsGet=true)]public string? Interval{get;set;}
     [BindProperty(SupportsGet=true)]public int? MainMeterId{get;set;}
+    [BindProperty(SupportsGet=true)]public string? View{get;set;}
     public SubmeterEvaluation? Data{get;private set;}
     public MainMeterChoice[] MainMeters{get;private set;}=[];
     public string Title=>Mode=="day"?"Denní vyhodnocení":Mode=="year"?"Roční vyhodnocení":"Měsíční vyhodnocení";
@@ -22,7 +23,9 @@ public class ElectricitySubmeterEvaluationModel(IElectricitySubmeterEvaluation e
     public IActionResult OnGet()=>Load(false);
     public IActionResult OnGetExport()=>Load(true);
     private IActionResult Load(bool export){
-        Mode??="month";Interval??="quarter";
+        Mode??="month";Interval??="quarter";View??="overview";
+        if(View is not ("overview" or "values" or "costs"))return BadRequest("Neplatné zobrazení vyhodnocení.");
+        if(Mode=="year"&&View=="costs"){View="overview";ModelState.Remove(nameof(View));}
         if(Date is null&&!Request.Query.ContainsKey(nameof(Date)))Date=DateTime.Today.ToString("yyyy-MM-dd",CultureInfo.InvariantCulture);
         if(!ModelState.IsValid||!DateOnly.TryParseExact(Date,"yyyy-MM-dd",CultureInfo.InvariantCulture,DateTimeStyles.None,out var date))return BadRequest("Neplatné datum vyhodnocení; použijte RRRR-MM-DD.");
         try{

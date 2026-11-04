@@ -365,6 +365,8 @@ internal static class AuthenticatedPageChecks
         var submeter=await Get("/ElectricitySubmeter/10003");
         Check(submeter.Code==HttpStatusCode.OK&&submeter.Html.Contains("&lt;submeter&gt;")&&!submeter.Html.Contains("<submeter>"),"physical name encoded");
         Check(submeter.Html.Contains("0001/0003")&&submeter.Html.Contains("kWh"),"physical address and work unit");
+        Check(!submeter.Html.Contains("data-price-table"),"physical information separate from prices");
+        var separatePrices=await Get("/ElectricitySubmeter/10003?Section=prices");Check(separatePrices.Code==HttpStatusCode.OK&&separatePrices.Html.Contains("data-price-table")&&!separatePrices.Html.Contains("<h2>Informace o vstupu"),"physical prices separate page state");
         Check((await Get("/ElectricitySubmeter/50000001")).Code==HttpStatusCode.NotFound,"virtual ID cannot be physical");
         Check((await Get("/ElectricitySubmeter/999")).Code==HttpStatusCode.NotFound,"unknown physical ID");
         var tree=await Get("/ElectricitySubmeters?handler=Tree&Station=1&InputType=EU");
@@ -377,15 +379,26 @@ internal static class AuthenticatedPageChecks
         using(var parsed=System.Text.Json.JsonDocument.Parse(next.Html))Check(parsed.RootElement.GetProperty("rows")[0].GetProperty("id").GetInt32()==10101,"physical keyset continuation");
         foreach(var mode in new[]{"day","month","year"}){
             var route="/ElectricitySubmeterEvaluation/10003?Mode="+mode+"&Date=2026-10-01&Interval=hour";
-            var result=await Get(route);Check(result.Code==HttpStatusCode.OK&&result.Html.Contains("data-evaluation-table")&&result.Html.Contains("<svg"),"physical evaluation view "+mode);
+            var result=await Get(route);Check(result.Code==HttpStatusCode.OK&&!result.Html.Contains("data-evaluation-table")&&result.Html.Contains("<svg"),"physical evaluation view "+mode);
             var expected=mode=="day"?"96":mode=="month"?"2976":"32160";
             Check(WebUtility.HtmlDecode(result.Html).Contains(expected),"physical known consumption "+mode);
             using var request=new HttpRequestMessage(HttpMethod.Get,route);request.Headers.Add("X-Workspace-Request","1");
             using var fragment=await client.SendAsync(request);var fragmentHtml=await fragment.Content.ReadAsStringAsync();
             Check(fragment.StatusCode==HttpStatusCode.OK&&fragmentHtml.Contains("workspace-content")&&!fragmentHtml.Contains("<script")&&fragment.Headers.CacheControl?.NoStore==true,"physical AJAX fragment "+mode);
             if(Environment.GetEnvironmentVariable("ACE_RESPONSIVE_DIR") is string folder){await File.WriteAllTextAsync(Path.Combine(folder,"submeter-"+mode+".html"),result.Html);await File.WriteAllTextAsync(Path.Combine(folder,"fragment-submeter-"+mode+".html"),fragmentHtml);}
+            foreach(var section in mode=="year"?new[]{"values"}:new[]{"values","costs"}){
+                var detail=await Get(route+"&View="+section);var html=WebUtility.HtmlDecode(detail.Html);
+                Check(detail.Code==HttpStatusCode.OK&&html.Contains("data-evaluation-table")&&!html.Contains("<svg"),"separate evaluation result "+mode+"/"+section);
+                Check(section=="costs"?html.Contains("<th scope=\"col\">Náklady (Kč)</th>"):!html.Contains("<th scope=\"col\">Náklady (Kč)</th>"),"measurement and cost columns separate "+mode+"/"+section);
+                if(Environment.GetEnvironmentVariable("ACE_RESPONSIVE_DIR") is string detailFolder){
+                    await File.WriteAllTextAsync(Path.Combine(detailFolder,"submeter-"+mode+"-"+section+".html"),detail.Html);
+                    using var req=new HttpRequestMessage(HttpMethod.Get,route+"&View="+section);req.Headers.Add("X-Workspace-Request","1");using var resp=await client.SendAsync(req);await File.WriteAllTextAsync(Path.Combine(detailFolder,"fragment-submeter-"+mode+"-"+section+".html"),await resp.Content.ReadAsStringAsync());
+                }
+            }
         }
-        foreach(var query in new[]{"Mode=bad","Date=2026-02-30","Date=","Interval=minute","MainMeterId=-1"})Check((await Get("/ElectricitySubmeterEvaluation/10003?"+query)).Code==HttpStatusCode.BadRequest,"physical invalid evaluation "+query);
+        foreach(var query in new[]{"Mode=bad","Date=2026-02-30","Date=","Interval=minute","MainMeterId=-1","View=bad"})Check((await Get("/ElectricitySubmeterEvaluation/10003?"+query)).Code==HttpStatusCode.BadRequest,"physical invalid evaluation "+query);
+        var yearFromCosts=await Get("/ElectricitySubmeterEvaluation/10003?Mode=year&Date=2026-10-01&View=costs");
+        Check(yearFromCosts.Code==HttpStatusCode.OK&&yearFromCosts.Html.Contains("<svg")&&!yearFromCosts.Html.Contains("data-evaluation-table"),"year from costs returns clear overview");
         Check((await Get("/ElectricitySubmeterEvaluation/10003")).Code==HttpStatusCode.OK,"physical default period valid");
         using(var csv=await client.GetAsync("/ElectricitySubmeterEvaluation/10003?handler=Export&Mode=day&Date=2026-10-01&Interval=hour")){
             var bytes=await csv.Content.ReadAsByteArrayAsync();var text=System.Text.Encoding.UTF8.GetString(bytes);
@@ -393,8 +406,9 @@ internal static class AuthenticatedPageChecks
             Check(bytes.Take(3).SequenceEqual(new byte[]{239,187,191})&&text.Contains("2026-10-01 06:00")&&text.Contains("kWh")&&text.Split('\n',StringSplitOptions.RemoveEmptyEntries).Length==25,"physical CSV BOM, shift, units and hourly rows");
         }
         if(Environment.GetEnvironmentVariable("ACE_RESPONSIVE_DIR") is string submeterFolder){
-            foreach(var (name,route) in new[]{("submeters","/ElectricitySubmeters"),("submeter","/ElectricitySubmeter/10003")}){var html=(await Get(route)).Html;await File.WriteAllTextAsync(Path.Combine(submeterFolder,name+".html"),html);}
+            foreach(var (name,route) in new[]{("submeters","/ElectricitySubmeters"),("submeter","/ElectricitySubmeter/10003"),("submeter-prices","/ElectricitySubmeter/10003?Section=prices")}){var html=(await Get(route)).Html;await File.WriteAllTextAsync(Path.Combine(submeterFolder,name+".html"),html);}
             using var request=new HttpRequestMessage(HttpMethod.Get,"/ElectricitySubmeter/10003");request.Headers.Add("X-Workspace-Request","1");using var response=await client.SendAsync(request);await File.WriteAllTextAsync(Path.Combine(submeterFolder,"fragment-submeter.html"),await response.Content.ReadAsStringAsync());
+            using(var req=new HttpRequestMessage(HttpMethod.Get,"/ElectricitySubmeter/10003?Section=prices")){req.Headers.Add("X-Workspace-Request","1");using var resp=await client.SendAsync(req);await File.WriteAllTextAsync(Path.Combine(submeterFolder,"fragment-submeter-prices.html"),await resp.Content.ReadAsStringAsync());}
             foreach(var (name,route) in new[]{("submeters-first","/ElectricitySubmeters?handler=Tree"),("submeters-next","/ElectricitySubmeters?handler=Tree&AfterId=10100"),("submeters-station","/ElectricitySubmeters?handler=Tree&Station=2"),("submeters-type","/ElectricitySubmeters?handler=Tree&InputType=EU"),("submeters-search","/ElectricitySubmeters?handler=Tree&Search=10003")})await File.WriteAllTextAsync(Path.Combine(submeterFolder,name+".json"),(await Get(route)).Html);
         }
         Console.WriteLine($"PASS: {count} authenticated Razor/HTTP, CSRF and authorization checks (test stores only).");
