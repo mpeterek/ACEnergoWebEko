@@ -33,8 +33,10 @@ public sealed class ElectricityGroupConfiguration(DatabaseCatalog catalog,IConfi
  private static GroupConfiguration Read(OleDbConnection connection,string kind,int id,bool composition,OleDbTransaction? tx=null){
   var table=ElectricityGroupCatalog.Definition(kind).Table;
   var extra=kind=="fictitious"?"":kind=="centres"?",[numIDHlavni],[bPrepocet]":",[numIDHlavni]";
-  using var command=new OleDbCommand($"SELECT [strNazev],[strRozmerP],[strRozmerV]{extra} FROM [{table}] WHERE [numCislo]=? AND [numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]=?)",connection,tx);
-  command.Parameters.Add("id",OleDbType.Integer).Value=id;command.Parameters.Add("energy",OleDbType.VarWChar,255).Value="Elektřina";
+  // ACE může vyhodnocovat poziční parametry poddotazu před parametry vnějšího dotazu.
+  // Energie je pevná konstanta aplikace; veškeré vstupy uživatele zůstávají parametry.
+  using var command=new OleDbCommand($"SELECT [strNazev],[strRozmerP],[strRozmerV]{extra} FROM [{table}] WHERE [numCislo]=? AND [numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]='Elektřina')",connection,tx);
+  command.Parameters.Add("id",OleDbType.Integer).Value=id;
   object[] raw;
   using(var reader=command.ExecuteReader()){
    if(reader is null||!reader.Read())throw new KeyNotFoundException();
@@ -69,13 +71,13 @@ public sealed class ElectricityGroupConfiguration(DatabaseCatalog catalog,IConfi
   using var held=db.AcquireWriteLock();using var connection=db.Open(true);using var tx=connection.BeginTransaction(IsolationLevel.ReadCommitted);
   var current=Read(connection,kind,id,false,tx);if(current.Version!=version)throw new GroupConfigurationConflictException();
   var table=ElectricityGroupCatalog.Definition(kind).Table;
-  using var command=new OleDbCommand($"UPDATE [{table}] SET [strNazev]=?,[strRozmerP]=?,[strRozmerV]=? WHERE [numCislo]=? AND [numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]=?)",connection,tx);
+  using var command=new OleDbCommand($"UPDATE [{table}] SET [strNazev]=?,[strRozmerP]=?,[strRozmerV]=? WHERE [numCislo]=? AND [numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]='Elektřina')",connection,tx);
   // Prázdné původní hodnoty zachovávají rozdíl mezi NULL a prázdným řetězcem.
   static object Unit(string? value,string? old)=>string.IsNullOrEmpty(value)?(object?)(string.IsNullOrEmpty(old)?old:null)??DBNull.Value:value;
   command.Parameters.Add("name",OleDbType.VarWChar,30).Value=name;
   command.Parameters.Add("power",OleDbType.VarWChar,15).Value=Unit(power,current.PowerUnit);
   command.Parameters.Add("energyUnit",OleDbType.VarWChar,15).Value=Unit(energy,current.EnergyUnit);
-  command.Parameters.Add("id",OleDbType.Integer).Value=id;command.Parameters.Add("energy",OleDbType.VarWChar,255).Value="Elektřina";
+  command.Parameters.Add("id",OleDbType.Integer).Value=id;
   if(command.ExecuteNonQuery()!=1)throw new InvalidDataException("Změněn neočekávaný počet konfigurací.");tx.Commit();
  }
 }

@@ -18,8 +18,8 @@ public sealed class ElectricityFictitiousComposition(DatabaseCatalog catalog,ICo
  private FictitiousComposition Read(int id){
   var db=new ElectricityConfigurationDatabase(catalog,configuration);using var connection=db.Open(false);
   string name;
-  using(var parent=new OleDbCommand("SELECT [strNazev] FROM [tblKonfigFiktivni] WHERE [numCislo]=? AND [numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]=?)",connection)){
-   parent.Parameters.Add("id",OleDbType.Integer).Value=id;parent.Parameters.Add("energy",OleDbType.VarWChar,255).Value="Elektřina";
+  using(var parent=new OleDbCommand("SELECT [strNazev] FROM [tblKonfigFiktivni] WHERE [numCislo]=? AND [numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]='Elektřina')",connection)){
+   parent.Parameters.Add("id",OleDbType.Integer).Value=id;
    var value=parent.ExecuteScalar();if(value is null)throw new KeyNotFoundException();name=Convert.ToString(value)??"";
   }
   using var command=new OleDbCommand("SELECT p.[numImpuls], i.[strNazev], i.[strRozmerP], i.[strRozmerV], p.[numKonstA], p.[numKonstB], p.[numKonstP], i.[numCislo] FROM [tblKonfigFiktivniPolozky] AS p LEFT JOIN [tblKonfigImpuls] AS i ON p.[numImpuls]=i.[numCislo] WHERE p.[numCislo]=? ORDER BY p.[numImpuls]",connection);

@@ -56,8 +56,8 @@ public sealed class ElectricityGroupCompositionEditor(DatabaseCatalog catalog,IC
  [SupportedOSPlatform("windows")]
  private static CompositionEditSnapshot Read(OleDbConnection connection,string kind,int id,OleDbTransaction? tx=null){
   var parent=ElectricityGroupCatalog.Definition(kind).Table;
-  using var parentCommand=new OleDbCommand($"SELECT * FROM [{parent}] WHERE [numCislo]=? AND [numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]=?)",connection,tx);
-  parentCommand.Parameters.Add("id",OleDbType.Integer).Value=id;parentCommand.Parameters.Add("energy",OleDbType.VarWChar,255).Value="Elektřina";
+  using var parentCommand=new OleDbCommand($"SELECT * FROM [{parent}] WHERE [numCislo]=? AND [numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]='Elektřina')",connection,tx);
+  parentCommand.Parameters.Add("id",OleDbType.Integer).Value=id;
   object[] parentRaw;string name;int mainMeter=0;
   using(var reader=parentCommand.ExecuteReader()){
    if(reader is null||!reader.Read())throw new KeyNotFoundException();
@@ -83,26 +83,26 @@ public sealed class ElectricityGroupCompositionEditor(DatabaseCatalog catalog,IC
   var rows=new List<CompositionCandidate>();var numeric=int.TryParse(text,out var number)?number:-1;
   void Query(string table,string restriction,string type){
    using var command=new OleDbCommand($"SELECT TOP 101 [numCislo],[strNazev],[strRozmerP],[strRozmerV] FROM [{table}] WHERE ({restriction}) AND ([numCislo]=? OR InStr(1,[strNazev],?)>0) ORDER BY [numCislo]",connection);
-   command.Parameters.Add("energy",OleDbType.VarWChar,255).Value="Elektřina";
+
    command.Parameters.Add("number",OleDbType.Integer).Value=numeric;command.Parameters.Add("text",OleDbType.VarWChar,80).Value=text;
    using var reader=command.ExecuteReader();while(reader is not null&&reader.Read()){
     string Text(int i)=>reader.IsDBNull(i)?"Neuvedeno":Convert.ToString(reader[i])??"";
     rows.Add(new(Convert.ToInt32(reader[0]),Text(1),Text(2),Text(3),type));
    }
   }
-  if(kind=="plants")Query("tblKonfigStredisko","[numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]=?)","Středisko");
+  if(kind=="plants")Query("tblKonfigStredisko","[numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]='Elektřina')","Středisko");
   else {
-   Query("tblKonfigImpuls","[boolArchiv]<>0 AND [numCislo]>0 AND [numCislo]<50000000 AND [strTyp] IN (SELECT [strTypEnergie] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]=?)","Reálný vstup");
-   if(kind=="centres")Query("tblKonfigFiktivni","[numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]=?)","Fiktivní měření");
+   Query("tblKonfigImpuls","[boolArchiv]<>0 AND [numCislo]>0 AND [numCislo]<50000000 AND [strTyp] IN (SELECT [strTypEnergie] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]='Elektřina')","Reálný vstup");
+   if(kind=="centres")Query("tblKonfigFiktivni","[numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]='Elektřina')","Fiktivní měření");
   }
   return new(rows.Take(100).ToArray(),rows.Count>100);
  }
  [SupportedOSPlatform("windows")]
  private static void ValidateChild(OleDbConnection connection,OleDbTransaction tx,string kind,int child){
   var table=kind=="plants"?"tblKonfigStredisko":kind=="centres"&&child>=FictitiousOffset?"tblKonfigFiktivni":"tblKonfigImpuls";
-  var filter=table=="tblKonfigImpuls"?"[boolArchiv]<>0 AND [numCislo]<50000000 AND [strTyp] IN (SELECT [strTypEnergie] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]=?)":"[numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]=?)";
+  var filter=table=="tblKonfigImpuls"?"[boolArchiv]<>0 AND [numCislo]<50000000 AND [strTyp] IN (SELECT [strTypEnergie] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]='Elektřina')":"[numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]='Elektřina')";
   using var command=new OleDbCommand($"SELECT COUNT(*) FROM [{table}] WHERE [numCislo]=? AND ({filter})",connection,tx);
-  command.Parameters.Add("id",OleDbType.Integer).Value=child;command.Parameters.Add("energy",OleDbType.VarWChar,255).Value="Elektřina";
+  command.Parameters.Add("id",OleDbType.Integer).Value=child;
   if(Convert.ToInt32(command.ExecuteScalar())!=1)throw new ArgumentException("Vybraná položka není dostupná pro tento oddíl elektřiny.");
  }
  [SupportedOSPlatform("windows")]
@@ -124,8 +124,8 @@ public sealed class ElectricityGroupCompositionEditor(DatabaseCatalog catalog,IC
   if(command.ExecuteNonQuery()!=1)throw new InvalidDataException("Změněn neočekávaný počet položek.");
   if(kind=="plants"&&action=="remove"){
    // Původní UpDateZavodyP.asp při odebrání ruší také příznak na středisku.
-   using var clear=new OleDbCommand("UPDATE [tblKonfigStredisko] SET [bPrepocet]=False WHERE [numCislo]=? AND [numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]=?)",connection,tx);
-   clear.Parameters.Add("child",OleDbType.Integer).Value=child;clear.Parameters.Add("energy",OleDbType.VarWChar,255).Value="Elektřina";clear.ExecuteNonQuery();
+   using var clear=new OleDbCommand("UPDATE [tblKonfigStredisko] SET [bPrepocet]=False WHERE [numCislo]=? AND [numIDEnergie] IN (SELECT [numKlic] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]='Elektřina')",connection,tx);
+   clear.Parameters.Add("child",OleDbType.Integer).Value=child;clear.ExecuteNonQuery();
   }
   tx.Commit();
  }

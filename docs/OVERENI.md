@@ -290,3 +290,33 @@ prohlížeče nebo běžící Hot Reload nemusí načíst novou trasu.
 Použitý SDK v prostředí: /workspace/dotnet/dotnet. Nativní ACE na Windows
 není k dispozici; funkčnost jeho dotazů ani odstranění lokální chyby 404
 nejsou touto validací potvrzené. Podrobnosti rozsahu: UI-ELEKTRINA.md.
+
+## Nula řádků detailu při funkčním katalogu (GROUP-NOT-FOUND)
+
+Uživatelský výstup lokalizoval chybu do ElectricityGroupConfiguration.Read:
+ExecuteReader/Read nevrátil záznam pro fictitious/50000001. Trasa i ID jsou
+správné; nešlo o chybějící Razor Page. Katalog takový záznam zobrazuje.
+Rizikovým rozdílem je kombinace pozičního parametru ID ve vnějším dotazu
+s parametrem energie ve vnořeném dotazu ACE/OLE DB.
+
+Dotazy detailu, editoru složení, validace nového vstupu a původní čtecí
+stránky nyní používají pro energii pevný SQL literál 'Elektřina'. Hodnota
+nikdy nepochází od uživatele. ID, názvy, jednotky, hledaný text i koeficienty
+zůstávají parametrizované. Filtr energií ani ochrana zápisů nebyly odebrány.
+Tím se odstranilo riziko pořadí parametrů mezi vnitřním a vnějším dotazem.
+Konkrétní chování uživatelova ACE není možné v Linuxu reprodukovat;
+úspěšné nativní načtení po této změně musí potvrdit Windows.
+
+Debug build a stávajících 148 HTTP kontrol prošly. HTTP fakes tuto nativní
+chybu neodhalují. Doplněna proto volitelná čtecí kontrola pro Windows,
+která pro každý záznam elektrického katalogu skutečně načte nativní detail,
+editor složení a u fiktivních měření i původní čtecí stránku:
+
+```powershell
+dotnet run --project tests/ACEnergo.Checks -- --group-mdb "C:\ACEnergoData\ACEnergoWebEko.mdb"
+```
+
+Kontrola nevolá žádnou ukládací metodu. Porovnává názvy a ID položek mezi
+katalogem a detaily; vypíše selhávající kind/ID. Při chybě nebo nulovém počtu
+ověřených záznamů končí nenulovým kódem. Je sestavená, ale zde nebyla spuštěná
+proti ACE. Vyžaduje stejnou bitovost a provider jako aplikace.
