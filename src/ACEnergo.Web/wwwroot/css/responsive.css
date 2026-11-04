@@ -45,7 +45,7 @@ input, select, textarea, .form-control, .form-select { min-width: 0; }
 .tariff-table th, .tariff-table td { padding: .25rem; }
 .tariff-table td.tariff-interactive { padding: 0; }
 .tariff-cycle { min-width: 3rem; min-height: var(--ui-control-height); padding: .4rem .25rem; font-size: .8rem; }
-.measurement-workspace { grid-template-columns: minmax(210px,250px) minmax(0,1fr); gap: var(--ui-section-gap); }
+.measurement-workspace { grid-template-columns: minmax(19rem,min(var(--measurement-tree-width,24rem),36vw)) minmax(0,1fr); gap: var(--ui-section-gap); }
 .measurement-workspace aside { top: .75rem; }
 .measurement-tree { max-height: min(65vh, calc(100vh - 11rem)); margin-top: .65rem; }
 .measurement-tree summary { padding: .35rem .25rem; }
@@ -69,7 +69,7 @@ input, select, textarea, .form-control, .form-select { min-width: 0; }
 }
 /* Tablet má vedlejší panel, pokud je pro oba sloupce dost prostoru. */
 @media (min-width: 768px) and (max-width: 1023px) {
-    .measurement-workspace { grid-template-columns: 200px minmax(0,1fr); }
+    .measurement-workspace { grid-template-columns: minmax(15rem,min(var(--measurement-tree-width,24rem),36vw)) minmax(0,1fr); }
     .measurement-workspace aside { position: sticky; }
     .measurement-tree { max-height: min(60vh, calc(100vh - 12rem)); }
 }
@@ -100,3 +100,21 @@ input, select, textarea, .form-control, .form-select { min-width: 0; }
     .measurement-workspace { display: block; }
     .measurement-workspace aside, .workspace-toolbar { display: none; }
 }
+
+/* Společné kompaktní formuláře konfigurace a cen. */
+.configuration-form { max-width:48rem; }
+.configuration-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.65rem 1rem; }
+.configuration-wide { grid-column:1 / -1; }
+.configuration-grid label { margin-top:.25rem; }
+.configuration-help { font-size:.85rem; color:var(--color-muted); margin:.5rem 0 0; }
+.configuration-actions { display:flex; justify-content:flex-end; border-top:1px solid var(--color-border); margin-top:1rem; padding-top:.85rem; }
+.configuration-actions .btn { width:auto; }
+.configuration-summary { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:.5rem 1rem; }
+.configuration-summary dd { margin:0; overflow-wrap:anywhere; }
+@media(max-width:575px){ .configuration-grid { grid-template-columns:minmax(0,1fr); } .configuration-summary { grid-template-columns:minmax(0,1fr); gap:.25rem; } }
+
+.stacked-form .button-primary { width:auto; }
+.login-panel .stacked-form .button-primary { width:100%; }
+
+.configuration-form input[type=checkbox], .configuration-form input[type=radio] { width:1.1rem; height:1.1rem; padding:0; flex-shrink:0; }
+.configuration-form > label { display:flex; align-items:center; gap:.5rem; min-height:var(--ui-control-height); }

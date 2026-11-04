@@ -14,9 +14,9 @@
 <p class="eyebrow">ELEKTŘINA · HLAVNÍ MĚŘENÍ</p>
 <h1>Ceny a rezervovaná kapacita @(Model.Snapshot?.MeterName)</h1>
 <nav class="page-navigation" aria-label="Navigace měření">
-    <a asp-page="/Electricity">Hlavní měření</a>
-    <a asp-page="/ElectricityPriceYear" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Roční přehled cen</a>
-    <a asp-page="/ElectricityTariffs" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Tarify</a>
+    <a class="btn btn-outline-secondary btn-sm" asp-page="/Electricity">Hlavní měření</a>
+    <a class="btn btn-outline-secondary btn-sm" asp-page="/ElectricityPriceYear" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Roční přehled cen</a>
+    <a class="btn btn-outline-secondary btn-sm" asp-page="/ElectricityTariffs" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Tarify</a>
 </nav>
 <section class="panel">
     <form method="get" class="period-form">

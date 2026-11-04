@@ -92,3 +92,11 @@ Equal("0001/0002",ElectricityGroupCompositionEditor.ComponentLabel("centres",100
 Equal("Středisko 12",ElectricityGroupCompositionEditor.ComponentLabel("plants",12));
 Reject(()=>ElectricityGroupCompositionEditor.Definition("analog"));
 Console.WriteLine("PASS composition coefficients, virtual IDs and table whitelist.");
+
+ElectricityGroupConfiguration.ValidateSettings("centres",null,null);
+ElectricityGroupConfiguration.ValidateSettings("centres",5,true);
+ElectricityGroupConfiguration.ValidateSettings("plants",5,null);
+Reject(()=>ElectricityGroupConfiguration.ValidateSettings("centres",-1,false));
+Reject(()=>ElectricityGroupConfiguration.ValidateSettings("fictitious",5,null));
+Reject(()=>ElectricityGroupConfiguration.ValidateSettings("plants",5,true));
+Console.WriteLine("PASS main meter and recalculation settings scope validation.");

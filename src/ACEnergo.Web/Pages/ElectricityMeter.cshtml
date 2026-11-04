@@ -2,17 +2,17 @@
 @model ElectricityMeterModel
 @{ViewData["Title"]="Konfigurace hlavního měření";}
 <h1>Konfigurace hlavního měření</h1>
-<nav class="page-navigation"><a asp-page="/Electricity">Seznam měření</a><a asp-page="/ElectricityPrices" asp-route-meterId="@Model.MeterId">Ceny a kapacity</a></nav>
+<nav class="page-navigation"><a class="btn btn-outline-secondary btn-sm" asp-page="/Electricity">Seznam měření</a><a class="btn btn-outline-secondary btn-sm" asp-page="/ElectricityPrices" asp-route-meterId="@Model.MeterId">Ceny a kapacity</a></nav>
 @if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
 @if(Model.Data is not null){
 <section class="panel"><dl><dt>Činný vstup – uložený identifikátor</dt><dd>@Model.Data.Input</dd><dt>Jalový vstup – uložený identifikátor</dt><dd>@Model.Data.ReactiveInput</dd></dl>
 @if(Model.CanEdit){
-<form method="post" class="stacked-form"><input asp-for="MeterId" type="hidden"/><input asp-for="Version" type="hidden"/>
-<label asp-for="MeterName">Název měření</label><input asp-for="MeterName" maxlength="30" required/>
-<label asp-for="Coefficient">Koeficient činné energie</label><input asp-for="Coefficient" inputmode="decimal" required/>
-<label asp-for="ReactiveCoefficient">Koeficient jalové energie</label><input asp-for="ReactiveCoefficient" inputmode="decimal" readonly="@(Model.Data.ReactiveInput==0)" required/>
+<form method="post" class="configuration-form"><input asp-for="MeterId" type="hidden"/><input asp-for="Version" type="hidden"/>
+<div class="configuration-grid"><div class="configuration-wide"><label asp-for="MeterName">Název měření</label><input asp-for="MeterName" maxlength="30" required/></div>
+<div><label asp-for="Coefficient">Koeficient činné energie</label><input asp-for="Coefficient" inputmode="decimal" required/></div>
+<div><label asp-for="ReactiveCoefficient">Koeficient jalové energie</label><input asp-for="ReactiveCoefficient" inputmode="decimal" readonly="@(Model.Data.ReactiveInput==0)" required/></div></div>
 @if(Model.Data.ReactiveInput!=0){<label><input asp-for="DisconnectReactive"/> Odpojit jalový vstup (nastaví identifikátor 0 a koeficient 1)</label>}
-<button class="button button-primary">Uložit konfiguraci</button></form>
+<div class="configuration-actions"><button class="btn btn-primary">Uložit změny</button></div></form>
 }else{<dl><dt>Název</dt><dd>@Model.Data.Name</dd><dt>Koeficient činné energie</dt><dd>@Model.Data.Coefficient</dd><dt>Koeficient jalové energie</dt><dd>@Model.Data.ReactiveCoefficient</dd></dl>}
 </section>}
 <p>Vazby jsou převzaté z uložené konfigurace. Výběr nového fyzického vstupu a zakládání měření se dále převádějí; komunikace s Energomatem se nepoužívá.</p>

@@ -357,3 +357,24 @@ ACE_RESPONSIVE_MINIFIED=1 node tools/check-responsive-layout.cjs /tmp/acenergo-r
 Browser kontrola vyžaduje Playwright a Chromium (cestu lze nastavit přes
 CHROMIUM_PATH); druhý běh vyžaduje předchozí Release build. Jde o emulované
 profily Chromia, nikoli o test na fyzických tabletech či telefonech.
+
+## Jediný strom, širší názvy a editace vazeb
+
+Debug build a 167 HTTP kontrol prošly. Nové kontroly ověřují výběr hlavního
+měření u středisek/závodů, možnost odpojení, příznak pouze u střediska,
+read-only režim, podvržený zápis čtenářem, neexistující/záporné ID a konflikt
+verze. Samostatná validace odmítá pole, která daný druh skupiny nemá.
+Katalogová trasa vrací strom a výzvu k výběru, nikoli druhou tabulku všech
+skupin. Testy sledují skutečný odkaz ze stromu a další akce až v detailu.
+
+Rozšířená kontrola tools/check-responsive-layout.cjs zahrnuje 11 stránek:
+k původním osmi přibyl editor cen, svátky a měsíční ceny. Všech osm rozměrů
+1920×1080 až 320×568 prošlo se zdrojovými styly. Ověřuje se také kompaktní
+šířka ukládacích tlačítek, nowrap názvů, dynamické rozšíření panelu při vložení
+dlouhého názvu, bez přesahu dokumentu. Zdrojový i minifikovaný skript stromu
+prošel Acorn ecmaVersion=5. Release build včetně minifikace a publikace x86
+prošly; produkční varianty stylů byly také ověřené na všech rozměrech.
+
+Nativní zápisy numIDHlavni / bPrepocet nebyly spuštěné proti Windows ACE.
+Odpovídající tabulky a původní pravidlo rušení přepočtu položek při odpojení
+hlavního měření závodu byly ověřené v původních ASP zdrojích.

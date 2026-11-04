@@ -6,7 +6,7 @@
 
 <p class="eyebrow">ELEKTŘINA</p>
 <h1>Hlavní měření</h1>
-<a asp-page="/Index">Zpět na přehled</a>
+<a class="btn btn-outline-secondary btn-sm" asp-page="/Index">Zpět na přehled</a>
 <section class="panel" aria-label="Seznam hlavních měření">
     @if (Model.Error is not null)
     {
@@ -23,7 +23,7 @@
                 <tbody>
                     @foreach (var meter in Model.Meters)
                     {
-                        <tr><td>@meter.Id</td><td>@meter.Name</td><td><a asp-page="/ElectricityTariffs" asp-route-meterId="@meter.Id">Tarify</a> · <a asp-page="/ElectricityHolidays" asp-route-meterId="@meter.Id">Svátky</a> · <a asp-page="/ElectricityPrices" asp-route-meterId="@meter.Id">Ceny</a> · <a asp-page="/ElectricityMeter" asp-route-meterId="@meter.Id">Konfigurace vstupů</a></td></tr>
+                        <tr><td>@meter.Id</td><td>@meter.Name</td><td><a class="btn btn-outline-secondary btn-sm" asp-page="/ElectricityTariffs" asp-route-meterId="@meter.Id">Tarify</a> <a class="btn btn-outline-secondary btn-sm" asp-page="/ElectricityHolidays" asp-route-meterId="@meter.Id">Svátky</a> <a class="btn btn-outline-secondary btn-sm" asp-page="/ElectricityPrices" asp-route-meterId="@meter.Id">Ceny</a> <a class="btn btn-outline-secondary btn-sm" asp-page="/ElectricityMeter" asp-route-meterId="@meter.Id">Konfigurace vstupů</a></td></tr>
                     }
                 </tbody>
             </table>

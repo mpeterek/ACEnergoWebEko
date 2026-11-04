@@ -10,6 +10,9 @@ public class ElectricityGroupModel(IElectricityGroupConfiguration store,ILogger<
  [BindProperty]public string GroupName{get;set;}="";
  [BindProperty]public string? PowerUnit{get;set;}
  [BindProperty]public string? EnergyUnit{get;set;}
+ [BindProperty]public int? MainMeterId{get;set;}
+ [BindProperty]public bool? Recalculate{get;set;}
+ public MainMeterChoice[] MainMeters{get;private set;}=[];
  [BindProperty]public string Version{get;set;}="";
  public string Heading{get;private set;}="Elektřina";
  public GroupConfiguration? Data{get;private set;}
@@ -21,9 +24,11 @@ public class ElectricityGroupModel(IElectricityGroupConfiguration store,ILogger<
   try{Heading=ElectricityGroupCatalog.Definition(Kind).Title;}catch(ArgumentException){return NotFound();}
   try{
    Data=store.Load(Kind,Id);
-   if(!save){GroupName=Data.Name;PowerUnit=Data.PowerUnit;EnergyUnit=Data.EnergyUnit;Version=Data.Version;return Page();}
+   if(Kind!="fictitious")MainMeters=store.MainMeters();
+   if(!save){GroupName=Data.Name;PowerUnit=Data.PowerUnit;EnergyUnit=Data.EnergyUnit;Version=Data.Version;MainMeterId=int.TryParse(Data.MainMeter,out var meter)&&meter>0?meter:null;Recalculate=bool.TryParse(Data.Recalculation,out var recalculate)?recalculate:null;return Page();}
    if(!ModelState.IsValid){Response.StatusCode=400;return Page();}
-   store.Save(Kind,Id,GroupName,PowerUnit,EnergyUnit,Version);
+   if(Request.Form.ContainsKey(nameof(MainMeterId))||Request.Form.ContainsKey(nameof(Recalculate)))store.SaveSettings(Kind,Id,GroupName,PowerUnit,EnergyUnit,Version,MainMeterId,Recalculate);
+   else store.Save(Kind,Id,GroupName,PowerUnit,EnergyUnit,Version);
    TempData["GroupSaved"]="Konfigurace byla uložena.";
    return RedirectToPage(new{Kind,Id});
   }catch(KeyNotFoundException ex){

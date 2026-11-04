@@ -19,14 +19,30 @@
 <section class="panel">
 <h2>Základní konfigurace</h2>
 @if(Model.CanEdit){
-<form method="post" class="stacked-form"><input asp-for="Version" type="hidden"/>
-<label asp-for="GroupName">Název</label><input asp-for="GroupName" maxlength="30" required/>
-<label asp-for="PowerUnit">Jednotka výkonu</label><input asp-for="PowerUnit" maxlength="15"/>
-<label asp-for="EnergyUnit">Jednotka energie</label><input asp-for="EnergyUnit" maxlength="15"/>
-<button class="button button-primary">Uložit konfiguraci</button></form>
-}else{<dl><dt>Název</dt><dd>@Model.Data.Name</dd><dt>Jednotka výkonu</dt><dd>@(Model.Data.PowerUnit??"Neuvedeno")</dd><dt>Jednotka energie</dt><dd>@(Model.Data.EnergyUnit??"Neuvedeno")</dd></dl>}
-@if(Model.Data.MainMeter is not null){<dl><dt>Identifikátor hlavního měření</dt><dd>@Model.Data.MainMeter</dd></dl>}
-@if(Model.Data.Recalculation is not null){<dl><dt>Uložený příznak přepočtu</dt><dd>@Model.Data.Recalculation</dd></dl>}
+<form method="post" class="configuration-form"><input asp-for="Version" type="hidden"/>
+<div class="configuration-grid">
+<div class="configuration-wide"><label asp-for="GroupName">Název měření</label><input asp-for="GroupName" class="form-control" maxlength="30" required/></div>
+<div><label asp-for="PowerUnit">Jednotka výkonu</label><input asp-for="PowerUnit" class="form-control" maxlength="15"/></div>
+<div><label asp-for="EnergyUnit">Jednotka energie</label><input asp-for="EnergyUnit" class="form-control" maxlength="15"/></div>
+@if(Model.Kind!="fictitious"){
+<div class="configuration-wide"><label asp-for="MainMeterId">Hlavní měření</label>
+<select asp-for="MainMeterId" class="form-select" aria-describedby="main-meter-help"><option value="">Bez hlavního měření</option>
+@if(Model.MainMeterId is >0&&!Model.MainMeters.Any(m=>m.Id==Model.MainMeterId)){<option value="@Model.MainMeterId">Nedostupné měření #@Model.MainMeterId (uložená vazba)</option>}
+@foreach(var meter in Model.MainMeters){<option value="@meter.Id">@meter.Name (#@meter.Id)</option>}
+</select><small id="main-meter-help" class="text-secondary">Hlavní měření určuje přebíraná tarifní pásma.</small>
+@if(Model.Kind=="plants"){<p class="configuration-help">Odpojení hlavního měření vypne přepočet ztrát u všech položek tohoto závodu.</p>}
+</div>}
+@if(Model.Kind=="centres"){
+<div class="configuration-wide"><label asp-for="Recalculate">Přepočet střediska</label><select asp-for="Recalculate" class="form-select"><option value="">Neuvedeno</option><option value="true">Zapnutý</option><option value="false">Vypnutý</option></select><small class="text-secondary">Uložený příznak střediska; přepočet jednotlivých vazeb v závodu se nastavuje v položkách závodu.</small></div>
+}
+</div>
+<div class="configuration-actions"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i> Uložit změny</button></div>
+</form>
+}else{
+<dl class="configuration-summary"><dt>Název</dt><dd>@Model.Data.Name</dd><dt>Jednotka výkonu</dt><dd>@(Model.Data.PowerUnit??"Neuvedeno")</dd><dt>Jednotka energie</dt><dd>@(Model.Data.EnergyUnit??"Neuvedeno")</dd>
+@if(Model.Data.MainMeter is not null){<dt>Hlavní měření</dt><dd>@(Model.MainMeters.FirstOrDefault(m=>m.Id.ToString()==Model.Data.MainMeter)?.Name??(Model.Data.MainMeter=="0"?"Bez hlavního měření":Model.Data.MainMeter))</dd>}
+@if(Model.Data.Recalculation is not null){<dt>Přepočet střediska</dt><dd>@(Model.Data.Recalculation=="True"?"Zapnutý":Model.Data.Recalculation=="False"?"Vypnutý":"Neuvedeno")</dd>}
+</dl>}
 </section>
 <section class="panel table-scroll"><table class="data-table price-table" data-price-table>
 <caption>Přiřazené vstupy a uložené koeficienty</caption>

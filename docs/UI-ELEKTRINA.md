@@ -80,3 +80,36 @@ jsou ukotvené v něm a nerozšiřují celou stránku.
 Nový styl je zahrnutý v bundleconfig.json: Debug používá originál, Release
 vytváří responsive.min.css a produkční prostředí jej načítá. Pravidla
 routování, model binding a databázová logika se v této úpravě nemění.
+
+## Výběr měření a kompaktní konfigurace
+
+Úvod fiktivních měření, středisek a závodů už neopakuje katalog v pracovní
+ploše. Jediný výběr je ve stromu vlevo; vpravo je před výběrem stručná výzva.
+Akce vybraného vstupu se objeví až po jeho výběru. Společný návrat na Přehled
+je umístěn pod pracovní plochou.
+
+Strom má širší výchozí panel a vlastní ES5 skript měří šířku názvů. Šířku
+nastaví CSS proměnnou, nejvýše na 480 px a v mezích podílu šířky okna.
+Názvy se nezalamují; při nedostatku místa lze posunout pouze obsah stromu.
+Na mobilu zůstává celý panel nad pracovní plochou. Nové konfigurace používají
+dvousloupcová pole a běžně široké tlačítko Uložit změny vpravo dole; na mobilu
+jsou pole pod sebou. Stejný formát dostala konfigurace hlavního měření a
+editor cen. Navigace tarifů, svátků a cen používá kompaktní tlačítka.
+
+Hlavní měření střediska a závodu je nově editovatelné výběrem názvu a ID
+z tblKonfigHlavniElektrina. Lze zvolit Bez hlavního měření. U střediska je
+editovatelný také uložený bPrepocet (Neuvedeno / Zapnutý / Vypnutý). Jde o
+příznak střediska, nikoli nahrazení příznaků jednotlivých vazeb závodu.
+Fiktivní vstupy tato pole v konfigurační tabulce nemají a formulář je nenabízí.
+
+Vazba, příznak, název i jednotky se ukládají atomicky s dosavadní verzí,
+ReadCommitted a společným zámkem. Nové hlavní měření se ověřuje proti MDB;
+neexistující nebo záporné ID se odmítne. Nezměněnou starší nedostupnou vazbu
+lze zachovat při editaci názvu, aniž by byla skrytě odstraněna. Původní NULL
+vazba zůstane NULL, původní odpojení 0 zůstane 0. Hodnota příznaku Neuvedeno
+znamená NULL. Původní Save API je zachované a bez nových polí vazby nemění.
+
+Podle UpDateZavodyH.asp odpojení hlavního měření závodu také nastaví bPrepocet
+na False na jeho položkách, ve stejné transakci; formulář tento účinek uvádí.
+Databázové schéma, oprávnění a adresy se nemění. První nativní ověření nových
+zápisů proveďte na kopii MDB; zde jsou k dispozici pouze HTTP testovací úložiště.

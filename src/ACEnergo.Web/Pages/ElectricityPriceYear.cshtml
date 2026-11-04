@@ -12,7 +12,7 @@
 <script src="~/js/pages/prices.js" asp-append-version="true" defer></script>
 }
 <h1>Roční přehled cen @(Model.Months.FirstOrDefault()?.MeterName)</h1>
-<nav class="page-navigation"><a asp-page="/Electricity">Hlavní měření</a><a asp-page="/ElectricityPrices" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Měsíční ceník</a></nav>
+<nav class="page-navigation"><a class="btn btn-outline-secondary btn-sm" asp-page="/Electricity">Hlavní měření</a><a class="btn btn-outline-secondary btn-sm" asp-page="/ElectricityPrices" asp-route-meterId="@Model.MeterId" asp-route-Period="@Model.Period">Měsíční ceník</a></nav>
 <section class="panel">
 <form method="get" class="period-form"><label for="year-period">Rok podle vybraného měsíce</label><input id="year-period" class="month-input" type="month" name="Period" value="@Model.Period" required /><button class="button">Načíst rok</button></form>
 </section>

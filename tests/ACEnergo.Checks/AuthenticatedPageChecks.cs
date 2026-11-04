@@ -138,7 +138,7 @@ internal static class AuthenticatedPageChecks
             Check(saved.StatusCode==HttpStatusCode.Found,"meter configuration POST accepts Czech coefficient");
         foreach(var kind in new[]{"fictitious","centres","plants"}) {
             var group=await Get("/ElectricityGroups/"+kind);
-            Check(group.Code==HttpStatusCode.OK && group.Html.Contains("Test group") && group.Html.Contains("MWh"), "group catalog renders "+kind);
+            Check(group.Code==HttpStatusCode.OK && group.Html.Contains("Test group") && group.Html.Contains("workspace-welcome") && !group.Html.Contains("data-price-table"), "group catalog renders "+kind);
         }
         foreach(var kind in new[]{"fictitious","centres","plants"}) {
             Role("view");
@@ -165,12 +165,33 @@ internal static class AuthenticatedPageChecks
             Check(await Save("Edited",new string('A',64))==HttpStatusCode.Found&&factory.GroupConfig.Writes==groupWrites+1,"group configuration saves "+kind);
             Check((await Get("/ElectricityGroup/"+kind+"/999")).Code==HttpStatusCode.NotFound,"unknown group detail "+kind);
         }
+        foreach(var kind in new[]{"centres","plants"}){
+            Role("config");var url="/ElectricityGroup/"+kind+"/1";var form=await Get(url);
+            Check(form.Html.Contains("name=\"MainMeterId\"")&&form.Html.Contains("Other meter"),"main meter selector "+kind);
+            Check(form.Html.Contains("name=\"Recalculate\"")==(kind=="centres"),"recalculation editable only on centre "+kind);
+            async Task<HttpStatusCode> Assign(string main,string flag,string version){
+                var fields=new Dictionary<string,string>{["__RequestVerificationToken"]=Token(form.Html),["Version"]=version,["GroupName"]="Edited",["PowerUnit"]="MW",["EnergyUnit"]="MWh",["MainMeterId"]=main};
+                if(kind=="centres")fields["Recalculate"]=flag;
+                using var response=await client.PostAsync(url,new FormUrlEncodedContent(fields));return response.StatusCode;
+            }
+            var writesBefore=factory.GroupConfig.Writes;
+            Role("view");Check(await Assign("6","false",new string('A',64))==HttpStatusCode.Forbidden&&factory.GroupConfig.Writes==writesBefore,"viewer cannot assign main meter "+kind);
+            Check(!(await Get(url)).Html.Contains("name=\"MainMeterId\""),"viewer has read-only assignment "+kind);
+            Role("config");Check(await Assign("999","false",new string('A',64))==HttpStatusCode.BadRequest&&factory.GroupConfig.Writes==writesBefore,"unknown main meter rejected "+kind);
+            Check(await Assign("-1","false",new string('A',64))==HttpStatusCode.BadRequest&&factory.GroupConfig.Writes==writesBefore,"negative main meter rejected "+kind);
+            Check(await Assign("6","false",new string('B',64))==HttpStatusCode.Conflict&&factory.GroupConfig.Writes==writesBefore,"assignment stale token rejected "+kind);
+            Check(await Assign("6","false",new string('A',64))==HttpStatusCode.Found&&factory.GroupConfig.LastMainMeter==6,"assignment saved "+kind);
+            if(kind=="centres")Check(factory.GroupConfig.LastRecalculate==false,"centre recalculation saved");
+            Check(await Assign("","",new string('A',64))==HttpStatusCode.Found&&factory.GroupConfig.LastMainMeter is null,"main meter can be disconnected "+kind);
+        }
         Role("config");
         var centreCatalog=await Get("/ElectricityGroups/centres");
         var centreLinks=Regex.Matches(centreCatalog.Html,"href=\"([^\"]*/ElectricityGroup(?:Composition)?/centres/16)\"").Select(match=>WebUtility.HtmlDecode(match.Groups[1].Value)).Distinct().ToArray();
-        Check(centreCatalog.Html.Contains("data-measurement-tree")&&centreCatalog.Html.Contains("workspace-toolbar"),"shared tree and workspace toolbar render");
+        Check(centreCatalog.Html.Contains("data-measurement-tree")&&centreCatalog.Html.Contains("workspace-heading"),"shared tree and workspace toolbar render");
         Check(centreCatalog.Html.Contains("/lib/adminlte/adminlte.min.css")&&centreCatalog.Html.Contains("/lib/bootstrap/bootstrap.min.css")&&centreCatalog.Html.Contains("/lib/fontawesome/css/all.min.css"),"local requested UI assets render");
-        Check(centreLinks.Length==2,"real catalog emits both links for centre 16");
+        Check(centreLinks.Length==1,"landing emits a single tree selection for centre 16");
+        var centreDetail=await Get("/ElectricityGroup/centres/16");
+        Check(centreDetail.Html.Contains("/ElectricityGroupComposition/centres/16"),"selected measurement offers its composition");
         foreach(var link in centreLinks){var linked=await Get(link);Check(linked.Code==HttpStatusCode.OK&&WebUtility.HtmlDecode(linked.Html).Contains("Středisko 16"),"follow rendered centre 16 link "+link);}
         foreach(var url in new[]{"/ElectricityGroup/centres/999","/ElectricityGroupComposition/centres/999"}){
             var missing=await Get(url);Check(missing.Code==HttpStatusCode.NotFound&&WebUtility.HtmlDecode(missing.Html).Contains("nebyl v používané databázi"),"missing group has explanatory body "+url);
@@ -232,7 +253,7 @@ internal static class AuthenticatedPageChecks
         Check((await Get("/ElectricityHolidays/999")).Code == HttpStatusCode.NotFound, "unknown meter 404");
         if(Environment.GetEnvironmentVariable("ACE_RESPONSIVE_DIR") is string responsiveDirectory){
             Directory.CreateDirectory(responsiveDirectory);
-            var pages=new[]{("home","/"),("login","/Login"),("meter","/ElectricityMeter/5"),("groups","/ElectricityGroups/centres"),("configuration","/ElectricityGroup/centres/16")};
+            var pages=new[]{("home","/"),("login","/Login"),("meter","/ElectricityMeter/5"),("groups","/ElectricityGroups/centres"),("configuration","/ElectricityGroup/centres/16"),("price-editor","/ElectricityPriceEdit/5?Period=2026-10"),("holidays","/ElectricityHolidays/5?Period=2026-10"),("monthly-prices","/ElectricityPrices/5?Period=2026-10")};
             foreach(var (name,url) in pages){var rendered=await Get(url);if(rendered.Code!=HttpStatusCode.OK)throw new Exception("Responsive fixture failed: "+url);await File.WriteAllTextAsync(Path.Combine(responsiveDirectory,name+".html"),rendered.Html);}
         }
         Console.WriteLine($"PASS: {count} authenticated Razor/HTTP, CSRF and authorization checks (test stores only).");
@@ -344,6 +365,14 @@ internal static class AuthenticatedPageChecks
     }
     private sealed class FakeGroupConfiguration : IElectricityGroupConfiguration {
         public int Writes {get;private set;}
+        public int? LastMainMeter{get;private set;}
+        public bool? LastRecalculate{get;private set;}
+        public MainMeterChoice[] MainMeters()=>[new(5,"Main meter"),new(6,"Other meter")];
+        public void SaveSettings(string kind,int id,string name,string? power,string? energy,string version,int? mainMeter,bool? recalculate){
+            ElectricityGroupConfiguration.ValidateSettings(kind,mainMeter,recalculate);
+            if(mainMeter is >0&&!MainMeters().Any(m=>m.Id==mainMeter))throw new ArgumentException("Unknown main meter");
+            Save(kind,id,name,power,energy,version);LastMainMeter=mainMeter;LastRecalculate=recalculate;
+        }
         public GroupConfiguration Load(string kind,int id){
             ElectricityGroupCatalog.Definition(kind);if(id!=1&&!(kind=="centres"&&id==16))throw new KeyNotFoundException();
             return new(id==16?"Středisko 16":"Test <group>","MW","MWh",new string('A',64),[new(10002,"Component","MW","MWh","1,5","0","1",true)],kind=="fictitious"?null:"5",kind=="centres"?"True":null);

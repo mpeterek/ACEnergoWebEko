@@ -11,7 +11,7 @@
  var displayId=Model.Kind=="fictitious"?group.Id-ElectricityGroupCompositionEditor.FictitiousOffset:group.Id;
  <li data-tree-item data-search-text="@group.Id @displayId @group.Name">
  <details open="@selected">
- <summary class="@(selected?"tree-selected":"")"><a asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@group.Id" aria-current="@(selected?"page":null)"><span class="tree-id">@displayId.ToString("D4")</span> @group.Name</a></summary>
+ <summary class="@(selected?"tree-selected":"")"><a asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@group.Id" title="@group.Name" aria-current="@(selected?"page":null)"><span class="tree-id">@displayId.ToString("D4")</span> @group.Name</a></summary>
  @if(selected&&Model.Selected is not null){
  <ul class="tree-components">@foreach(var child in Model.Selected.Components){<li><a asp-page="/ElectricityGroupComposition" asp-route-kind="@Model.Kind" asp-route-id="@Model.SelectedId" asp-fragment="@("component-"+child.Input)"><i class="fa-solid fa-gauge" aria-hidden="true"></i> @child.Name</a> <small>@ElectricityGroupCompositionEditor.ComponentLabel(Model.Kind,child.Input)</small></li>}</ul>
  }else{<a class="tree-open" asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@group.Id">Otevřít vstup a jeho položky</a>}

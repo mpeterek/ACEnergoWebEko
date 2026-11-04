@@ -26,16 +26,23 @@ const profiles = [
                 if (!fs.existsSync(file)) return route.fulfill({ status: 404, body: '' });
                 await route.fulfill({ path: file, contentType: file.endsWith('.css') ? 'text/css' : file.endsWith('.js') ? 'application/javascript' : file.endsWith('.html') ? 'text/html' : undefined });
             });
-            for (const name of ['home', 'login', 'meter', 'groups', 'configuration', 'composition', 'prices', 'tariffs']) {
+            const pages = ['home', 'login', 'meter', 'groups', 'configuration', 'composition', 'prices', 'tariffs', 'price-editor', 'holidays', 'monthly-prices'];
+            for (const name of pages) {
                 await page.goto('http://responsive.test/' + name + '.html');
                 await page.evaluate(() => document.fonts.ready);
                 const measurements = await page.evaluate(() => {
                     const input = document.querySelector('input:not([type=hidden]):not([type=checkbox])');
                     const button = document.querySelector('.workspace-toolbar .btn, .button');
                     const title = document.querySelector('h1');
+                    const save = document.querySelector('.configuration-actions button');
+                    const form = document.querySelector('.configuration-form');
+                    const label = document.querySelector('.measurement-tree summary a');
                     const sidebar = document.querySelector('.measurement-workspace aside');
                     const content = document.querySelector('.workspace-content');
                     return {
+                        saveWidth: save ? save.getBoundingClientRect().width : null,
+                        formWidth: form ? form.getBoundingClientRect().width : null,
+                        treeWrap: label ? getComputedStyle(label).whiteSpace : null,
                         overflow: document.documentElement.scrollWidth > innerWidth + 1,
                         body: parseFloat(getComputedStyle(document.body).fontSize),
                         input: input ? parseFloat(getComputedStyle(input).fontSize) : 16,
@@ -44,6 +51,8 @@ const profiles = [
                         sideBySide: sidebar && content ? sidebar.getBoundingClientRect().right <= content.getBoundingClientRect().left + 1 : null
                     };
                 });
+                if (measurements.saveWidth && measurements.formWidth > 300 && measurements.saveWidth > measurements.formWidth * .7) throw Error('Save button is too wide: ' + name);
+                if (measurements.treeWrap && measurements.treeWrap !== 'nowrap') throw Error('Tree label wraps');
                 if (measurements.overflow) throw Error(`${name} overflows at ${profile.width}x${profile.height}`);
                 if (measurements.body < 14 || measurements.body > 15) throw Error('Unexpected body size');
                 if (measurements.title < 20 || measurements.title > 29) throw Error('Unexpected heading size');
@@ -52,6 +61,17 @@ const profiles = [
                 if (measurements.sideBySide !== null) {
                     const expected = profile.width >= 768 && !(profile.width <= 1023 && profile.height <= 500);
                     if (measurements.sideBySide !== expected) throw Error('Wrong workspace placement: ' + name);
+                }
+                if (name === 'groups') {
+                    const growth = await page.evaluate(() => {
+                        const sidebar = document.querySelector('.measurement-workspace aside');
+                        const label = document.querySelector('.measurement-tree summary a');
+                        const before = sidebar.getBoundingClientRect().width;
+                        label.textContent = '0001 Velmi_dlouhy_nazev_mereni_pro_kontrolu_sirky';
+                        window.dispatchEvent(new Event('resize'));
+                        return { before, after: sidebar.getBoundingClientRect().width, overflow: document.documentElement.scrollWidth > innerWidth + 1, wraps: getComputedStyle(label).whiteSpace !== 'nowrap' };
+                    });
+                    if (growth.overflow || growth.wraps || growth.after + 1 < growth.before) throw Error('Long tree name regression');
                 }
                 if (name === 'login') {
                     const toggle = page.locator('.password-toggle');
@@ -63,7 +83,7 @@ const profiles = [
                 }
             }
             if (errors.length) throw Error(errors.join('\n'));
-            console.log(`PASS 8 pages at ${profile.width}x${profile.height}, ${profile.touch ? 'touch' : 'mouse'}`);
+            console.log(`PASS ${pages.length} pages at ${profile.width}x${profile.height}, ${profile.touch ? 'touch' : 'mouse'}`);
             await context.close();
         }
     } finally { await browser.close(); }
