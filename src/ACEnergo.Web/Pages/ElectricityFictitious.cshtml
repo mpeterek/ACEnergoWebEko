@@ -11,7 +11,7 @@
 <script src="~/js/pages/prices.js" asp-append-version="true" defer></script>
 }
 <p class="eyebrow">ELEKTŘINA · FIKTIVNÍ MĚŘENÍ</p><h1>@Model.Data?.Name</h1>
-<nav class="page-navigation"><a asp-page="/ElectricityGroups" asp-route-kind="fictitious">Fiktivní měření</a><a asp-page="/Index">Přehled</a></nav>
+<nav class="page-navigation"><a asp-page="/ElectricityGroup" asp-route-kind="fictitious" asp-route-id="@Model.Id">Konfigurace měření</a><a asp-page="/ElectricityGroups" asp-route-kind="fictitious">Fiktivní měření</a><a asp-page="/Index">Přehled</a></nav>
 @if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
 @if(Model.Data is not null){
 <section class="panel table-scroll"><table class="data-table price-table" data-price-table>

@@ -2,7 +2,7 @@ using System.Data.OleDb;
 using System.Globalization;
 using System.Runtime.Versioning;
 namespace ACEnergo.Web.Services;
-public sealed record FictitiousComponent(int Input,string Name,string PowerUnit,string EnergyUnit,string A,string B,string P,bool Defined);
+public sealed record FictitiousComponent(int Input,string Name,string PowerUnit,string EnergyUnit,string A,string B,string P,bool Defined,string? Recalculation=null);
 public sealed record FictitiousComposition(string Name,FictitiousComponent[] Components);
 public interface IElectricityFictitiousComposition { FictitiousComposition Load(int id); }
 public sealed class ElectricityFictitiousComposition(DatabaseCatalog catalog,IConfiguration configuration):IElectricityFictitiousComposition {

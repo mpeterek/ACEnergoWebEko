@@ -73,3 +73,11 @@ Equal("0001/0002",ElectricityFictitiousComposition.Address(10002));
 Equal("0000/0000",ElectricityFictitiousComposition.Address(0));
 Equal("0123/9999",ElectricityFictitiousComposition.Address(1239999));
 Console.WriteLine("PASS station/input address formatting.");
+
+ElectricityGroupConfiguration.Validate(new string('x',30),new string('W',15),null);
+ElectricityGroupConfiguration.Validate("Měření",null,"");
+Reject(()=>ElectricityGroupConfiguration.Validate("",null,null));
+Reject(()=>ElectricityGroupConfiguration.Validate(new string('x',31),null,null));
+Reject(()=>ElectricityGroupConfiguration.Validate("Test",new string('W',16),null));
+Reject(()=>ElectricityGroupConfiguration.Validate("Test",null,new string('W',16)));
+Console.WriteLine("PASS group name and optional unit schema limits.");

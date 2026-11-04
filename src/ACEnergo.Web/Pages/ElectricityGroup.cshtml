@@ -1,0 +1,37 @@
+@page "{kind}/{id:int}"
+@model ElectricityGroupModel
+@{ViewData["Title"]=Model.Heading;}
+@section Styles {
+<link rel="stylesheet" href="~/lib/datatables/dataTables.dataTables.min.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/css/pages/prices.css" asp-append-version="true"/>
+}
+@section Scripts {
+<script src="~/lib/jquery/jquery.min.js" asp-append-version="true" defer></script>
+<script src="~/lib/datatables/dataTables.min.js" asp-append-version="true" defer></script>
+<script src="~/js/pages/prices.js" asp-append-version="true" defer></script>
+}
+<p class="eyebrow">ELEKTŘINA · @Model.Heading</p><h1>@Model.Data?.Name</h1>
+<nav class="page-navigation"><a asp-page="/ElectricityGroups" asp-route-kind="@Model.Kind">@Model.Heading</a><a asp-page="/Index">Přehled</a></nav>
+@if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
+@if(TempData["GroupSaved"] is string saved){<p role="status">@saved</p>}
+@if(Model.Data is not null){
+<section class="panel">
+<h2>Základní konfigurace</h2>
+@if(Model.CanEdit){
+<form method="post" class="stacked-form"><input asp-for="Version" type="hidden"/>
+<label asp-for="GroupName">Název</label><input asp-for="GroupName" maxlength="30" required/>
+<label asp-for="PowerUnit">Jednotka výkonu</label><input asp-for="PowerUnit" maxlength="15"/>
+<label asp-for="EnergyUnit">Jednotka energie</label><input asp-for="EnergyUnit" maxlength="15"/>
+<button class="button button-primary">Uložit konfiguraci</button></form>
+}else{<dl><dt>Název</dt><dd>@Model.Data.Name</dd><dt>Jednotka výkonu</dt><dd>@(Model.Data.PowerUnit??"Neuvedeno")</dd><dt>Jednotka energie</dt><dd>@(Model.Data.EnergyUnit??"Neuvedeno")</dd></dl>}
+@if(Model.Data.MainMeter is not null){<dl><dt>Identifikátor hlavního měření</dt><dd>@Model.Data.MainMeter</dd></dl>}
+@if(Model.Data.Recalculation is not null){<dl><dt>Uložený příznak přepočtu</dt><dd>@Model.Data.Recalculation</dd></dl>}
+</section>
+<section class="panel table-scroll"><table class="data-table price-table" data-price-table>
+<caption>Přiřazené vstupy a uložené koeficienty</caption>
+<thead><tr><th scope="col">@(Model.Kind=="plants"?"ID střediska":"Stanice / vstup")</th><th scope="col">Název</th><th scope="col">Výkon</th><th scope="col">Energie</th><th scope="col">Koeficient A</th><th scope="col">Koeficient B</th><th scope="col">Koeficient P</th>@if(Model.Kind=="plants"){<th scope="col">Uložený příznak přepočtu</th>}</tr></thead>
+<tbody>@foreach(var row in Model.Data.Components){<tr><td>@(Model.Kind=="plants"?row.Input.ToString():ElectricityFictitiousComposition.Address(row.Input))</td><td>@if(Model.Kind=="plants"&&row.Defined){<a asp-page="/ElectricityGroup" asp-route-kind="centres" asp-route-id="@row.Input">@row.Name</a>}else{@row.Name} @if(!row.Defined){<span class="badge">Chybějící definice</span>}</td><td>@row.PowerUnit</td><td>@row.EnergyUnit</td><td>@row.A</td><td>@row.B</td><td>@row.P</td>@if(Model.Kind=="plants"){<td>@row.Recalculation</td>}</tr>}</tbody>
+</table></section>
+@if(Model.Data.Components.Length==0){<p role="status">Konfigurace nemá přiřazené žádné položky.</p>}
+}
+<p>Složení a koeficienty jsou pro čtení. Editace vazeb a výpočty spotřeb se dále převádějí.</p>

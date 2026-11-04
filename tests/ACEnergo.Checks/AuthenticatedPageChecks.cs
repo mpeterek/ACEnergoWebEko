@@ -140,6 +140,35 @@ internal static class AuthenticatedPageChecks
             var group=await Get("/ElectricityGroups/"+kind);
             Check(group.Code==HttpStatusCode.OK && group.Html.Contains("Test group") && group.Html.Contains("MWh"), "group catalog renders "+kind);
         }
+        foreach(var kind in new[]{"fictitious","centres","plants"}) {
+            Role("view");
+            var url="/ElectricityGroup/"+kind+"/1";
+            var detail=await Get(url);
+            Check(detail.Code==HttpStatusCode.OK && detail.Html.Contains("Koeficient A") && !detail.Html.Contains("name=\"GroupName\""),"group detail read-only "+kind);
+            Check(detail.Html.Contains("&lt;group&gt;"),"group name HTML encoded "+kind);
+            if(kind=="plants")Check(detail.Html.Contains("/ElectricityGroup/centres/10002"),"plant links to centre detail");
+            Role("config");detail=await Get(url);
+            Check(detail.Code==HttpStatusCode.OK && detail.Html.Contains("name=\"PowerUnit\""),"group edit controls "+kind);
+            var token=Token(detail.Html);
+            async Task<HttpStatusCode> Save(string name,string version,bool csrf=true) {
+                var fields=new Dictionary<string,string>{["GroupName"]=name,["PowerUnit"]="MW",["EnergyUnit"]="MWh",["Version"]=version};
+                if(csrf)fields["__RequestVerificationToken"]=token;
+                using var response=await client.PostAsync(url,new FormUrlEncodedContent(fields));return response.StatusCode;
+            }
+            var groupWrites=factory.GroupConfig.Writes;
+            Check(await Save("Edited",new string('A',64),false)==HttpStatusCode.BadRequest&&factory.GroupConfig.Writes==groupWrites,"group CSRF rejected "+kind);
+            Role("view");
+            Check(await Save("Edited",new string('A',64))==HttpStatusCode.Forbidden&&factory.GroupConfig.Writes==groupWrites,"group forged viewer POST rejected "+kind);
+            Role("config");
+            Check(await Save(new string('x',31),new string('A',64))==HttpStatusCode.BadRequest&&factory.GroupConfig.Writes==groupWrites,"group validates name "+kind);
+            Check(await Save("Edited",new string('B',64))==HttpStatusCode.Conflict&&factory.GroupConfig.Writes==groupWrites,"group stale version rejected "+kind);
+            Check(await Save("Edited",new string('A',64))==HttpStatusCode.Found&&factory.GroupConfig.Writes==groupWrites+1,"group configuration saves "+kind);
+            Check((await Get("/ElectricityGroup/"+kind+"/999")).Code==HttpStatusCode.NotFound,"unknown group detail "+kind);
+        }
+        Check((await Get("/ElectricityGroup/analog/1")).Code==HttpStatusCode.NotFound,"group detail rejects analog");
+        Role("none");
+        Check((await Get("/ElectricityGroup/centres/1")).Code==HttpStatusCode.Forbidden,"group detail requires view permission");
+        Role("config");
         Check((await Get("/ElectricityGroups/analog")).Code==HttpStatusCode.NotFound,"group kind whitelist rejects analog");
         Role("none");
         Check((await Get("/ElectricityGroups/centres")).Code==HttpStatusCode.Forbidden,"group catalog requires electricity view permission");
@@ -165,6 +194,7 @@ internal static class AuthenticatedPageChecks
     {
         public FakeHolidays Holidays { get; } = new();
         public FakeTariffs Tariffs { get; } = new();
+        public FakeGroupConfiguration GroupConfig { get; } = new();
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             var root = new DirectoryInfo(AppContext.BaseDirectory);
@@ -179,6 +209,8 @@ internal static class AuthenticatedPageChecks
                 services.AddSingleton<IElectricityHolidayStore>(Holidays);
                 services.RemoveAll<IElectricityFictitiousComposition>();
                 services.AddSingleton<IElectricityFictitiousComposition, FakeComposition>();
+                services.RemoveAll<IElectricityGroupConfiguration>();
+                services.AddSingleton<IElectricityGroupConfiguration>(GroupConfig);
                 services.RemoveAll<IElectricityGroupCatalog>();
                 services.AddSingleton<IElectricityGroupCatalog, FakeGroups>();
                 services.RemoveAll<IElectricityMeterConfiguration>();
@@ -239,6 +271,17 @@ internal static class AuthenticatedPageChecks
         public FictitiousComposition Load(int id)=>id switch {
             1=>new("Test",[new(10002,"Test input","MW","MWh","1,5","0","1",true),new(20001,"Nedefinováno","—","—","1","0","1",false)]),
             2=>new("Empty",[]),_=>throw new KeyNotFoundException()};
+    }
+    private sealed class FakeGroupConfiguration : IElectricityGroupConfiguration {
+        public int Writes {get;private set;}
+        public GroupConfiguration Load(string kind,int id){
+            ElectricityGroupCatalog.Definition(kind);if(id!=1)throw new KeyNotFoundException();
+            return new("Test <group>","MW","MWh",new string('A',64),[new(10002,"Component","MW","MWh","1,5","0","1",true)],kind=="fictitious"?null:"5",kind=="centres"?"True":null);
+        }
+        public void Save(string kind,int id,string name,string? power,string? energy,string version){
+            var current=Load(kind,id);ElectricityGroupConfiguration.Validate(name,power,energy);
+            if(current.Version!=version)throw new GroupConfigurationConflictException();Writes++;
+        }
     }
     private sealed class FakeGroups : IElectricityGroupCatalog {
         public ElectricityGroup[] Load(string kind){ElectricityGroupCatalog.Definition(kind);return [new(1,"Test group","MW","MWh")];}

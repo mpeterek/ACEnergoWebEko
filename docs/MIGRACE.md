@@ -269,3 +269,32 @@ Původní MDB potvrzuje tabulky a potřebné sloupce. HTTP testy s testovacím
 Sestavení adresy má samostatné testy. Nativní OLE DB dotaz zůstává k ověření
 na Windows. Jde pouze o čtecí složení: editace a výpočty z koeficientů nejsou
 součástí této etapy.
+
+## Společná konfigurace fiktivních měření, středisek a závodů
+
+Nový detail `/ElectricityGroup/{kind}/{id}` propojuje všechny tři seznamy.
+Pro `fictitious`, `centres` a `plants` obsahuje editaci názvu a jednotek výkonu
+/ energie. Limity 30 a 15 znaků odpovídají schématu dodané MDB. Jednotky jsou
+nepovinné; nezměněná prázdná hodnota zachovává původní NULL nebo prázdný řetězec.
+Ukládání aktualizuje pouze tyto tři sloupce existujícího elektrického záznamu;
+identifikátory, vazby a nastavení přepočtu nemění. Nezakládá ani nemaže záznamy.
+
+Fiktivní měření a střediska zobrazují složení z příslušných tabulek Položky
+s LEFT JOIN na tblKonfigImpuls. Závody zobrazují přiřazená střediska s odkazem
+na jejich detail, koeficienty A/B/P a uložený příznak přepočtu. Chybějící
+odkazované definice zůstávají viditelné. Střediska a závody zobrazují uložené
+ID hlavního měření, střediska také příznak přepočtu. Původní URL složení
+fiktivního měření zůstává funkční a odkazuje na novou konfiguraci.
+
+Čtení vyžaduje ElekView, zápis navíc ElekConfig nebo administrátora.
+POST používá antiforgery, SHA-256 verzi původních údajů, společný procesní
+zamykací soubor a transakci ReadCommitted podporovanou ACE. Konflikt vrací
+409 a vyžaduje nové načtení; neplatná data 400; chybějící záznam či neznámý
+oddíl 404. Původní ASP a externí Access zamykací soubor nerespektují;
+při editaci nepoužívejte souběžné externí zapisovače.
+
+Tato etapa dokončuje základní editaci a čtecí složení tří oddílů společně.
+Editace položek složení, nové záznamy, bilanční výpočty a grafy těchto oddílů
+zůstávají další částí migrace. Analogová měření jsou vyloučená.
+Nativní OLE DB čtení a zápis na Windows zatím nejsou touto etapou ověřené;
+první ověření proveďte na kopii konfigurační MDB.

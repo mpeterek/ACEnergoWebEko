@@ -214,3 +214,13 @@ Skryté heslo má přeškrtnuté oko, zobrazené běžné oko. Přístupný popi
 aria-pressed a ovládání klávesnicí zůstávají. Chromium při šířce 390 px
 ověřilo umístění uvnitř pole, načtení SVG, přepnutí myší a mezerníkem i
 zachování hodnoty. Backend přihlášení se neměnil.
+
+Společná konfigurace tří oddílů elektřiny: sestavení bez varování a chyb;
+regresní konzolové kontroly a 91 autentizovaných Razor/HTTP kontrol prošly.
+Nové kontroly pro každý oddíl pokrývají čtení, HTML kódování, editační prvky,
+POST, CSRF, podvržený zápis čtenářem, chybný název, konflikt verze a 404.
+Ověřen je odkaz závod → středisko, whitelist oddílů a oprávnění. Čisté kontroly
+validují hranice názvu 30 znaků a nepovinných jednotek 15 znaků.
+Schéma a délky polí byly ověřené čtecím parserem dodané MDB. HTTP používá
+výhradně testovací úložiště; neprokazuje nativní OLE DB operace. Ty vyžadují
+Windows s odpovídajícím ACE providerem a kopii MDB pro první zápis.
