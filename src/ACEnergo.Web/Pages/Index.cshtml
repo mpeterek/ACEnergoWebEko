@@ -36,7 +36,7 @@
             {
                 <nav class="dashboard-links" aria-label="Oddíly elektřiny">
                 <a class="btn btn-outline-primary" asp-page="/Electricity">Hlavní měření</a>
-                <button class="btn btn-outline-secondary" disabled title="Oddíl podružných měření včetně vyhodnocení dosud není převeden">Podružná měření · připravuje se</button>
+                <a class="btn btn-outline-primary" asp-page="/ElectricitySubmeters">Podružná měření</a>
                 <a class="btn btn-outline-primary" asp-page="/ElectricityGroups" asp-route-kind="fictitious">Fiktivní měření</a>
                 <a class="btn btn-outline-primary" asp-page="/ElectricityGroups" asp-route-kind="centres">Střediska</a>
                 <a class="btn btn-outline-primary" asp-page="/ElectricityGroups" asp-route-kind="plants">Závody</a>
@@ -44,7 +44,7 @@
             }
             @if (module.Right == "ElekView")
             {
-                <p>Hlavní měření: vstupy, ceny, tarify a svátky. Fiktivní měření, střediska a závody: konfigurace, složení a úpravy vazeb. Výpočty a grafy se převádějí.</p>
+                <p>Hlavní měření: vstupy, ceny, tarify a svátky. Fiktivní měření, střediska a závody: konfigurace, složení a úpravy vazeb. Podružná měření: denní, měsíční a roční vyhodnocení, grafy a export CSV. Další výpočty se převádějí.</p>
                 <span class="badge">Částečně převedeno</span>
             }
             else

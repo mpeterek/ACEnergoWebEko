@@ -1,0 +1,22 @@
+@model ACEnergo.Web.ViewComponents.SubmeterTreeModel
+<div class="card workspace-tree" data-submeter-tree data-tree-url="@Url.Page("/ElectricitySubmeters", "Tree")" data-detail-url="@Url.Page("/ElectricitySubmeter",new{id=0})" data-next-id="@(Model.List.Rows.LastOrDefault()?.Id??0)">
+<div class="card-header"><h2 class="card-title"><i class="fa-solid fa-sitemap" aria-hidden="true"></i> Výběr měření</h2></div>
+<div class="card-body">
+<form method="get" asp-page="/ElectricitySubmeters" data-submeter-filter>
+<label for="submeter-station" class="form-label">Stanice</label><select id="submeter-station" class="form-select" name="Station" data-submeter-station><option value="">Všechny stanice</option>@foreach(var station in Model.List.Stations){<option value="@station" selected="@(station==Model.Station)">@station.ToString("D4")</option>}</select>
+<label for="submeter-type" class="form-label">Typ vstupu</label><select id="submeter-type" class="form-select" name="InputType" data-submeter-type><option value="">Všechny elektrické typy</option>@foreach(var type in Model.List.Types){<option value="@type" selected="@(type==Model.Type)">@type</option>}</select>
+<label for="measurement-search" class="form-label">Hledat název nebo ID</label><input id="measurement-search" type="search" class="form-control" name="Search" data-tree-search value="@Model.Search" maxlength="80"/>
+<noscript><button type="submit" class="btn btn-outline-primary">Vyhledat</button></noscript>
+</form>
+<p role="status" data-submeter-status>@Model.Error</p>
+<ul class="measurement-tree" data-measurement-tree>
+@foreach(var item in Model.List.Rows.Concat(Model.Selected is not null&&Model.List.Rows.All(r=>r.Id!=Model.Selected.Input.Id)?[Model.Selected.Input]:Array.Empty<SubmeterItem>())){
+ var selected=item.Id==Model.Selected?.Input.Id;
+ <li data-tree-item data-group-id="@item.Id" data-search-text="@item.Id @item.Name @item.Type"><details open="@selected"><summary class="@(selected?"tree-selected":"")"><a asp-page="/ElectricitySubmeter" asp-route-id="@item.Id" title="@item.Name" aria-current="@(selected?"page":null)"><span class="tree-id">@ElectricityFictitiousComposition.Address(item.Id)</span> @item.Name</a></summary>
+ <ul class="tree-components"><li><a asp-page="/ElectricitySubmeter" asp-route-id="@item.Id">Informace o vstupu</a></li><li><a asp-page="/ElectricitySubmeterEvaluation" asp-route-id="@item.Id">Vyhodnocení spotřeby</a></li></ul>
+ </details></li>
+}
+</ul><p data-tree-empty hidden>Žádné měření neodpovídá hledání.</p>
+<button type="button" class="btn btn-outline-primary btn-sm" data-submeter-more hidden="@(!Model.List.HasMore)">Načíst další měření</button>
+<noscript>@if(Model.List.HasMore){<a class="btn btn-outline-primary" asp-page="/ElectricitySubmeters" asp-route-Station="@Model.Station" asp-route-InputType="@Model.Type" asp-route-Search="@Model.Search" asp-route-AfterId="@Model.List.Rows.Last().Id">Další měření</a>}</noscript>
+</div></div>

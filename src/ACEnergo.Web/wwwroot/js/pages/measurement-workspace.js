@@ -72,19 +72,21 @@
         } catch (ignore) { /* Default server-rendered selection remains usable. */ }
     }
     function eligible(url) {
+        if (kind === 'submeters') { return url.origin === window.location.origin && /\/Electricity(?:Submeters|Submeter(?:Evaluation)?\/[0-9]+)\/?$/.test(url.pathname) && !url.searchParams.has('handler'); }
         var match = url.pathname.match(/\/Electricity(?:Group|GroupComposition|Groups|GroupPrices|GroupPriceHistory|GroupPriceYear)\/([^/]+)(?:\/[0-9]+)?\/?$/);
         return url.origin === window.location.origin && match && match[1] === kind && !url.searchParams.has('handler');
     }
     function initTables() {
         if (!window.DataTable) { return; }
-        var tables = content.querySelectorAll('[data-price-table]');
+        var tables = content.querySelectorAll('[data-price-table], [data-evaluation-table]');
         var i;
         for (i = 0; i < tables.length; i += 1) {
             if (!window.DataTable.isDataTable(tables[i])) {
+                var evaluation = tables[i].hasAttribute('data-evaluation-table');
                 new window.DataTable(tables[i], {
-                    paging: false, info: false, ordering: false, autoWidth: false,
-                    layout: { topStart: null, topEnd: 'search', bottomStart: null, bottomEnd: null },
-                    language: { search: 'Hledat položku:', zeroRecords: 'Žádná odpovídající položka', emptyTable: 'Nejsou dostupné položky' }
+                    paging: evaluation, pageLength: 24, info: evaluation, ordering: false, autoWidth: false,
+                    layout: { topStart: null, topEnd: 'search', bottomStart: evaluation ? 'info' : null, bottomEnd: evaluation ? 'paging' : null },
+                    language: { search: 'Hledat položku:', zeroRecords: 'Žádná odpovídající položka', emptyTable: 'Nejsou dostupné položky', info: '_START_–_END_ z _TOTAL_', infoEmpty: 'Žádné položky', paginate: { first: 'První', last: 'Poslední', next: 'Další', previous: 'Předchozí' } }
                 });
             }
         }
@@ -223,6 +225,7 @@
         var url = new URL(window.location.href);
         if (eligible(url)) { navigate(url, false, null); } else { window.location.reload(); }
     });
+    document.addEventListener('acenergo:tree-ready', function () { filter(); save(); });
     window.addEventListener('beforeunload', save);
     window.addEventListener('resize', fitTree);
     input.addEventListener('input', function () { filter(); save(); });

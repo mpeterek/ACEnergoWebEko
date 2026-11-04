@@ -1,6 +1,7 @@
 # Migrace ACEnergoWebEko – stav implementace
 
-Projekt obsahuje první etapu a navazující převod tarifů a svátků; úplný převod aplikace není dokončen.
+Projekt obsahuje konfiguraci a ceníky elektřiny, tarify, svátky, správu skupin
+a archivní vyhodnocení podružných měření. Úplný převod aplikace není dokončen.
 Původní archiv: příloha `ACEnergoWebEko.-.kopie.zip` vydání `v.1.0` na GitHubu.
 Archiv prošel kontrolou CRC. Originály i MDB zůstaly nezměněné mimo nový projekt.
 
@@ -13,12 +14,12 @@ odkazy na tabulky a výskyty ConnectDBase. Jde o statickou analýzu, nikoli důk
 
 | Oblast | ASP souborů | Stav |
 | --- | ---: | --- |
-| Elektřina | 319 | Převeden seznam, týdenní tarify a svátky; nativní integrační testy čekají na Windows |
+| Elektřina | 319 | Konfigurace, ceníky, tarify, svátky, skupiny a vyhodnocení podružných měření den/měsíc/rok; nové nativní dotazy čekají na ověření ve Windows |
 | Plyn | 215 | Čeká |
 | Teplo | 174 | Čeká |
 | Voda | 170 | Čeká |
 | Ostatní | 118 | Čeká |
-| Analog | 29 | Čeká |
+| Analog | 29 | Vynecháno na přání uživatele |
 | Knihovna | 35 | Převeden výpočet názvu měsíční MDB |
 | Servis | 20 | Implementována autentizace; správa uživatelů čeká |
 | Kořen a Path | 8 | Nové rozvržení a přesměrování vstupní URL |
@@ -388,3 +389,70 @@ Bez JavaScriptu fungují běžné odkazy a formuláře.
 
 Vyhodnocení podružných měření, spotřeb, bilancí a grafů se nadále převádí.
 Analogová měření jsou na výslovné přání vynechána.
+
+## Podružná měření – výběr, archivní vyhodnocení a export
+
+Z přehledu je nyní dostupná položka **Elektřina → Podružná měření**.
+Nové stránky `/ElectricitySubmeters`, `/ElectricitySubmeter/{id}`
+a `/ElectricitySubmeterEvaluation/{id}` používají stejnou AJAX pracovní
+plochu jako skupiny. Při otevření vstupu a změně období se zachovává strom,
+jeho rozbalení a pozice. Katalog načítá nejvýše 100 vstupů na dávku;
+filtrování podle stanice, elektrického typu, názvu nebo přesného ID probíhá
+na serveru. Nejde o načtení tisíců položek do prohlížeče najednou.
+
+### Převedené funkce
+
+- Archivované fyzické vstupy z `tblKonfigImpuls`, `boolArchiv<>0`,
+  `0<numCislo<50000000`, pouze typy definované pro Elektřinu.
+  Stanice/vstup odpovídá `ID / 10000` a `ID % 10000`, například 0001/0003.
+  Fiktivní ani analogové vstupy nelze otevřít jako podružné měření.
+- Informace o vstupu, skutečné jednotky práce a výkonu, typ, posuny
+  den/měsíc/rok a historie společných cen. Konfigurace fyzického zařízení
+  se nemění a aplikace s Energomatem nekomunikuje.
+- Den: 96 čtvrthodin nebo 24 hodin, graf spotřeby, spotřeba a nejvyšší
+  zaznamenaný čtvrthodinový výkon. Hodinový řádek sčítá čtyři čtvrthodiny,
+  jeho maximum zůstává čtvrthodinové, nikoli hodinová energie násobená čtyřmi.
+- Měsíc: denní řádky, spotřeba, denní maxima, graf a součet období.
+- Rok: dvanáct měsíců, graf a součet dostupných hodnot. Stejně jako původní
+  roční vyhodnocení se nepočítají roční náklady ani roční tarifní rozpad.
+- Jednotné nebo tarifní ocenění úplných denních/měsíčních dat z ceníku
+  elektrického typu. V denním přehledu se cena vybírá ke zvolenému dni,
+  v měsíčním k prvnímu dni měsíce. Při tarifním ocenění uživatel vybírá
+  hlavní měření; použijí se jeho uložená pásma daného měsíce a jeho svátky.
+- Tabulka DataTables s hledáním a stránkováním, barevně odlišený graf
+  úplných/neúplných hodnot, CSV UTF-8 s BOM, jednotkami, skutečnými časy,
+  počtem platných/očekávaných čtvrthodin a stavem dostupnosti.
+
+### Návaznost na ASP a datové hranice
+
+Zdrojové postupy: `Elektrina/PodruznaMereni/Vyhodnoceni/Inc/ReadDataImpulsPodruzne.asp`,
+`Den/AllDataImpulsDen.asp`, `Mesic/AllDataImpulsMesic.asp`,
+`Rok/AllDataImpulsRok.asp`, `Knihovna/CasPosunEnergie/CasPosunEnergie.asp`
+a společné cenové funkce. Schéma ověřeno v dodané MDB: `tblDataImpuls`
+obsahuje `numCislo`, `dtDateTime`, `numHodnota` (DECIMAL).
+
+Čas v archivu znamená **konec** čtvrthodiny. Čtení používá interval
+`(počátek + posun, konec + posun]`, tj. první hodnota 00:15 a poslední
+24:00 při nulovém posunu. Pásmo i svátek čtvrthodiny končící půlnocí
+patří předchozímu dni. Hodnota je již práce/energie v uložené jednotce;
+koeficienty fyzického vstupu se neaplikují podruhé. Výkon = hodnota × 4.
+Denní, měsíční a roční posun jsou tři oddělená nastavení typu.
+
+Jako původní ASP se pro každý logický měsíc čte jediná odpovídající měsíční
+MDB, včetně jejího případného přesahu do dalšího měsíce při posunutém dni.
+Pro říjen 2026 je to `ACEnergoWebEko2610.mdb` ve složce `Access:Directory`,
+obvykle `C:\ACEnergoData`. Samotná konfigurační a přihlašovací MDB archivní
+hodnoty neobsahují. Roční přehled otevírá až dvanáct měsíčních souborů.
+Dotazy jsou parametrizované a připojení měsíčních databází pouze pro čtení.
+
+Chybějící soubor, chybějící čtvrthodina a NULL nejsou nahrazeny nulou.
+Částečný součet je výslovně označen jako dostupná neúplná spotřeba;
+celkové náklady se v takovém případě neuvádějí. Naměřená nula zůstává nulou.
+Duplicitní nebo nečtvrthodinové časy vyhodnocení odmítne. Neukládané výchozí
+tarify se pro výpočet ceny nepoužívají. Tyto kontroly zpřesňují původní
+zacházení s výpadky; nevytvářejí náhradní měření.
+
+Tato etapa nepřevádí směnové bilance, libovolné pásmo od–do, minutové
+archivy, komunikaci se zařízeními ani vyhodnocení fiktivních měření,
+středisek a závodů. Tyto funkce nadále čekají na další migraci.
+Nativní nové dotazy čekají na ověření ve Windows s ACE providerem.

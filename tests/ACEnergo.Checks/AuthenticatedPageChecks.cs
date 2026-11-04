@@ -358,6 +358,45 @@ internal static class AuthenticatedPageChecks
         }
         Role("config");Check((await Get("/ElectricityGroupPrices/analog/1")).Code==HttpStatusCode.NotFound,"shared price whitelist");
         Check((await Get("/ElectricityGroupPriceYear/centres/1?Period=")).Code==HttpStatusCode.BadRequest,"shared price explicit empty period invalid");
+        Role("none");
+        foreach(var route in new[]{"/ElectricitySubmeters","/ElectricitySubmeters?handler=Tree","/ElectricitySubmeter/10003","/ElectricitySubmeterEvaluation/10003?Mode=day&Date=2026-10-01","/ElectricitySubmeterEvaluation/10003?handler=Export&Mode=day&Date=2026-10-01"})
+            Check((await Get(route)).Code==HttpStatusCode.Forbidden,"submeter policy "+route);
+        Role("view");
+        var submeter=await Get("/ElectricitySubmeter/10003");
+        Check(submeter.Code==HttpStatusCode.OK&&submeter.Html.Contains("&lt;submeter&gt;")&&!submeter.Html.Contains("<submeter>"),"physical name encoded");
+        Check(submeter.Html.Contains("0001/0003")&&submeter.Html.Contains("kWh"),"physical address and work unit");
+        Check((await Get("/ElectricitySubmeter/50000001")).Code==HttpStatusCode.NotFound,"virtual ID cannot be physical");
+        Check((await Get("/ElectricitySubmeter/999")).Code==HttpStatusCode.NotFound,"unknown physical ID");
+        var tree=await Get("/ElectricitySubmeters?handler=Tree&Station=1&InputType=EU");
+        using(var parsed=System.Text.Json.JsonDocument.Parse(tree.Html)){var values=parsed.RootElement.GetProperty("rows");Check(tree.Code==HttpStatusCode.OK&&values.GetArrayLength()==1&&values[0].GetProperty("id").GetInt32()==10004,"physical tree station/type JSON filter");}
+        Check((await Get("/ElectricitySubmeters?handler=Tree&Station=wrong")).Code==HttpStatusCode.BadRequest,"physical tree model binding");
+        Check((await Get("/ElectricitySubmeters?handler=Tree&Station=5000")).Code==HttpStatusCode.BadRequest,"physical tree rejects virtual station");
+        var first=await Get("/ElectricitySubmeters?handler=Tree");
+        using(var parsed=System.Text.Json.JsonDocument.Parse(first.Html))Check(parsed.RootElement.GetProperty("hasMore").GetBoolean()&&parsed.RootElement.GetProperty("rows").GetArrayLength()==100,"physical list bounded first page");
+        var next=await Get("/ElectricitySubmeters?handler=Tree&AfterId=10100");
+        using(var parsed=System.Text.Json.JsonDocument.Parse(next.Html))Check(parsed.RootElement.GetProperty("rows")[0].GetProperty("id").GetInt32()==10101,"physical keyset continuation");
+        foreach(var mode in new[]{"day","month","year"}){
+            var route="/ElectricitySubmeterEvaluation/10003?Mode="+mode+"&Date=2026-10-01&Interval=hour";
+            var result=await Get(route);Check(result.Code==HttpStatusCode.OK&&result.Html.Contains("data-evaluation-table")&&result.Html.Contains("<svg"),"physical evaluation view "+mode);
+            var expected=mode=="day"?"96":mode=="month"?"2976":"32160";
+            Check(WebUtility.HtmlDecode(result.Html).Contains(expected),"physical known consumption "+mode);
+            using var request=new HttpRequestMessage(HttpMethod.Get,route);request.Headers.Add("X-Workspace-Request","1");
+            using var fragment=await client.SendAsync(request);var fragmentHtml=await fragment.Content.ReadAsStringAsync();
+            Check(fragment.StatusCode==HttpStatusCode.OK&&fragmentHtml.Contains("workspace-content")&&!fragmentHtml.Contains("<script")&&fragment.Headers.CacheControl?.NoStore==true,"physical AJAX fragment "+mode);
+            if(Environment.GetEnvironmentVariable("ACE_RESPONSIVE_DIR") is string folder){await File.WriteAllTextAsync(Path.Combine(folder,"submeter-"+mode+".html"),result.Html);await File.WriteAllTextAsync(Path.Combine(folder,"fragment-submeter-"+mode+".html"),fragmentHtml);}
+        }
+        foreach(var query in new[]{"Mode=bad","Date=2026-02-30","Date=","Interval=minute","MainMeterId=-1"})Check((await Get("/ElectricitySubmeterEvaluation/10003?"+query)).Code==HttpStatusCode.BadRequest,"physical invalid evaluation "+query);
+        Check((await Get("/ElectricitySubmeterEvaluation/10003")).Code==HttpStatusCode.OK,"physical default period valid");
+        using(var csv=await client.GetAsync("/ElectricitySubmeterEvaluation/10003?handler=Export&Mode=day&Date=2026-10-01&Interval=hour")){
+            var bytes=await csv.Content.ReadAsByteArrayAsync();var text=System.Text.Encoding.UTF8.GetString(bytes);
+            Check(csv.StatusCode==HttpStatusCode.OK&&csv.Content.Headers.ContentType?.MediaType=="text/csv"&&csv.Content.Headers.ContentDisposition?.FileNameStar?.EndsWith(".csv")==true,"physical CSV download");
+            Check(bytes.Take(3).SequenceEqual(new byte[]{239,187,191})&&text.Contains("2026-10-01 06:00")&&text.Contains("kWh")&&text.Split('\n',StringSplitOptions.RemoveEmptyEntries).Length==25,"physical CSV BOM, shift, units and hourly rows");
+        }
+        if(Environment.GetEnvironmentVariable("ACE_RESPONSIVE_DIR") is string submeterFolder){
+            foreach(var (name,route) in new[]{("submeters","/ElectricitySubmeters"),("submeter","/ElectricitySubmeter/10003")}){var html=(await Get(route)).Html;await File.WriteAllTextAsync(Path.Combine(submeterFolder,name+".html"),html);}
+            using var request=new HttpRequestMessage(HttpMethod.Get,"/ElectricitySubmeter/10003");request.Headers.Add("X-Workspace-Request","1");using var response=await client.SendAsync(request);await File.WriteAllTextAsync(Path.Combine(submeterFolder,"fragment-submeter.html"),await response.Content.ReadAsStringAsync());
+            foreach(var (name,route) in new[]{("submeters-first","/ElectricitySubmeters?handler=Tree"),("submeters-next","/ElectricitySubmeters?handler=Tree&AfterId=10100"),("submeters-station","/ElectricitySubmeters?handler=Tree&Station=2"),("submeters-type","/ElectricitySubmeters?handler=Tree&InputType=EU"),("submeters-search","/ElectricitySubmeters?handler=Tree&Search=10003")})await File.WriteAllTextAsync(Path.Combine(submeterFolder,name+".json"),(await Get(route)).Html);
+        }
         Console.WriteLine($"PASS: {count} authenticated Razor/HTTP, CSRF and authorization checks (test stores only).");
     }
 
@@ -379,6 +418,10 @@ internal static class AuthenticatedPageChecks
             builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?> { ["AllowedHosts"] = "localhost" }));
             builder.ConfigureTestServices(services =>
             {
+                services.RemoveAll<IElectricitySubmeterStore>();
+                services.AddSingleton<IElectricitySubmeterStore, SubmeterFixture>();
+                services.RemoveAll<IElectricityPulseArchive>();
+                services.AddSingleton<IElectricityPulseArchive, PulseArchiveFixture>();
                 services.RemoveAll<IElectricityHolidayStore>();
                 services.AddSingleton<IElectricityHolidayStore>(Holidays);
                 services.RemoveAll<IElectricityFictitiousComposition>();

@@ -498,3 +498,40 @@ Druhý zapisuje výhradně do dočasné kopie, zkontroluje přesnost cen,
 NULL, zachování historie, konflikt i duplicitní datum a ověří hash originálu.
 Vyžaduje nejméně jedno elektrické fiktivní měření. Na Linuxu tyto nativní
 kontroly nelze spustit; zelený HTTP test je nenahrazuje.
+
+## Podružná měření a archivní spotřeby
+
+`dotnet run --project tests/ACEnergo.Checks` zahrnuje 35 doménových a servisních
+kontrol podružných měření nad syntetickými archivy. Kontrolují denní/hodinové,
+měsíční a roční součty, rozdílné posuny, záporný posun přes únor, přestupný
+rok, výkon × 4, NULL, chybějící MDB, duplicitní časy, cenovou platnost,
+mapování nízkého/vysokého/víkendového tarifu, svátky a zrušení ročního čtení.
+HTTP kontroly ověřují nové Razor stránky, oprávnění, omezené dávky seznamu,
+filtry, AJAX fragmenty, neplatná data a CSV. Jde o testovací úložiště;
+nepotvrzují registraci provideru ani funkčnost nativního SQL na Windows.
+
+Po exportu HTML stejným příkazem `ACE_RESPONSIVE_DIR=...` uvedeným výše:
+
+```bash
+node tools/check-submeters.cjs /tmp/acenergo-responsive
+node tools/check-responsive-layout.cjs /tmp/acenergo-responsive
+```
+
+První nástroj ověřuje v Chromium desktop, tablet a mobil: stránkování
+seznamu, stanice/typ/hledání, opakování neúspěšného dotazu, souběh dotazů,
+den/měsíc/rok přes AJAX, historii prohlížeče, pozici stromu, graf,
+DataTables a parametry exportu. Druhý zahrnuje všech 19 obrazovek od 320 do
+1920 px. Po Release buildu lze první kontrolu spustit s
+`ACE_SUBMETERS_MINIFIED=1`, druhou s `ACE_RESPONSIVE_MINIFIED=1`.
+
+Nativní čtecí kontrola ve Windows (běžnou aplikaci nejprve zastavte):
+
+```powershell
+dotnet run --project tests/ACEnergo.Checks -- --submeter-mdb C:\ACEnergoData\ACEnergoWebEko.mdb 2026-10 10003
+```
+
+ID 10003 nahraďte skutečným archivovaným elektrickým vstupem a období
+měsícem s existujícím archivem. Poslední argument je volitelný (pak se použije
+první vstup). Kontrola čte katalog, filtr stanice, definici vstupu, ceny a
+měsíční archiv. Výsledek nové agregace porovná s nezávislým SQL SUM/COUNT.
+Nic nezapisuje. Nativní kontrolu nelze provést v tomto linuxovém prostředí.

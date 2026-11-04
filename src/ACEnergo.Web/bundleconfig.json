@@ -48,5 +48,25 @@
       "enabled": true
     },
     "sourceMap": false
+  },
+  {
+    "outputFileName": "wwwroot/generated/submeters.min.css",
+    "inputFiles": [
+      "wwwroot/css/pages/submeters.css"
+    ],
+    "minify": {
+      "enabled": true
+    },
+    "sourceMap": false
+  },
+  {
+    "outputFileName": "wwwroot/generated/submeter-tree.min.js",
+    "inputFiles": [
+      "wwwroot/js/pages/submeter-tree.js"
+    ],
+    "minify": {
+      "enabled": true
+    },
+    "sourceMap": false
   }
 ]

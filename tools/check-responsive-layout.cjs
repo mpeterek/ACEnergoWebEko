@@ -26,7 +26,7 @@ const profiles = [
                 if (!fs.existsSync(file)) return route.fulfill({ status: 404, body: '' });
                 await route.fulfill({ path: file, contentType: file.endsWith('.css') ? 'text/css' : file.endsWith('.js') ? 'application/javascript' : file.endsWith('.html') ? 'text/html' : undefined });
             });
-            const pages = ['home', 'login', 'meter', 'groups', 'configuration', 'composition', 'prices', 'tariffs', 'price-editor', 'holidays', 'monthly-prices', 'type-prices', 'type-history', 'type-year'];
+            const pages = ['home', 'login', 'meter', 'groups', 'configuration', 'composition', 'prices', 'tariffs', 'price-editor', 'holidays', 'monthly-prices', 'type-prices', 'type-history', 'type-year', 'submeters', 'submeter', 'submeter-day', 'submeter-month', 'submeter-year'];
             for (const name of pages) {
                 await page.goto('http://responsive.test/' + name + '.html');
                 await page.evaluate(() => document.fonts.ready);

@@ -1,0 +1,28 @@
+@page "{id:int}"
+@model ElectricitySubmeterEvaluationModel
+@using System.Globalization
+@using ACEnergo.Web.Domain
+@{Layout="/Pages/Shared/_SubmeterLayout.cshtml";ViewData["Title"]="Elektřina – "+Model.Title;}
+<h1>@(Model.Data?.Definition.Input.Name??"Podružné měření")</h1>
+@if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
+<section class="panel"><h2>@Model.Title</h2>
+<form method="get" class="evaluation-form" data-workspace-form><div><label asp-for="Mode">Rozsah</label><select asp-for="Mode" class="form-select"><option value="day">Den</option><option value="month">Měsíc</option><option value="year">Rok</option></select></div><div><label asp-for="Date">Datum / měsíc / rok podle data</label><input asp-for="Date" type="date" class="form-control" min="2000-01-01" max="9998-12-31" required/></div><div><label asp-for="Interval">Podrobnost dne</label><select asp-for="Interval" class="form-select"><option value="quarter">Čtvrthodiny</option><option value="hour">Hodiny</option></select></div><div><label asp-for="MainMeterId">Tarifní pásma hlavního měření</label><select asp-for="MainMeterId" class="form-select"><option value="">Bez přiřazeného tarifu</option>@foreach(var meter in Model.MainMeters){<option value="@meter.Id">@meter.Name (#@meter.Id)</option>}</select></div><button type="submit" class="btn btn-primary">Vyhodnotit</button></form></section>
+@if(Model.Data is {} data){
+ var unit=data.Definition.Input.WorkUnit??"Neuvedeno";var powerUnit=data.Definition.Input.PowerUnit??"Neuvedeno";
+ @foreach(var warning in data.Warnings){<p class="alert alert-warning" role="status">@warning</p>}
+ <p>Typ @data.Definition.Input.Type · stanice/vstup @ElectricityFictitiousComposition.Address(data.Definition.Input.Id) · časový posun @data.Shift hod. Archivní čas označuje konec čtvrthodiny.</p>
+ <div class="evaluation-summary"><div class="card"><div class="card-body"><h2>@(data.Complete?"Celková spotřeba":"Dostupná spotřeba · neúplná")</h2><strong>@ElectricitySubmeterEvaluationModel.Number(data.Energy) @unit</strong></div></div><div class="card"><div class="card-body"><h2>Nejvyšší zaznamenaný ¼h výkon</h2><strong>@ElectricitySubmeterEvaluationModel.Number(data.PeakPower) @powerUnit</strong></div></div><div class="card"><div class="card-body"><h2>@(Model.Mode=="year"?"Roční náklady se nevyhodnocují":"Náklady za úplné období")</h2><strong>@ElectricitySubmeterEvaluationModel.Number(data.Cost) @(Model.Mode=="year"?"":"Kč")</strong></div></div></div>
+ <nav class="d-flex flex-wrap gap-2 my-3" aria-label="Výstup vyhodnocení"><a class="btn btn-outline-primary btn-sm" asp-page-handler="Export" asp-route-id="@Model.Id" asp-route-Mode="@Model.Mode" asp-route-Date="@Model.Date" asp-route-Interval="@Model.Interval" asp-route-MainMeterId="@Model.MainMeterId" data-native-navigation><i class="fa-solid fa-file-csv" aria-hidden="true"></i> Export CSV</a></nav>
+ <section class="panel consumption-chart"><h2>Spotřeba · @unit</h2><p>Modrá: úplná data. Oranžová: dostupná část neúplného období. Prázdné místo: chybějící hodnoty. Přesné hodnoty jsou v tabulce.</p>
+ @{
+ var numbers=data.Rows.Where(r=>r.Energy.HasValue).Select(r=>r.Energy!.Value).Append(0m).ToArray();var min=numbers.Min();var max=numbers.Max();var span=max-min; if(span==0)span=1;
+ string Y(decimal value)=>(210m-(value-min)/span*180m).ToString("0.###",CultureInfo.InvariantCulture);
+ var baseline=decimal.Parse(Y(0),CultureInfo.InvariantCulture);
+ }
+ <svg viewBox="0 0 800 250" role="img" aria-label="Graf spotřeby; přesné hodnoty a úplnost jsou v následující tabulce"><line x1="110" x2="780" y1="@Y(0)" y2="@Y(0)" class="chart-axis"/><text x="5" y="25">@ElectricitySubmeterEvaluationModel.Number(max)</text><text x="5" y="225">@ElectricitySubmeterEvaluationModel.Number(min)</text>
+ @for(var i=0;i<data.Rows.Length;i++){var row=data.Rows[i];if(row.Energy is not decimal energy)continue;var x=110m+i*670m/data.Rows.Length;var valueY=decimal.Parse(Y(energy),CultureInfo.InvariantCulture);var height=Math.Max(Math.Abs(baseline-valueY),1);<rect x="@x.ToString("0.###",CultureInfo.InvariantCulture)" y="@Math.Min(valueY,baseline).ToString("0.###",CultureInfo.InvariantCulture)" width="@Math.Max(670m/data.Rows.Length-2,1).ToString("0.###",CultureInfo.InvariantCulture)" height="@height.ToString("0.###",CultureInfo.InvariantCulture)" class="@(row.Complete?"chart-complete":"chart-partial")"><title>@Model.Label(row): @ElectricitySubmeterEvaluationModel.Number(energy) @unit · @row.Status</title></rect>}
+ <text x="110" y="245">@Model.Label(data.Rows.First())</text><text x="780" y="245" text-anchor="end">@Model.Label(data.Rows.Last())</text></svg></section>
+ <section class="panel table-scroll"><table class="data-table price-table" data-evaluation-table><caption>@Model.Title · @data.Date.ToString("dd.MM.yyyy")</caption><thead><tr><th scope="col">@(Model.Mode=="day"?"Konec intervalu":Model.Mode=="year"?"Měsíc":"Den")</th><th scope="col">Spotřeba (@unit)</th><th scope="col">Max. ¼h (@powerUnit)</th><th scope="col">Nízký tarif (@unit)</th><th scope="col">Vysoký tarif (@unit)</th><th scope="col">Víkend (@unit)</th><th scope="col">Náklady (Kč)</th><th scope="col">Platné / očekávané ¼h</th><th scope="col">Stav</th></tr></thead><tbody>
+ @foreach(var row in data.Rows){<tr><th scope="row">@Model.Label(row)</th><td>@ElectricitySubmeterEvaluationModel.Number(row.Energy)</td><td>@ElectricitySubmeterEvaluationModel.Number(row.PeakPower)</td>@foreach(var band in row.Bands){<td>@ElectricitySubmeterEvaluationModel.Number(band)</td>}<td>@ElectricitySubmeterEvaluationModel.Number(row.Cost)</td><td>@row.Samples / @row.Expected</td><td>@row.Status</td></tr>}
+ </tbody></table></section>
+}
