@@ -24,6 +24,7 @@ builder.Services.AddScoped<IElectricityPriceEditor, ElectricityPriceEditor>();
 builder.Services.AddScoped<IElectricityMeterConfiguration, ElectricityMeterConfiguration>();
 builder.Services.AddScoped<IElectricityGroupCatalog, ElectricityGroupCatalog>();
 builder.Services.AddScoped<IElectricityGroupConfiguration, ElectricityGroupConfiguration>();
+builder.Services.AddScoped<IElectricityGroupCompositionEditor, ElectricityGroupCompositionEditor>();
 builder.Services.AddScoped<IElectricityFictitiousComposition, ElectricityFictitiousComposition>();
 builder.Services.AddAuthorization(options => options.AddPolicy("ElekConfig", policy => policy.RequireAuthenticatedUser().RequireAssertion(context => context.User.IsInRole("Administrator") || context.User.HasClaim("permission", "ElekConfig"))));
 var app = builder.Build();

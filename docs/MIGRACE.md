@@ -298,3 +298,49 @@ Editace položek složení, nové záznamy, bilanční výpočty a grafy těchto
 zůstávají další částí migrace. Analogová měření jsou vyloučená.
 Nativní OLE DB čtení a zápis na Windows zatím nejsou touto etapou ověřené;
 první ověření proveďte na kopii konfigurační MDB.
+
+## Správa složení tří oddílů elektřiny
+
+Z Přehledu otevřete Fiktivní měření, Střediska nebo Závody. Každý řádek má
+nyní výslovné odkazy Konfigurace a Složení. Detail konfigurace obsahuje odkaz
+Upravit složení; nová stránka je `/ElectricityGroupComposition/{kind}/{id}`.
+Předchozí commit 6d7428e se týkal detailů, nikoli tarifů či zásadního redesignu
+úvodní stránky. Přehled nyní také popisuje dostupnou editaci skupin.
+
+Nové funkce pro ElekConfig / administrátora:
+
+- Hledání podle názvu nebo úplného ID, nejvýše 100 kandidátů s výzvou
+  k upřesnění při překročení limitu. Přidání již přiřazené položky je odmítnuto.
+- Fiktivní měření: přidání archivovaného reálného vstupu elektřiny,
+  změna koeficientu P a odebrání vazby.
+- Střediska: stejné operace pro reálné vstupy i fiktivní měření elektřiny.
+  ID fiktivních vstupů začínají na 50000000 podle global_konstanty.asp;
+  detail správně načítá jejich názvy a jednotky z tblKonfigFiktivni a nabízí
+  přechod na jejich konfiguraci.
+- Závody: přidání střediska elektřiny, změna příznaku přepočtu ztrát
+  a odebrání vazby. Zapnutí přepočtu vyžaduje přiřazené hlavní měření závodu.
+
+Jako v původních UpDateFiktivniP.asp / UpDateStrediskaP.asp se mění pouze
+numKonstP, nikoli A a B. Povolena je i nula a záporný koeficient, desetinná
+čárka i tečka. Nový reálný či fiktivní vstup začíná s P=1, nová vazba závodu
+s přepočtem vypnutým. Ostatní sloupce nové položky ponechávají výchozí hodnoty
+MDB, stejně jako původní AddNew. Změna příznaku závodu nemění koeficienty.
+Odebrání vyžaduje výslovné potvrzení u dané položky. U závodu zároveň ruší
+bPrepocet na elektrickém středisku podle původního UpDateZavodyP.asp;
+uživatel je na tento účinek upozorněn přímo ve formuláři.
+
+Kandidáti reálných vstupů jsou filtrováni podle boolArchiv a strTypEnergie
+z tblKonfigEnergie pro Elektřinu, stejně jako Knihovna/SeznamTypVstupu.asp.
+Vstupy jiných energií nelze přidat podvržením POST; validace se opakuje
+v transakci. Nejde o komunikaci s Energomatem ani o migraci Analogů.
+
+SHA-256 verze zahrnuje rodiče a celé původní složení včetně NULL a koeficientů
+A/B/P. Duplicitní nebo neúplné identifikátory složení blokují editaci.
+Zápisy používají parametrizované OLE DB příkazy, společný procesní i souborový
+zámek a ReadCommitted; porucha operace zruší celou transakci. CSRF a serverová
+oprávnění platí pro každý handler. Externí ASP / Access zápisy souborový zámek
+nerespektují, proto je nepouštějte souběžně s editací.
+
+Zůstává migrace zakládání a rušení samotných skupin, vazeb hlavního měření,
+bilancí a grafů. Nativní nové dotazy a zápisy vyžadují ověření na Windows
+s ACE providerem; první ověření proveďte na kopii konfigurační MDB.

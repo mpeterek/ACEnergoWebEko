@@ -224,3 +224,23 @@ validují hranice názvu 30 znaků a nepovinných jednotek 15 znaků.
 Schéma a délky polí byly ověřené čtecím parserem dodané MDB. HTTP používá
 výhradně testovací úložiště; neprokazuje nativní OLE DB operace. Ty vyžadují
 Windows s odpovídajícím ACE providerem a kopii MDB pro první zápis.
+
+Správa složení fiktivních měření, středisek a závodů:
+
+- Regresní konzolové kontroly a 140 autentizovaných Razor/HTTP kontrol prošly.
+  Nové testy pokrývají hledání, čtecí režim, přidání / změnu / odebrání,
+  skutečně navázané hodnoty koeficientu i checkboxu, potvrzení odebrání,
+  duplicitní položku, neplatný koeficient, konflikt verze, chybějící CSRF,
+  podvržené zápisy čtenářem, 404 a vyloučení analogového oddílu.
+- Čisté kontroly pokrývají koeficienty s čárkou i tečkou, zápornou hodnotu,
+  nulu, odmítnutí NaN / Infinity / přetečení / neplatných vstupů,
+  popisky virtuálních ID a whitelist tabulek.
+- Chromium ověřilo skutečně vykreslené Razor HTML při 1440, 768 a 390 px:
+  bez horizontálního přesahu stránky, povinné potvrzení před odebráním,
+  správnou hodnotu koeficientu, ChildId a Version ve FormData.
+- Původní ASP ověřuje editovaná pole, filtr archivovaných elektrických vstupů,
+  offset fiktivních ID a účinek odebrání střediska ze závodu. Schéma dodané
+  MDB potvrzuje všechny použité tabulky a sloupce.
+
+HTTP kontroly používají testovací úložiště. Nativní OLE DB dotazy, transakce
+ani vazby přes IIF / LEFT JOIN nebyly spuštěné proti ACE na Windows.

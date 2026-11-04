@@ -81,3 +81,13 @@ Reject(()=>ElectricityGroupConfiguration.Validate(new string('x',31),null,null))
 Reject(()=>ElectricityGroupConfiguration.Validate("Test",new string('W',16),null));
 Reject(()=>ElectricityGroupConfiguration.Validate("Test",null,new string('W',16)));
 Console.WriteLine("PASS group name and optional unit schema limits.");
+
+Equal(-1.25d,ElectricityGroupCompositionEditor.Coefficient("-1,25"));
+Equal(0d,ElectricityGroupCompositionEditor.Coefficient("0"));
+Equal(1.25d,ElectricityGroupCompositionEditor.Coefficient("1.25"));
+foreach(var invalid in new[]{"NaN","Infinity","1e309","1,2.3","",new string('9',400)})Reject(()=>ElectricityGroupCompositionEditor.Coefficient(invalid));
+Equal("Fiktivní měření 1",ElectricityGroupCompositionEditor.ComponentLabel("centres",50000001));
+Equal("0001/0002",ElectricityGroupCompositionEditor.ComponentLabel("centres",10002));
+Equal("Středisko 12",ElectricityGroupCompositionEditor.ComponentLabel("plants",12));
+Reject(()=>ElectricityGroupCompositionEditor.Definition("analog"));
+Console.WriteLine("PASS composition coefficients, virtual IDs and table whitelist.");

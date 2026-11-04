@@ -51,6 +51,10 @@ public sealed class ElectricityGroupConfiguration(DatabaseCatalog catalog,IConfi
   var parts=kind switch {"fictitious"=>"tblKonfigFiktivniPolozky","centres"=>"tblKonfigStrediskoPolozky","plants"=>"tblKonfigZavodPolozky",_=>throw new ArgumentException()};
   var child=plants?"numStredisko":"numImpuls";var target=plants?"tblKonfigStredisko":"tblKonfigImpuls";
   using var command=new OleDbCommand($"SELECT p.[{child}],i.[strNazev],i.[strRozmerP],i.[strRozmerV],p.[numKonstA],p.[numKonstB],p.[numKonstP],i.[numCislo]{(plants?",p.[bPrepocet]":"")} FROM [{parts}] AS p LEFT JOIN [{target}] AS i ON p.[{child}]=i.[numCislo] WHERE p.[numCislo]=? ORDER BY p.[{child}]",connection);
+  if(kind=="centres"){
+   // Středisko může odkazovat také na fiktivní měření (ID od 50000000).
+   command.CommandText="SELECT p.[numImpuls], IIF(p.[numImpuls]>=50000000,f.[strNazev],i.[strNazev]), IIF(p.[numImpuls]>=50000000,f.[strRozmerP],i.[strRozmerP]), IIF(p.[numImpuls]>=50000000,f.[strRozmerV],i.[strRozmerV]),p.[numKonstA],p.[numKonstB],p.[numKonstP], IIF(p.[numImpuls]>=50000000,f.[numCislo],i.[numCislo]) FROM ([tblKonfigStrediskoPolozky] AS p LEFT JOIN [tblKonfigImpuls] AS i ON p.[numImpuls]=i.[numCislo]) LEFT JOIN [tblKonfigFiktivni] AS f ON p.[numImpuls]=f.[numCislo] WHERE p.[numCislo]=? ORDER BY p.[numImpuls]";
+  }
   command.Parameters.Add("id",OleDbType.Integer).Value=id;
   using var reader=command.ExecuteReader();var rows=new List<FictitiousComponent>();
   while(reader is not null&&reader.Read()){

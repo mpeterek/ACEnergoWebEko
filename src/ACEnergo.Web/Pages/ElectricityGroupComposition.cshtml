@@ -1,0 +1,59 @@
+@page "{kind}/{id:int}"
+@model ElectricityGroupCompositionModel
+@{ViewData["Title"]="Složení · "+Model.Data?.Name;}
+@section Styles {
+<link rel="stylesheet" href="~/css/pages/group-composition.css" asp-append-version="true"/>
+}
+<p class="eyebrow">ELEKTŘINA · @Model.Heading</p>
+<h1>Složení: @Model.Data?.Name</h1>
+<nav class="page-navigation"><a asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@Model.Id">Základní konfigurace</a><a asp-page="/ElectricityGroups" asp-route-kind="@Model.Kind">@Model.Heading</a><a asp-page="/Index">Přehled</a></nav>
+@if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
+@if(TempData["CompositionSaved"] is string saved){<p class="message-success" role="status">@saved</p>}
+@if(Model.Data is not null&&Model.Snapshot is not null){
+<section class="panel"><h2>Přiřazené položky</h2>
+@if(Model.Snapshot.Rows.Length==0){<p>Konfigurace nemá přiřazené žádné položky.</p>}
+@foreach(var row in Model.Snapshot.Rows){
+ var definition=Model.Data.Components.FirstOrDefault(component=>component.Input==row.Id);
+ <article class="composition-item">
+ <h3>@ElectricityGroupCompositionEditor.ComponentLabel(Model.Kind!,row.Id) · @(definition?.Name??"Nedefinováno")</h3>
+ <p>Výkon: @(definition?.PowerUnit??"Neuvedeno") · Energie: @(definition?.EnergyUnit??"Neuvedeno")</p>
+ @if(Model.CanEdit){
+ <form method="post" asp-page-handler="Update" class="composition-form">
+ <input type="hidden" name="Version" value="@Model.Version"/><input type="hidden" name="ChildId" value="@row.Id"/>
+ @if(Model.Kind=="plants"){
+ @if(Model.Snapshot.MainMeter<=0){<p>Přepočet ztrát vyžaduje přiřazené hlavní měření závodu.</p>}
+ <label class="composition-check"><input type="checkbox" name="Recalculate" value="true" checked="@(row.Recalculate==true)"/> Zahrnout do přepočtu ztrát</label>
+ }else{
+ <label for="coef-@row.Id">Koeficient P</label><input id="coef-@row.Id" name="Coefficient" value="@row.Coefficient" inputmode="decimal" required/>
+ }
+ <button class="button button-primary" type="submit">Uložit položku</button>
+ </form>
+ <form method="post" asp-page-handler="Remove" class="composition-remove">
+ <input type="hidden" name="Version" value="@Model.Version"/><input type="hidden" name="ChildId" value="@row.Id"/>
+ <label class="composition-check"><input type="checkbox" name="ConfirmRemoval" value="true" required/> Potvrdit odebrání této vazby</label>
+ <button class="button" type="submit">Odebrat položku</button>
+ </form>
+ }else{<p>@(Model.Kind=="plants"?"Přepočet ztrát: "+(row.Recalculate is null?"Neuvedeno":row.Recalculate.Value?"Ano":"Ne"):"Koeficient P: "+(row.Coefficient??"Neuvedeno"))</p>}
+ </article>
+}
+@if(Model.Kind=="plants"&&Model.CanEdit){<p>Odebrání vazby zruší také příznak přepočtu na příslušném středisku, stejně jako původní aplikace.</p>}
+</section>
+@if(Model.CanEdit){
+<section class="panel"><h2>Přidat položku</h2>
+<p>@(Model.Kind=="plants"?"Vyhledejte středisko elektřiny.":Model.Kind=="centres"?"Vyhledejte archivovaný reálný vstup nebo fiktivní měření elektřiny.":"Vyhledejte archivovaný reálný vstup elektřiny.") Zadejte název nebo úplný číselný identifikátor.</p>
+<form method="get" class="composition-search"><label asp-for="Search">Hledat položku</label><input asp-for="Search" maxlength="80"/><button class="button">Vyhledat</button></form>
+@if(!string.IsNullOrWhiteSpace(Model.Search)){
+ @if(Model.Candidates.Rows.Length==0){<p role="status">Nenalezeny žádné položky.</p>}
+ @if(Model.Candidates.HasMore){<p role="status">Zobrazeno prvních 100 položek. Upřesněte hledání.</p>}
+ <ul class="composition-candidates">
+ @foreach(var candidate in Model.Candidates.Rows){
+ <li><div><strong>@candidate.Name</strong><p>@candidate.Type · ID @candidate.Id · @candidate.PowerUnit / @candidate.EnergyUnit</p></div>
+ @if(Model.Snapshot.Rows.Any(row=>row.Id==candidate.Id)){<span class="badge">Již přiřazeno</span>}
+ else{<form method="post" asp-page-handler="Add"><input type="hidden" name="Version" value="@Model.Version"/><input type="hidden" name="ChildId" value="@candidate.Id"/><button class="button" type="submit">Přidat položku</button></form>}
+ </li>
+ }
+ </ul>
+}
+</section>
+}
+}

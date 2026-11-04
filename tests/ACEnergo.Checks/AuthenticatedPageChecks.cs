@@ -165,6 +165,38 @@ internal static class AuthenticatedPageChecks
             Check(await Save("Edited",new string('A',64))==HttpStatusCode.Found&&factory.GroupConfig.Writes==groupWrites+1,"group configuration saves "+kind);
             Check((await Get("/ElectricityGroup/"+kind+"/999")).Code==HttpStatusCode.NotFound,"unknown group detail "+kind);
         }
+        foreach(var kind in new[]{"fictitious","centres","plants"}) {
+            var url="/ElectricityGroupComposition/"+kind+"/1";
+            Role("view");var page=await Get(url);
+            Check(page.Code==HttpStatusCode.OK&&!page.Html.Contains("name=\"ChildId\""),"composition viewer read-only "+kind);
+            Role("config");page=await Get(url+"?Search=Test");
+            Check(page.Code==HttpStatusCode.OK&&page.Html.Contains("name=\"ChildId\"")&&page.Html.Contains("Test candidate"),"composition editor searches "+kind);
+            Check(page.Html.Contains("/css/pages/group-composition.css?v=")&&!Regex.IsMatch(page.Html,"\\sstyle\\s*=|\\son[a-z]+\\s*=",RegexOptions.IgnoreCase),"composition external styling "+kind);
+            var token=Token(page.Html);
+            async Task<HttpStatusCode> Change(string handler,int child,string version,string coefficient="1",bool confirm=false,bool csrf=true) {
+                var fields=new Dictionary<string,string>{["ChildId"]=child.ToString(),["Version"]=version,["Coefficient"]=coefficient,["Recalculate"]="true",["ConfirmRemoval"]=confirm.ToString()};
+                if(csrf)fields["__RequestVerificationToken"]=token;
+                using var result=await client.PostAsync(url+"?handler="+handler,new FormUrlEncodedContent(fields));return result.StatusCode;
+            }
+            var store=factory.CompositionEditor;var initial=store.Writes;
+            Check(await Change("Add",10003,store.Load(kind,1).Version,csrf:false)==HttpStatusCode.BadRequest&&store.Writes==initial,"composition CSRF rejected "+kind);
+            Role("view");
+            foreach(var handler in new[]{"Add","Update","Remove"})Check(await Change(handler,10002,store.Load(kind,1).Version,confirm:true)==HttpStatusCode.Forbidden&&store.Writes==initial,"composition viewer POST denied "+kind+handler);
+            Role("config");
+            Check(await Change("Add",10003,new string('B',64))==HttpStatusCode.Conflict&&store.Writes==initial,"composition stale version rejected "+kind);
+            Check(await Change("Add",10002,store.Load(kind,1).Version)==HttpStatusCode.BadRequest,"composition duplicate rejected "+kind);
+            Check(await Change("Add",10003,store.Load(kind,1).Version)==HttpStatusCode.Found,"composition add "+kind);
+            if(kind!="plants")Check(await Change("Update",10003,store.Load(kind,1).Version,"bad")==HttpStatusCode.BadRequest,"composition invalid coefficient "+kind);
+            Check(await Change("Update",10003,store.Load(kind,1).Version,"-1,25")==HttpStatusCode.Found,"composition update "+kind);
+            Check(kind=="plants"?store.Load(kind,1).Rows.Single(r=>r.Id==10003).Recalculate==true:store.Load(kind,1).Rows.Single(r=>r.Id==10003).Coefficient=="-1,25","composition posted values bound "+kind);
+            Check(await Change("Remove",10003,store.Load(kind,1).Version)==HttpStatusCode.BadRequest,"composition removal needs confirmation "+kind);
+            Check(await Change("Remove",10003,store.Load(kind,1).Version,confirm:true)==HttpStatusCode.Found&&!store.Load(kind,1).Rows.Any(r=>r.Id==10003),"composition remove "+kind);
+            Check((await Get("/ElectricityGroupComposition/"+kind+"/999")).Code==HttpStatusCode.NotFound,"composition missing parent "+kind);
+            if(kind=="centres"&&Environment.GetEnvironmentVariable("ACE_COMPOSITION_HTML") is string output)File.WriteAllText(output,(await Get(url+"?Search=Test")).Html);
+        }
+        Check((await Get("/ElectricityGroupComposition/analog/1")).Code==HttpStatusCode.NotFound,"composition excludes analog");
+        Role("none");Check((await Get("/ElectricityGroupComposition/plants/1")).Code==HttpStatusCode.Forbidden,"composition requires view permission");
+        Role("config");
         Check((await Get("/ElectricityGroup/analog/1")).Code==HttpStatusCode.NotFound,"group detail rejects analog");
         Role("none");
         Check((await Get("/ElectricityGroup/centres/1")).Code==HttpStatusCode.Forbidden,"group detail requires view permission");
@@ -195,6 +227,7 @@ internal static class AuthenticatedPageChecks
         public FakeHolidays Holidays { get; } = new();
         public FakeTariffs Tariffs { get; } = new();
         public FakeGroupConfiguration GroupConfig { get; } = new();
+        public FakeCompositionEditor CompositionEditor { get; } = new();
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             var root = new DirectoryInfo(AppContext.BaseDirectory);
@@ -209,6 +242,8 @@ internal static class AuthenticatedPageChecks
                 services.AddSingleton<IElectricityHolidayStore>(Holidays);
                 services.RemoveAll<IElectricityFictitiousComposition>();
                 services.AddSingleton<IElectricityFictitiousComposition, FakeComposition>();
+                services.RemoveAll<IElectricityGroupCompositionEditor>();
+                services.AddSingleton<IElectricityGroupCompositionEditor>(CompositionEditor);
                 services.RemoveAll<IElectricityGroupConfiguration>();
                 services.AddSingleton<IElectricityGroupConfiguration>(GroupConfig);
                 services.RemoveAll<IElectricityGroupCatalog>();
@@ -271,6 +306,24 @@ internal static class AuthenticatedPageChecks
         public FictitiousComposition Load(int id)=>id switch {
             1=>new("Test",[new(10002,"Test input","MW","MWh","1,5","0","1",true),new(20001,"Nedefinováno","—","—","1","0","1",false)]),
             2=>new("Empty",[]),_=>throw new KeyNotFoundException()};
+    }
+    private sealed class FakeCompositionEditor : IElectricityGroupCompositionEditor {
+        private readonly Dictionary<string,List<CompositionEditRow>> data=new();
+        public int Writes{get;private set;}
+        private List<CompositionEditRow> Rows(string kind){ElectricityGroupCompositionEditor.Definition(kind);if(!data.TryGetValue(kind,out var rows)){rows=[new(10002,"1",false)];data.Add(kind,rows);}return rows;}
+        public CompositionEditSnapshot Load(string kind,int id){
+            if(id!=1)throw new KeyNotFoundException();var rows=Rows(kind);
+            var version=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(rows)));
+            return new("Test <group>",version,rows.ToArray(),5);
+        }
+        public CompositionSearch Search(string kind,int id,string search){_=Load(kind,id);return new([new(10003,"Test candidate","MW","MWh","Vstup")],false);}
+        private void Validate(string kind,int id,string version){if(Load(kind,id).Version!=version)throw new GroupConfigurationConflictException();}
+        public void Add(string kind,int id,int child,string version){Validate(kind,id,version);if(Rows(kind).Any(r=>r.Id==child))throw new ArgumentException("Duplicate");Rows(kind).Add(new(child,"1",false));Writes++;}
+        public void Update(string kind,int id,int child,string? coefficient,bool recalculate,string version){
+            Validate(kind,id,version);var value=kind=="plants"?null:ElectricityGroupCompositionEditor.Coefficient(coefficient).ToString(System.Globalization.CultureInfo.GetCultureInfo("cs-CZ"));
+            var index=Rows(kind).FindIndex(r=>r.Id==child);if(index<0)throw new ArgumentException("Missing");Rows(kind)[index]=new(child,value,recalculate);Writes++;
+        }
+        public void Remove(string kind,int id,int child,string version){Validate(kind,id,version);Rows(kind).RemoveAll(r=>r.Id==child);Writes++;}
     }
     private sealed class FakeGroupConfiguration : IElectricityGroupConfiguration {
         public int Writes {get;private set;}
