@@ -6,6 +6,7 @@ if (args.Length == 2 && args[0] == "--tariff-lock-probe")
     catch (IOException) { Environment.ExitCode = 23; }
     return;
 }
+if (args.Length > 0 && args[0] == "--submeter-mdb") { WindowsSubmeterReadCheck.Run(args); return; }
 if (args.Length > 0 && args[0] == "--type-price-mdb") { WindowsTypePriceCheck.Run(args); return; }
 if (args.Length > 0 && args[0] == "--group-mdb") { WindowsGroupReadCheck.Run(args); return; }
 if (args.Length > 0 && args[0] == "--holiday-mdb") { WindowsHolidayCheck.Run(args); return; }
@@ -120,3 +121,5 @@ Reject(()=>ElectricityGroupCompositionEditor.ValidatePicker("centres","physical"
 Console.WriteLine("PASS legacy station/input decomposition and station filter scope.");
 
 TypePriceChecks.Run();
+
+SubmeterChecks.Run();

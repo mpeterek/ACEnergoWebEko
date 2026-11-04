@@ -45,6 +45,14 @@ public sealed class ElectricityTypePriceStore(DatabaseCatalog catalog, IConfigur
             if (reader.Read()) throw new InvalidDataException("Duplicitní definice typu vstupu.");
         }
         var energyId = Convert.ToInt32(metadata[0]);
+        var ordered = ReadHistory(connection, energyId, tx);
+        var version = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new { metadata, ordered })));
+        string? Text(int i) => metadata[i] is DBNull ? null : Convert.ToString(metadata[i]);
+        return new(energyId, Text(1) ?? "", Text(2), Text(3), Text(4), Text(5), ordered, version);
+    }
+    [SupportedOSPlatform("windows")]
+    internal static TypePriceRecord[] ReadHistory(OleDbConnection connection, int energyId, OleDbTransaction? tx = null)
+    {
         using var prices = new OleDbCommand("SELECT [dtDatum],[numCena],[numCena1],[numCena2],[numCena3],[numCena4],[numCena5],[bTarif] FROM [tblCenyPodruzne] WHERE [numKlic]=?", connection, tx);
         prices.Parameters.Add("energy", OleDbType.Integer).Value = energyId;
         var history = new List<TypePriceRecord>();
@@ -58,9 +66,7 @@ public sealed class ElectricityTypePriceStore(DatabaseCatalog catalog, IConfigur
         }
         // Pořadí řádků ACE není stabilní, včetně více záznamů stejného data.
         var ordered = history.OrderByDescending(row => row.EffectiveAt).ThenBy(row => JsonSerializer.Serialize(row), StringComparer.Ordinal).ToArray();
-        var version = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new { metadata, ordered })));
-        string? Text(int i) => metadata[i] is DBNull ? null : Convert.ToString(metadata[i]);
-        return new(energyId, Text(1) ?? "", Text(2), Text(3), Text(4), Text(5), ordered, version);
+        return ordered;
     }
     [SupportedOSPlatform("windows")]
     private void Write(string kind, int id, DateOnly month, decimal?[] values, bool? tariff, string version)
