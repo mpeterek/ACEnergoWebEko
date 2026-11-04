@@ -10,7 +10,7 @@
 <aside aria-label="Strom měření">@await Component.InvokeAsync("GroupTree",new{kind,selectedId=id,selected})</aside>
 <div class="workspace-content">
 <div class="card">
-<div class="card-header workspace-heading"><strong><i class="fa-solid fa-bolt" aria-hidden="true"></i> Elektřina · @ElectricityGroupCatalog.Definition(kind).Title</strong></div>
+<div class="card-header workspace-heading"><strong><i class="fa-solid fa-bolt" aria-hidden="true"></i> Elektřina · @ElectricityGroupCatalog.Definition(kind).Title</strong><a class="btn btn-outline-secondary btn-sm workspace-back" asp-page="/Index"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Zpět na přehled</a></div>
 @if(id!=0){
 <div class="card-body workspace-toolbar" role="navigation" aria-label="Činnosti vybraného měření">
 <button class="btn btn-outline-secondary" disabled title="Vyhodnocení tohoto oddílu dosud není převedeno"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Vyhodnocení</button>
@@ -22,7 +22,7 @@
 }
 </div>
 @RenderBody()
-<footer class="workspace-footer"><a class="btn btn-outline-secondary" asp-page="/Index"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Zpět na přehled</a></footer>
+
 </div></div>
 @section Styles {
 @await RenderSectionAsync("Styles",required:false)
