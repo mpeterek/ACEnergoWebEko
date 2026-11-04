@@ -6,6 +6,7 @@ if (args.Length == 2 && args[0] == "--tariff-lock-probe")
     catch (IOException) { Environment.ExitCode = 23; }
     return;
 }
+if (args.Length > 0 && args[0] == "--type-price-mdb") { WindowsTypePriceCheck.Run(args); return; }
 if (args.Length > 0 && args[0] == "--group-mdb") { WindowsGroupReadCheck.Run(args); return; }
 if (args.Length > 0 && args[0] == "--holiday-mdb") { WindowsHolidayCheck.Run(args); return; }
 if (args.Length > 0 && args[0] == "--tariff-mdb") { WindowsTariffCheck.Run(args); return; }
@@ -117,3 +118,5 @@ Equal(16,ElectricityGroupCompositionEditor.AddressParts("centres",16).Input);
 Reject(()=>ElectricityGroupCompositionEditor.ValidatePicker("plants","centres",null,null,0,1));
 Reject(()=>ElectricityGroupCompositionEditor.ValidatePicker("centres","physical",null,null,0,214749));
 Console.WriteLine("PASS legacy station/input decomposition and station filter scope.");
+
+TypePriceChecks.Run();

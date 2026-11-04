@@ -21,6 +21,7 @@ builder.Services.AddScoped<IElectricityTariffStore, ElectricityTariffStore>();
 builder.Services.AddScoped<IElectricityHolidayStore, ElectricityHolidayStore>();
 builder.Services.AddScoped<IElectricityPriceStore, ElectricityPriceStore>();
 builder.Services.AddScoped<IElectricityPriceEditor, ElectricityPriceEditor>();
+builder.Services.AddScoped<IElectricityTypePriceStore, ElectricityTypePriceStore>();
 builder.Services.AddScoped<IElectricityMeterConfiguration, ElectricityMeterConfiguration>();
 builder.Services.AddScoped<IElectricityGroupCatalog, ElectricityGroupCatalog>();
 builder.Services.AddScoped<IElectricityGroupConfiguration, ElectricityGroupConfiguration>();

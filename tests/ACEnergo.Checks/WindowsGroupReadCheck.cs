@@ -26,6 +26,7 @@ internal static class WindowsGroupReadCheck
         var details = new ElectricityGroupConfiguration(database, config);
         var composition = new ElectricityGroupCompositionEditor(database, config);
         var legacy = new ElectricityFictitiousComposition(database, config);
+        var prices = new ElectricityTypePriceStore(database, config);
         var passed = 0;
         var failed = 0;
         foreach (var kind in new[] { "fictitious", "centres", "plants" })
@@ -72,6 +73,8 @@ internal static class WindowsGroupReadCheck
                     // Záměrně nativní služby: HTTP fakes chybu pozičních parametrů neodhalí.
                     var detail = details.Load(kind, group.Id);
                     var items = composition.Load(kind, group.Id);
+                    var typePrices = prices.Load(kind, group.Id);
+                    if(typePrices.History.Any(row=>row.Values.Length!=6))throw new Exception("Ceník typu nemá šest hodnot.");
                     if (detail.Name != group.Name || items.Name != group.Name)
                         throw new Exception("Název detailu neodpovídá řádku katalogu.");
                     if (!detail.Components.Select(row => row.Input).Order().SequenceEqual(items.Rows.Select(row => row.Id).Order()))
