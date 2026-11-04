@@ -244,3 +244,24 @@ Správa složení fiktivních měření, středisek a závodů:
 
 HTTP kontroly používají testovací úložiště. Nativní OLE DB dotazy, transakce
 ani vazby přes IIF / LEFT JOIN nebyly spuštěné proti ACE na Windows.
+
+## Diagnostika 404 u střediska 16
+
+Trasa `/ElectricityGroup/centres/16` je definována v Razor Pages. Dodaná
+původní MDB obsahuje středisko 16 s numIDEnergie=2; tento klíč patří mezi
+klíče Elektřiny. To neprokazuje obsah MDB ani verzi procesu na místním PC.
+Příčina uživatelem hlášené 404 zatím nebyla reprodukována v jeho prostředí.
+
+Rozšířené HTTP kontroly nyní načítají skutečné HTML seznamu středisek,
+vyhledají oba generované odkazy pro ID 16 a projdou na jejich cíle. Obě
+stránky vracejí 200 nad testovacími úložišti. Celkem prošlo 146 HTTP kontrol.
+Kontroly navíc rozlišují 404 chybějící konfigurace s vysvětlením v těle
+stránky a 404 chybějícího endpointu s vlastní stránkou aplikace.
+
+V serverovém výstupu `GROUP-NOT-FOUND` znamená, že handler existuje, ale
+příslušný záznam nebyl načten z používané konfigurační MDB; záznam obsahuje
+oddíl, ID a cestu k souboru. `PAGE-NOT-FOUND` znamená, že pro danou cestu
+neexistuje stránka v běžícím procesu. Hodnoty ani cesty z těchto diagnostik
+nejsou zobrazovány anonymně v prohlížeči. Při přidání nových Razor Pages
+je vhodné zastavit aplikaci a znovu ji sestavit a spustit; samotné obnovení
+prohlížeče nebo běžící Hot Reload nemusí načíst novou trasu.

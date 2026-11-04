@@ -10,8 +10,8 @@
 <script src="~/lib/datatables/dataTables.min.js" asp-append-version="true" defer></script>
 <script src="~/js/pages/prices.js" asp-append-version="true" defer></script>
 }
-<p class="eyebrow">ELEKTŘINA · @Model.Heading</p><h1>@Model.Data?.Name</h1>
-<nav class="page-navigation"><a asp-page="/ElectricityGroupComposition" asp-route-kind="@Model.Kind" asp-route-id="@Model.Id">@(Model.CanEdit?"Upravit složení":"Zobrazit složení")</a><a asp-page="/ElectricityGroups" asp-route-kind="@Model.Kind">@Model.Heading</a><a asp-page="/Index">Přehled</a></nav>
+<p class="eyebrow">ELEKTŘINA · @Model.Heading</p><h1>@(Model.Data?.Name??Model.Heading)</h1>
+<nav class="page-navigation"><a asp-page="/ElectricityGroupComposition" asp-route-kind="@Model.Kind" asp-route-id="@Model.Id">@(Model.Kind=="plants"?"Přiřazená střediska":"Přiřazené vstupy")</a><a asp-page="/ElectricityGroups" asp-route-kind="@Model.Kind">@Model.Heading</a><a asp-page="/Index">Přehled</a></nav>
 @if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
 @if(TempData["GroupSaved"] is string saved){<p role="status">@saved</p>}
 @if(Model.Data is not null){
@@ -34,4 +34,4 @@
 </table></section>
 @if(Model.Data.Components.Length==0){<p role="status">Konfigurace nemá přiřazené žádné položky.</p>}
 }
-<p>Správu přiřazených položek otevřete odkazem Složení. Výpočty spotřeb a grafy se dále převádějí.</p>
+<p>Správu přiřazených položek otevřete odkazem Přiřazené vstupy. Výpočty spotřeb a grafy se dále převádějí.</p>

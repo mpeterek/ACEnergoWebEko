@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace ACEnergo.Web.Pages;
 [Authorize(Policy="ElekView")]
-public class ElectricityGroupCompositionModel(IElectricityGroupCompositionEditor editor,IElectricityGroupConfiguration configuration,ILogger<ElectricityGroupCompositionModel> logger):PageModel {
+public class ElectricityGroupCompositionModel(IElectricityGroupCompositionEditor editor,IElectricityGroupConfiguration configuration,ILogger<ElectricityGroupCompositionModel> logger,DatabaseCatalog catalog):PageModel {
  [BindProperty(SupportsGet=true)]public string? Kind{get;set;}
  [BindProperty(SupportsGet=true)]public int Id{get;set;}
  [BindProperty(SupportsGet=true)]public string? Search{get;set;}
@@ -34,7 +34,12 @@ public class ElectricityGroupCompositionModel(IElectricityGroupCompositionEditor
    else if(action=="update")editor.Update(Kind,Id,ChildId,Coefficient,Recalculate,Version??"");
    else {if(!ConfirmRemoval)throw new ArgumentException("Pro odebrání položky zaškrtněte potvrzení.");editor.Remove(Kind,Id,ChildId,Version??"");}
    TempData["CompositionSaved"]="Složení bylo uloženo.";return RedirectToPage(new{Kind,Id});
-  }catch(KeyNotFoundException){return NotFound();}
+  }catch(KeyNotFoundException ex){
+   logger.LogWarning(ex,"GROUP-NOT-FOUND: stránka byla nalezena, ale elektrická konfigurace {Kind}/{Id} není v použité MDB {Database}",Kind,Id,catalog.Resolve("ACEnergoWebEko.mdb"));
+   Response.StatusCode=404;
+   ModelState.AddModelError("",$"Záznam {Heading}, ID {Id}, nebyl v používané databázi elektřiny nalezen. Vraťte se do seznamu a obnovte jej.");
+   return Page();
+  }
   catch(GroupConfigurationConflictException){Response.StatusCode=409;ModelState.AddModelError("","Konfigurace nebo složení se mezitím změnily. Znovu načtěte stránku.");return Page();}
   catch(ArgumentException ex){Response.StatusCode=400;ModelState.AddModelError("",ex.Message);return Page();}
   catch(Exception ex)when(ex is InvalidDataException or IOException or System.Data.OleDb.OleDbException or InvalidOperationException or UnauthorizedAccessException or PlatformNotSupportedException or OverflowException or FormatException or InvalidCastException){logger.LogError(ex,"Složení {Kind}/{Id} nelze upravit",Kind,Id);Response.StatusCode=503;ModelState.AddModelError("","Složení není dostupné. Podrobnosti jsou ve výstupu aplikace.");return Page();}

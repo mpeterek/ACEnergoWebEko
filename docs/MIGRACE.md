@@ -344,3 +344,9 @@ nerespektují, proto je nepouštějte souběžně s editací.
 Zůstává migrace zakládání a rušení samotných skupin, vazeb hlavního měření,
 bilancí a grafů. Nativní nové dotazy a zápisy vyžadují ověření na Windows
 s ACE providerem; první ověření proveďte na kopii konfigurační MDB.
+
+Popisky odkazů skupin jsou nyní konkrétnější: **Název a jednotky** a
+**Přiřazené vstupy** (u závodů **Přiřazená střediska**). Dosavadní názvy
+Konfigurace a Složení označovaly právě tyto funkce. Adresy zůstávají stejné.
+Při nenalezeném záznamu detail zobrazuje vysvětlení a návrat do seznamu;
+chybějící adresa má vlastní stránku 404 a doporučení restartu po aktualizaci.

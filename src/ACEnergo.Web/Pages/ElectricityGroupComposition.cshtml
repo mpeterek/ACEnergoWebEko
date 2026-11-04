@@ -1,11 +1,11 @@
 @page "{kind}/{id:int}"
 @model ElectricityGroupCompositionModel
-@{ViewData["Title"]="Složení · "+Model.Data?.Name;}
+@{ViewData["Title"]=(Model.Kind=="plants"?"Přiřazená střediska":"Přiřazené vstupy")+" · "+Model.Data?.Name;}
 @section Styles {
 <link rel="stylesheet" href="~/css/pages/group-composition.css" asp-append-version="true"/>
 }
 <p class="eyebrow">ELEKTŘINA · @Model.Heading</p>
-<h1>Složení: @Model.Data?.Name</h1>
+<h1>@(Model.Kind=="plants"?"Přiřazená střediska":"Přiřazené vstupy"): @(Model.Data?.Name??Model.Heading)</h1>
 <nav class="page-navigation"><a asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@Model.Id">Základní konfigurace</a><a asp-page="/ElectricityGroups" asp-route-kind="@Model.Kind">@Model.Heading</a><a asp-page="/Index">Přehled</a></nav>
 @if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
 @if(TempData["CompositionSaved"] is string saved){<p class="message-success" role="status">@saved</p>}

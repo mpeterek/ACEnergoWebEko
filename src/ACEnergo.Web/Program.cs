@@ -33,5 +33,7 @@ app.UseStaticFiles(); app.UseRouting(); app.UseRateLimiter(); app.UseAuthenticat
 app.MapGet("/health/live", () => Results.Ok(new { status = "running" })).AllowAnonymous();
 app.MapGet("/Default.asp", () => Results.Redirect("/"));
 app.MapGet("/Servis/Logon/LogonPage.asp", () => Results.Redirect("/Login")).AllowAnonymous();
-app.MapRazorPages(); app.Run();
+app.MapRazorPages();
+app.MapFallbackToPage("/NotFound");
+app.Run();
 public partial class Program { }

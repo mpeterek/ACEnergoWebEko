@@ -165,6 +165,16 @@ internal static class AuthenticatedPageChecks
             Check(await Save("Edited",new string('A',64))==HttpStatusCode.Found&&factory.GroupConfig.Writes==groupWrites+1,"group configuration saves "+kind);
             Check((await Get("/ElectricityGroup/"+kind+"/999")).Code==HttpStatusCode.NotFound,"unknown group detail "+kind);
         }
+        Role("config");
+        var centreCatalog=await Get("/ElectricityGroups/centres");
+        var centreLinks=Regex.Matches(centreCatalog.Html,"href=\"([^\"]*/ElectricityGroup(?:Composition)?/centres/16)\"").Select(match=>WebUtility.HtmlDecode(match.Groups[1].Value)).Distinct().ToArray();
+        Check(centreLinks.Length==2,"real catalog emits both links for centre 16");
+        foreach(var link in centreLinks){var linked=await Get(link);Check(linked.Code==HttpStatusCode.OK&&WebUtility.HtmlDecode(linked.Html).Contains("Středisko 16"),"follow rendered centre 16 link "+link);}
+        foreach(var url in new[]{"/ElectricityGroup/centres/999","/ElectricityGroupComposition/centres/999"}){
+            var missing=await Get(url);Check(missing.Code==HttpStatusCode.NotFound&&WebUtility.HtmlDecode(missing.Html).Contains("nebyl v používané databázi"),"missing group has explanatory body "+url);
+        }
+        var unknown=await Get("/unregistered-page/centres/16");
+        Check(unknown.Code==HttpStatusCode.NotFound&&WebUtility.HtmlDecode(unknown.Html).Contains("Stránka nebyla nalezena"),"missing endpoint has distinct explanatory body");
         foreach(var kind in new[]{"fictitious","centres","plants"}) {
             var url="/ElectricityGroupComposition/"+kind+"/1";
             Role("view");var page=await Get(url);
@@ -312,9 +322,9 @@ internal static class AuthenticatedPageChecks
         public int Writes{get;private set;}
         private List<CompositionEditRow> Rows(string kind){ElectricityGroupCompositionEditor.Definition(kind);if(!data.TryGetValue(kind,out var rows)){rows=[new(10002,"1",false)];data.Add(kind,rows);}return rows;}
         public CompositionEditSnapshot Load(string kind,int id){
-            if(id!=1)throw new KeyNotFoundException();var rows=Rows(kind);
+            if(id!=1&&!(kind=="centres"&&id==16))throw new KeyNotFoundException();var rows=Rows(kind);
             var version=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(rows)));
-            return new("Test <group>",version,rows.ToArray(),5);
+            return new(id==16?"Středisko 16":"Test <group>",version,rows.ToArray(),5);
         }
         public CompositionSearch Search(string kind,int id,string search){_=Load(kind,id);return new([new(10003,"Test candidate","MW","MWh","Vstup")],false);}
         private void Validate(string kind,int id,string version){if(Load(kind,id).Version!=version)throw new GroupConfigurationConflictException();}
@@ -328,8 +338,8 @@ internal static class AuthenticatedPageChecks
     private sealed class FakeGroupConfiguration : IElectricityGroupConfiguration {
         public int Writes {get;private set;}
         public GroupConfiguration Load(string kind,int id){
-            ElectricityGroupCatalog.Definition(kind);if(id!=1)throw new KeyNotFoundException();
-            return new("Test <group>","MW","MWh",new string('A',64),[new(10002,"Component","MW","MWh","1,5","0","1",true)],kind=="fictitious"?null:"5",kind=="centres"?"True":null);
+            ElectricityGroupCatalog.Definition(kind);if(id!=1&&!(kind=="centres"&&id==16))throw new KeyNotFoundException();
+            return new(id==16?"Středisko 16":"Test <group>","MW","MWh",new string('A',64),[new(10002,"Component","MW","MWh","1,5","0","1",true)],kind=="fictitious"?null:"5",kind=="centres"?"True":null);
         }
         public void Save(string kind,int id,string name,string? power,string? energy,string version){
             var current=Load(kind,id);ElectricityGroupConfiguration.Validate(name,power,energy);
@@ -337,7 +347,7 @@ internal static class AuthenticatedPageChecks
         }
     }
     private sealed class FakeGroups : IElectricityGroupCatalog {
-        public ElectricityGroup[] Load(string kind){ElectricityGroupCatalog.Definition(kind);return [new(1,"Test group","MW","MWh")];}
+        public ElectricityGroup[] Load(string kind){ElectricityGroupCatalog.Definition(kind);return kind=="centres"?[new(1,"Test group","MW","MWh"),new(16,"Středisko 16","MW","MWh")]:[new(1,"Test group","MW","MWh")];}
     }
     private sealed class FakeMeterConfiguration : IElectricityMeterConfiguration {
         public MeterConfiguration Load(int id)=>new("Test",101,"1",102,"1",new string('A',64));
