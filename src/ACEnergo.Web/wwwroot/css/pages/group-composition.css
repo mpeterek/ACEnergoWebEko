@@ -9,3 +9,18 @@
 .composition-candidates { list-style: none; padding: 0; }
 .composition-candidates li { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 1rem; border-top: 1px solid var(--color-border); padding: 1rem 0; overflow-wrap: anywhere; }
 .composition-candidates p { margin-bottom: 0; }
+
+.picker-filters { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto; gap:.75rem; align-items:end; margin-bottom:1rem; }
+.picker-filters label { margin-top:0; }
+.picker-table-scroll { position:relative; max-width:100%; }
+.picker-table-scroll th { white-space:nowrap; }
+.picker-table-scroll td { overflow-wrap:anywhere; }
+#composition-picker .modal-title { overflow-wrap:anywhere; }
+#composition-picker .nav-tabs { gap:.25rem; }
+#composition-picker .nav-link { white-space:normal; }
+@media(max-width:575px){ .picker-filters { grid-template-columns:minmax(0,1fr); } .picker-table-scroll table { min-width:640px; } }
+
+#composition-picker .btn-close { min-width:2.75rem; min-height:2.75rem; flex-shrink:0; }
+
+.composition-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; margin-bottom:.75rem; }
+.composition-heading h2 { margin:0; }

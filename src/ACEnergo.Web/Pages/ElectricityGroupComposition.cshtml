@@ -3,7 +3,15 @@
 @{Layout="/Pages/Shared/_GroupLayout.cshtml";ViewData["WorkspaceData"]=Model.Data;}
 @{ViewData["Title"]=(Model.Kind=="plants"?"Přiřazená střediska":"Přiřazené vstupy")+" · "+Model.Data?.Name;}
 @section Styles {
-<link rel="stylesheet" href="~/css/pages/group-composition.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/lib/datatables/dataTables.dataTables.min.css" asp-append-version="true"/>
+<environment include="Development"><link rel="stylesheet" href="~/css/pages/group-composition.css" asp-append-version="true"/></environment>
+<environment exclude="Development"><link rel="stylesheet" href="~/generated/group-composition.min.css" asp-append-version="true"/></environment>
+}
+@section Scripts {
+<script src="~/lib/jquery/jquery.min.js" asp-append-version="true" defer></script>
+<script src="~/lib/datatables/dataTables.min.js" asp-append-version="true" defer></script>
+<environment include="Development"><script src="~/js/pages/composition-picker.js" asp-append-version="true" defer></script></environment>
+<environment exclude="Development"><script src="~/generated/composition-picker.min.js" asp-append-version="true" defer></script></environment>
 }
 <p class="eyebrow">ELEKTŘINA · @Model.Heading</p>
 <h1>@(Model.Kind=="plants"?"Přiřazená střediska":"Přiřazené vstupy"): @(Model.Data?.Name??Model.Heading)</h1>
@@ -11,7 +19,9 @@
 @if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
 @if(TempData["CompositionSaved"] is string saved){<p class="message-success" role="status">@saved</p>}
 @if(Model.Data is not null&&Model.Snapshot is not null){
-<section class="panel"><h2>Přiřazené položky</h2>
+<section class="panel"><div class="composition-heading"><h2>Přiřazené položky</h2>
+@if(Model.CanEdit){<button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#composition-picker"><i class="fa-solid fa-plus" aria-hidden="true"></i> Vybrat ze seznamu</button>}
+</div>
 @if(Model.Snapshot.Rows.Length==0){<p>Konfigurace nemá přiřazené žádné položky.</p>}
 @foreach(var row in Model.Snapshot.Rows){
  var definition=Model.Data.Components.FirstOrDefault(component=>component.Input==row.Id);
@@ -40,7 +50,7 @@
 @if(Model.Kind=="plants"&&Model.CanEdit){<p>Odebrání vazby zruší také příznak přepočtu na příslušném středisku, stejně jako původní aplikace.</p>}
 </section>
 @if(Model.CanEdit){
-<section class="panel"><h2>Přidat položku</h2>
+<noscript><section class="panel"><h2>Přidat položku</h2><p>Pro modální výběr zapněte JavaScript, nebo použijte hledání níže.</p>
 <p>@(Model.Kind=="plants"?"Vyhledejte středisko elektřiny.":Model.Kind=="centres"?"Vyhledejte archivovaný reálný vstup nebo fiktivní měření elektřiny.":"Vyhledejte archivovaný reálný vstup elektřiny.") Zadejte název nebo úplný číselný identifikátor.</p>
 <form method="get" class="composition-search"><label asp-for="Search">Hledat položku</label><input asp-for="Search" maxlength="80"/><button class="button">Vyhledat</button></form>
 @if(!string.IsNullOrWhiteSpace(Model.Search)){
@@ -55,6 +65,29 @@
  }
  </ul>
 }
-</section>
+</section></noscript>
+<div class="modal fade" id="composition-picker" tabindex="-1" aria-labelledby="composition-picker-title" aria-hidden="true" data-picker-url="@Url.Page("/ElectricityGroupComposition","Candidates",new{kind=Model.Kind,id=Model.Id})" data-picker-category="@(Model.Kind=="plants"?"centres":"physical")">
+<div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-md-down"><div class="modal-content">
+<div class="modal-header"><h2 class="modal-title fs-5" id="composition-picker-title">@(Model.Kind=="plants"?"Přidat středisko":"Přidat vstup") · @Model.Data.Name</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button></div>
+<div class="modal-body">
+@if(Model.Kind=="centres"){
+<ul class="nav nav-tabs mb-3" role="tablist" aria-label="Druh vstupů">
+<li class="nav-item" role="presentation"><button class="nav-link active" id="picker-physical-tab" type="button" role="tab" aria-selected="true" aria-controls="picker-results" data-picker-tab="physical">Podružná měření</button></li>
+<li class="nav-item" role="presentation"><button class="nav-link" id="picker-fictitious-tab" type="button" role="tab" aria-selected="false" aria-controls="picker-results" data-picker-tab="fictitious" tabindex="-1">Fiktivní měření</button></li>
+</ul>
+}
+<form class="picker-filters" data-picker-search>
+<div><label for="picker-term">Název nebo ID</label><input id="picker-term" type="search" maxlength="80" class="form-control"/></div>
+<div><label for="picker-type">Typ vstupu</label><select id="picker-type" class="form-select"><option value="">Všechny elektrické typy</option></select></div>
+<button class="btn btn-outline-primary" type="submit">Vyhledat</button>
+</form>
+<form method="post" asp-page-handler="Add" id="picker-add-form"><input type="hidden" name="Version" value="@Model.Version"/></form>
+<div id="picker-results" role="@(Model.Kind=="centres"?"tabpanel":null)" aria-labelledby="@(Model.Kind=="centres"?"picker-physical-tab":null)" aria-busy="false">
+<p data-picker-status role="status" class="text-secondary">Seznam se načte po otevření okna.</p>
+<div class="table-responsive picker-table-scroll"><table id="picker-table" class="table table-hover align-middle"><caption class="visually-hidden">Dostupné položky elektřiny podle typu vstupu</caption><thead><tr><th>ID</th><th>Název</th><th>Typ</th><th>Výkon</th><th>Energie</th><th>Výběr</th></tr></thead><tbody data-picker-rows></tbody></table></div>
+<button class="btn btn-outline-secondary" type="button" data-picker-more hidden>Načíst další položky</button>
+</div>
+</div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button></div>
+</div></div></div>
 }
 }

@@ -28,5 +28,25 @@
       "enabled": true
     },
     "sourceMap": false
+  },
+  {
+    "outputFileName": "wwwroot/generated/composition-picker.min.js",
+    "inputFiles": [
+      "wwwroot/js/pages/composition-picker.js"
+    ],
+    "minify": {
+      "enabled": true
+    },
+    "sourceMap": false
+  },
+  {
+    "outputFileName": "wwwroot/generated/group-composition.min.css",
+    "inputFiles": [
+      "wwwroot/css/pages/group-composition.css"
+    ],
+    "minify": {
+      "enabled": true
+    },
+    "sourceMap": false
   }
 ]

@@ -113,3 +113,38 @@ Podle UpDateZavodyH.asp odpojení hlavního měření závodu také nastaví bPr
 na False na jeho položkách, ve stejné transakci; formulář tento účinek uvádí.
 Databázové schéma, oprávnění a adresy se nemění. První nativní ověření nových
 zápisů proveďte na kopii MDB; zde jsou k dispozici pouze HTTP testovací úložiště.
+
+## Modální výběr přiřazených položek
+
+Návrat Zpět na přehled je nyní nahoře v liště oddílu. Přidávací akce
+Vybrat ze seznamu je u nadpisu přiřazených položek, bez nutnosti procházet
+celý jejich výpis. Otevírá Bootstrap modal s tabulkou DataTables.
+
+U středisek jsou dvě záložky: Podružná měření a Fiktivní měření. U fiktivního
+vstupu se vybírají podružné reálné vstupy; u závodu střediska. Seznam se načte
+hned po otevření. Nabízí hledání názvu či úplného ID a filtr skutečné signatury
+strTyp / strTypEnergie, nikoli jen obecný popisek druhu vstupu.
+
+Data vždy spadají do Elektřiny podle tblKonfigEnergie. Reálné vstupy navíc
+zachovávají původní filtr boolArchiv. Fiktivní vstupy a střediska se spojují
+s energií přes numIDEnergie. Kategorie se ověřuje podle druhu rodiče i při
+přímém požadavku na server. Typy dropdownu jsou definované elektrické typy.
+
+GET handler Candidates na existující stránce čte nejvýše 100 položek a příznak
+pokračování. Další dávka používá kurzor numCislo, takže dlouhé seznamy nejsou
+načítané celé do modálu a fiktivní vstupy nejsou vytlačené reálnými položkami
+ze společného limitu. Filtrování probíhá na serveru přes celou kategorii;
+DataTables vykresluje dávky bez druhého klientského filtru či stránkování.
+
+Již přiřazené položky mají označení a nemají tlačítko Přidat. Tlačítko konkrétní
+položky odesílá normální POST Add se stávajícím tokenem CSRF, verzí a ChildId.
+Ukládací metody, kontrola duplicit, oprávnění i transakce zůstávají zachované.
+Bez JavaScriptu zůstává dostupné původní textové hledání v noscript části.
+
+Na mobilu je modal přes celou obrazovku, tabulka se posouvá ve vlastním
+kontejneru a tělo okna svisle. Záložky podporují šipky/Home/End, Escape zavírá
+modal a vrací fokus na spouštěcí tlačítko. Fokus po otevření jde do hledání;
+po načtení další dávky přejde na první novou dostupnou položku. Tím zůstává
+klávesnice uvnitř okna i po zmizení tlačítka pro pokračování. Zohledněna je
+vlastní obsluha fokusu AdminLTE. Vlastní JS je ES5 a nové soubory se minifikují
+v Release přes stávající bundleconfig.json.

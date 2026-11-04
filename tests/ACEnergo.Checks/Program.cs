@@ -100,3 +100,12 @@ Reject(()=>ElectricityGroupConfiguration.ValidateSettings("centres",-1,false));
 Reject(()=>ElectricityGroupConfiguration.ValidateSettings("fictitious",5,null));
 Reject(()=>ElectricityGroupConfiguration.ValidateSettings("plants",5,true));
 Console.WriteLine("PASS main meter and recalculation settings scope validation.");
+
+ElectricityGroupCompositionEditor.ValidatePicker("centres","physical",null,null,0);
+ElectricityGroupCompositionEditor.ValidatePicker("centres","fictitious","","EP",50000001);
+ElectricityGroupCompositionEditor.ValidatePicker("plants","centres",null,null,0);
+Reject(()=>ElectricityGroupCompositionEditor.ValidatePicker("fictitious","fictitious",null,null,0));
+Reject(()=>ElectricityGroupCompositionEditor.ValidatePicker("centres","analog",null,null,0));
+Reject(()=>ElectricityGroupCompositionEditor.ValidatePicker("centres","physical",null,null,-1));
+Reject(()=>ElectricityGroupCompositionEditor.ValidatePicker("centres","physical",new string('x',81),null,0));
+Console.WriteLine("PASS picker source scope, filter limits and cursor validation.");

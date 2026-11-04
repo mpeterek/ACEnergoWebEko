@@ -378,3 +378,34 @@ prošly; produkční varianty stylů byly také ověřené na všech rozměrech.
 Nativní zápisy numIDHlavni / bPrepocet nebyly spuštěné proti Windows ACE.
 Odpovídající tabulky a původní pravidlo rušení přepočtu položek při odpojení
 hlavního měření závodu byly ověřené v původních ASP zdrojích.
+
+## Výběr položek v modálu podle elektrických typů
+
+Debug build a 196 HTTP kontrol prošly. Nové kontroly pokrývají modal a horní
+návrat, počáteční seznam bez hledaného textu, oddělení fyzických a fiktivních
+vstupů, filtr signatury typu, označení přiřazené položky, kurzor pokračování,
+neplatný zdroj a rodiče a zákaz přístupu čtenářům. Čistá validace ověřuje také
+omezení délky filtrů a záporný kurzor.
+
+`tools/check-composition-picker.cjs` nad skutečným HTML a JSON exportovanými
+HTTP testy prošel při 1440×900, 768×1024, 390×844 a 844×390, se zdrojovými
+i produkčními minifikovanými soubory. Kontroluje otevření Bootstrap modálu,
+DataTables řádky, záložky a typ, hledání a prázdný výsledek, chybu/retry,
+syntetickou pokračovací dávku, zaměření hledání, klávesové záložky, Escape,
+navrácení fokusu, rozměry okna i skutečné POST hodnoty ChildId/Version/CSRF.
+Nový skript i minifikovaný výstup prošly parserem Acorn ecmaVersion=5.
+
+Testovací HTML a JSON lze připravit zapnutím ACE_COMPOSITION_HTML a
+ACE_PICKER_DIR při spuštění konzolových kontrol. Browser test vyžaduje
+Playwright a Chromium:
+
+```bash
+node tools/check-composition-picker.cjs /tmp/acenergo-responsive/composition.html /tmp/acenergo-picker
+ACE_PICKER_MINIFIED=1 node tools/check-composition-picker.cjs /tmp/acenergo-responsive/composition.html /tmp/acenergo-picker
+```
+
+Rozšířená Windows kontrola --group-mdb nyní čte také kandidáty všech kategorií
+po dávkách a ověřuje elektrické signatury, ID a filtr typu. Zde není nativní
+ACE k dispozici; tato část je sestavená, ale proti MDB nebyla spuštěná.
+Browser test používá testovací JSON, nikoli živou MDB. Ukládací operace Add
+se neměnila. Release build, minifikace a publikace Windows x86 prošly.

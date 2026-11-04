@@ -19,6 +19,18 @@ public class ElectricityGroupCompositionModel(IElectricityGroupCompositionEditor
  public string Heading{get;private set;}="Elektřina";
  public bool CanEdit=>User.IsInRole("Administrator")||User.HasClaim("permission","ElekConfig");
  public IActionResult OnGet()=>Run(null);
+ public IActionResult OnGetCandidates(string category,string? term,string? inputType,int afterId=0){
+  if(!CanEdit)return Forbid();
+  if(Kind is null)return NotFound();
+  try{
+   if(!ModelState.IsValid)return BadRequest(new{error="Neplatný filtr seznamu."});
+   var snapshot=editor.Load(Kind,Id);
+   var result=editor.Browse(Kind,Id,category,term,inputType,afterId);
+   return new JsonResult(new{rows=result.Rows.Select(row=>new{row.Id,row.Name,row.PowerUnit,row.EnergyUnit,row.Type,assigned=snapshot.Rows.Any(existing=>existing.Id==row.Id)}),types=result.Types,hasMore=result.HasMore});
+  }catch(KeyNotFoundException){return NotFound();}
+  catch(ArgumentException ex){return BadRequest(new{error=ex.Message});}
+  catch(Exception ex)when(ex is InvalidDataException or IOException or System.Data.OleDb.OleDbException or InvalidOperationException or UnauthorizedAccessException or PlatformNotSupportedException or OverflowException or FormatException or InvalidCastException){logger.LogError(ex,"Výběr položek {Kind}/{Id} není dostupný",Kind,Id);return new JsonResult(new{error="Seznam není dostupný. Podrobnosti jsou ve výstupu aplikace."}){StatusCode=503};}
+ }
  public IActionResult OnPostAdd()=>Run("add");
  public IActionResult OnPostUpdate()=>Run("update");
  public IActionResult OnPostRemove()=>Run("remove");

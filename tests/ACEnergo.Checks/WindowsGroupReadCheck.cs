@@ -32,6 +32,32 @@ internal static class WindowsGroupReadCheck
         {
             var groups = catalog.Load(kind);
             if (groups.Length == 0) { Console.WriteLine($"SKIP: {kind} nemá elektrické záznamy."); continue; }
+            foreach (var category in kind == "centres" ? new[] { "physical", "fictitious" } : new[] { kind == "plants" ? "centres" : "physical" })
+            {
+                try
+                {
+                    var afterId = 0;
+                    CompositionPicker batch;
+                    do
+                    {
+                        batch = composition.Browse(kind, groups[0].Id, category, null, null, afterId);
+                        if (batch.Rows.Any(row => row.Id <= afterId || !batch.Types.Contains(row.Type, StringComparer.OrdinalIgnoreCase)))
+                            throw new Exception("Kandidát neodpovídá kurzoru nebo elektrickým typům.");
+                        if (batch.Rows.Length > 0)
+                        {
+                            if (category == "physical" && batch.Rows.Any(row => row.Id >= ElectricityGroupCompositionEditor.FictitiousOffset)) throw new Exception("Fiktivní ID mezi podružnými vstupy.");
+                            if (category == "fictitious" && batch.Rows.Any(row => row.Id < ElectricityGroupCompositionEditor.FictitiousOffset)) throw new Exception("Reálné ID mezi fiktivními vstupy.");
+                            afterId = batch.Rows[^1].Id;
+                        }
+                        else if (batch.HasMore) throw new Exception("Prázdná dávka s pokračováním.");
+                    } while (batch.HasMore);
+                    var first = composition.Browse(kind, groups[0].Id, category, null, null, 0).Rows.FirstOrDefault();
+                    if (first is not null && composition.Browse(kind, groups[0].Id, category, null, first.Type, 0).Rows.Any(row => !string.Equals(row.Type, first.Type, StringComparison.OrdinalIgnoreCase)))
+                        throw new Exception("Filtr typu neodpovídá výběru.");
+                    Console.WriteLine($"PASS: nativní výběr {kind}/{category}, konečný kurzor {afterId}.");
+                }
+                catch (Exception ex) { failed++; Console.WriteLine($"FAIL: výběr {kind}/{category}: {ex}"); }
+            }
             foreach (var group in groups)
             {
                 try

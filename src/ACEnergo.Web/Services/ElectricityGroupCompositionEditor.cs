@@ -11,7 +11,9 @@ public sealed record CompositionCandidate(int Id,string Name,string PowerUnit,st
 public sealed record CompositionEditRow(int Id,string? Coefficient,bool? Recalculate);
 public sealed record CompositionEditSnapshot(string Name,string Version,CompositionEditRow[] Rows,int MainMeter=0);
 public sealed record CompositionSearch(CompositionCandidate[] Rows,bool HasMore);
+public sealed record CompositionPicker(CompositionCandidate[] Rows,bool HasMore,string[] Types);
 public interface IElectricityGroupCompositionEditor {
+ CompositionPicker Browse(string kind,int id,string category,string? search,string? inputType,int afterId);
  CompositionEditSnapshot Load(string kind,int id);
  CompositionSearch Search(string kind,int id,string search);
  void Add(string kind,int id,int child,string version);
@@ -43,6 +45,39 @@ public sealed class ElectricityGroupCompositionEditor(DatabaseCatalog catalog,IC
   if(!OperatingSystem.IsWindows())throw new PlatformNotSupportedException();
   using var connection=db.Open(false);Read(connection,kind,id);
   return SearchWindows(connection,kind,search.Trim());
+ }
+ public static void ValidatePicker(string kind,string category,string? search,string? inputType,int afterId){
+  Definition(kind);
+  var allowed=kind=="plants"?category=="centres":category=="physical"||(kind=="centres"&&category=="fictitious");
+  if(!allowed)throw new ArgumentException("Tento druh položek nelze v oddílu vybrat.");
+  if(afterId<0||search?.Length>80||inputType?.Length>30)throw new ArgumentException("Neplatný filtr nebo stránka seznamu.");
+ }
+ public CompositionPicker Browse(string kind,int id,string category,string? search,string? inputType,int afterId){
+  ValidatePicker(kind,category,search,inputType,afterId);
+  if(!OperatingSystem.IsWindows())throw new PlatformNotSupportedException();
+  using var connection=db.Open(false);Read(connection,kind,id);
+  return BrowseWindows(connection,category,search?.Trim()??"",inputType??"",afterId);
+ }
+ [SupportedOSPlatform("windows")]
+ private static CompositionPicker BrowseWindows(OleDbConnection connection,string category,string text,string inputType,int afterId){
+  var physical=category=="physical";
+  var table=category switch{"physical"=>"tblKonfigImpuls","fictitious"=>"tblKonfigFiktivni","centres"=>"tblKonfigStredisko",_=>throw new ArgumentException()};
+  var from=physical?$"[{table}] AS p":$"[{table}] AS p INNER JOIN [tblKonfigEnergie] AS e ON p.[numIDEnergie]=e.[numKlic]";
+  var type=physical?"p.[strTyp]":"e.[strTypEnergie]";
+  var restriction=physical?"p.[boolArchiv]<>0 AND p.[numCislo]>0 AND p.[numCislo]<50000000 AND p.[strTyp] IN (SELECT [strTypEnergie] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]='Elektřina')":"e.[strNazevEnergie]='Elektřina'";
+  using var command=new OleDbCommand($"SELECT TOP 101 p.[numCislo],p.[strNazev],p.[strRozmerP],p.[strRozmerV],{type} FROM {from} WHERE {restriction} AND p.[numCislo]>?"+(text.Length>0?" AND (p.[numCislo]=? OR InStr(1,p.[strNazev],?)>0)":"")+(inputType.Length>0?$" AND {type}=?":"")+" ORDER BY p.[numCislo]",connection);
+  command.Parameters.Add("after",OleDbType.Integer).Value=afterId;
+  if(text.Length>0){command.Parameters.Add("id",OleDbType.Integer).Value=int.TryParse(text,out var number)?number:-1;command.Parameters.Add("text",OleDbType.VarWChar,80).Value=text;}
+  if(inputType.Length>0)command.Parameters.Add("type",OleDbType.VarWChar,30).Value=inputType;
+  var rows=new List<CompositionCandidate>();
+  using(var reader=command.ExecuteReader())while(reader is not null&&reader.Read()){
+   string Text(int i)=>reader.IsDBNull(i)?"Neuvedeno":Convert.ToString(reader[i])??"";
+   rows.Add(new(Convert.ToInt32(reader[0]),Text(1),Text(2),Text(3),Text(4)));
+  }
+  using var types=new OleDbCommand("SELECT DISTINCT [strTypEnergie] FROM [tblKonfigEnergie] WHERE [strNazevEnergie]='Elektřina' ORDER BY [strTypEnergie]",connection);
+  using var typeReader=types.ExecuteReader();var choices=new List<string>();
+  while(typeReader is not null&&typeReader.Read())if(!typeReader.IsDBNull(0))choices.Add(Convert.ToString(typeReader[0])??"");
+  return new(rows.Take(100).ToArray(),rows.Count>100,choices.ToArray());
  }
  public void Add(string kind,int id,int child,string version)=>Change(kind,id,child,version,"add",null,false);
  public void Update(string kind,int id,int child,string? coefficient,bool recalculate,string version)=>Change(kind,id,child,version,"update",kind=="plants"?null:Coefficient(coefficient),recalculate);

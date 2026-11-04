@@ -227,6 +227,32 @@ internal static class AuthenticatedPageChecks
             Check((await Get("/ElectricityGroupComposition/"+kind+"/999")).Code==HttpStatusCode.NotFound,"composition missing parent "+kind);
             if(kind=="centres"&&Environment.GetEnvironmentVariable("ACE_COMPOSITION_HTML") is string output)File.WriteAllText(output,(await Get(url+"?Search=Test")).Html);
         }
+        Role("config");
+        foreach(var kind in new[]{"fictitious","centres","plants"}){
+            var page=await Get("/ElectricityGroupComposition/"+kind+"/1");
+            Check(page.Html.Contains("id=\"composition-picker\"")&&page.Html.Contains("id=\"picker-add-form\""),"modal add form renders "+kind);
+            Check(page.Html.Contains("data-picker-tab=\"fictitious\"")==(kind=="centres"),"virtual tab only on centres "+kind);
+            Check(page.Html.Contains("workspace-back")&&page.Html.IndexOf("workspace-back",StringComparison.Ordinal)<page.Html.IndexOf("workspace-toolbar",StringComparison.Ordinal)&&!page.Html.Contains("workspace-footer"),"back button at top "+kind);
+            var category=kind=="plants"?"centres":"physical";
+            var endpoint="/ElectricityGroupComposition/"+kind+"/1?handler=Candidates&category="+category;
+            var result=await Get(endpoint);
+            using var json=System.Text.Json.JsonDocument.Parse(result.Html);
+            Check(result.Code==HttpStatusCode.OK&&json.RootElement.GetProperty("rows").GetArrayLength()==2,"picker initially lists items "+kind);
+            Check(json.RootElement.GetProperty("rows")[0].GetProperty("assigned").GetBoolean(),"assigned picker entry flagged "+kind);
+            Check((await Get(endpoint+"&inputType=E")).Html.Contains("Test candidate")&&!(await Get(endpoint+"&inputType=E")).Html.Contains("Assigned test"),"picker filters actual type "+kind);
+            Role("view");Check((await Get(endpoint)).Code==HttpStatusCode.Forbidden,"viewer cannot query picker "+kind);Role("config");
+            Check((await Get(endpoint+"&afterId=-1")).Code==HttpStatusCode.BadRequest,"negative picker cursor rejected "+kind);
+        }
+        var virtualPicker=await Get("/ElectricityGroupComposition/centres/1?handler=Candidates&category=fictitious");
+        Check(virtualPicker.Code==HttpStatusCode.OK&&virtualPicker.Html.Contains("50000001")&&!virtualPicker.Html.Contains("10003"),"virtual tab isolated from physical rows");
+        Check((await Get("/ElectricityGroupComposition/fictitious/1?handler=Candidates&category=fictitious")).Code==HttpStatusCode.BadRequest,"virtual source disallowed on fictitious group");
+        Check((await Get("/ElectricityGroupComposition/centres/1?handler=Candidates&category=analog")).Code==HttpStatusCode.BadRequest,"analog source rejected");
+        Check((await Get("/ElectricityGroupComposition/centres/999?handler=Candidates&category=physical")).Code==HttpStatusCode.NotFound,"picker unknown parent 404");
+        Check((await Get("/ElectricityGroupComposition/centres/1?handler=Candidates&category=physical&afterId=10003")).Html.Contains("\"rows\":[]"),"picker keyset cursor applied");
+        if(Environment.GetEnvironmentVariable("ACE_PICKER_DIR") is string pickerDirectory){
+            Directory.CreateDirectory(pickerDirectory);
+            foreach(var category in new[]{"physical","fictitious"})await File.WriteAllTextAsync(Path.Combine(pickerDirectory,category+".json"),(await Get("/ElectricityGroupComposition/centres/1?handler=Candidates&category="+category)).Html);
+        }
         Check((await Get("/ElectricityGroupComposition/analog/1")).Code==HttpStatusCode.NotFound,"composition excludes analog");
         Role("none");Check((await Get("/ElectricityGroupComposition/plants/1")).Code==HttpStatusCode.Forbidden,"composition requires view permission");
         Role("config");
@@ -353,6 +379,11 @@ internal static class AuthenticatedPageChecks
             if(id!=1&&!(kind=="centres"&&id==16))throw new KeyNotFoundException();var rows=Rows(kind);
             var version=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(rows)));
             return new(id==16?"Středisko 16":"Test <group>",version,rows.ToArray(),5);
+        }
+        public CompositionPicker Browse(string kind,int id,string category,string? search,string? inputType,int afterId){
+            _=Load(kind,id);ElectricityGroupCompositionEditor.ValidatePicker(kind,category,search,inputType,afterId);
+            var rows=category=="fictitious"?new[]{new CompositionCandidate(50000001,"Virtual test","kW","kWh","EP")}:new[]{new CompositionCandidate(10002,"Assigned test","MW","MWh","EP"),new CompositionCandidate(10003,"Test candidate","MW","MWh","E")};
+            return new(rows.Where(row=>row.Id>afterId&&(string.IsNullOrEmpty(inputType)||row.Type==inputType)&&(string.IsNullOrEmpty(search)||row.Name.Contains(search,StringComparison.OrdinalIgnoreCase))).ToArray(),false,["E","EP"]);
         }
         public CompositionSearch Search(string kind,int id,string search){_=Load(kind,id);return new([new(10003,"Test candidate","MW","MWh","Vstup")],false);}
         private void Validate(string kind,int id,string version){if(Load(kind,id).Version!=version)throw new GroupConfigurationConflictException();}
