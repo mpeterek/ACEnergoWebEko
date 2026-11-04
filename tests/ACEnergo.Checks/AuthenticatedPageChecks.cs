@@ -168,6 +168,8 @@ internal static class AuthenticatedPageChecks
         Role("config");
         var centreCatalog=await Get("/ElectricityGroups/centres");
         var centreLinks=Regex.Matches(centreCatalog.Html,"href=\"([^\"]*/ElectricityGroup(?:Composition)?/centres/16)\"").Select(match=>WebUtility.HtmlDecode(match.Groups[1].Value)).Distinct().ToArray();
+        Check(centreCatalog.Html.Contains("data-measurement-tree")&&centreCatalog.Html.Contains("workspace-toolbar"),"shared tree and workspace toolbar render");
+        Check(centreCatalog.Html.Contains("/lib/adminlte/adminlte.min.css")&&centreCatalog.Html.Contains("/lib/bootstrap/bootstrap.min.css")&&centreCatalog.Html.Contains("/lib/fontawesome/css/all.min.css"),"local requested UI assets render");
         Check(centreLinks.Length==2,"real catalog emits both links for centre 16");
         foreach(var link in centreLinks){var linked=await Get(link);Check(linked.Code==HttpStatusCode.OK&&WebUtility.HtmlDecode(linked.Html).Contains("Středisko 16"),"follow rendered centre 16 link "+link);}
         foreach(var url in new[]{"/ElectricityGroup/centres/999","/ElectricityGroupComposition/centres/999"}){

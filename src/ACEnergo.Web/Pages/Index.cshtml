@@ -35,10 +35,11 @@
             @if (module.Right == "ElekView")
             {
                 <nav class="dashboard-links" aria-label="Oddíly elektřiny">
-                <a asp-page="/Electricity">Hlavní měření</a>
-                <a asp-page="/ElectricityGroups" asp-route-kind="fictitious">Fiktivní měření</a>
-                <a asp-page="/ElectricityGroups" asp-route-kind="centres">Střediska</a>
-                <a asp-page="/ElectricityGroups" asp-route-kind="plants">Závody</a>
+                <a class="btn btn-outline-primary" asp-page="/Electricity">Hlavní měření</a>
+                <button class="btn btn-outline-secondary" disabled title="Oddíl podružných měření včetně vyhodnocení dosud není převeden">Podružná měření · připravuje se</button>
+                <a class="btn btn-outline-primary" asp-page="/ElectricityGroups" asp-route-kind="fictitious">Fiktivní měření</a>
+                <a class="btn btn-outline-primary" asp-page="/ElectricityGroups" asp-route-kind="centres">Střediska</a>
+                <a class="btn btn-outline-primary" asp-page="/ElectricityGroups" asp-route-kind="plants">Závody</a>
                 </nav>
             }
             @if (module.Right == "ElekView")

@@ -265,3 +265,28 @@ neexistuje stránka v běžícím procesu. Hodnoty ani cesty z těchto diagnosti
 nejsou zobrazovány anonymně v prohlížeči. Při přidání nových Razor Pages
 je vhodné zastavit aplikaci a znovu ji sestavit a spustit; samotné obnovení
 prohlížeče nebo běžící Hot Reload nemusí načíst novou trasu.
+
+## Redesign pracovní plochy podle AGENTS.md a návodu
+
+- `dotnet build ACEnergoWebEko.sln --no-restore -m:1 --nologo`: PASS,
+  bez chyb a varování; Debug nespouští minifikátor.
+- `dotnet build ACEnergoWebEko.sln -c Release --no-restore -m:1 --nologo`:
+  PASS, bez chyb a varování, včetně vytvoření minifikovaného CSS a JS.
+- `dotnet run --project tests/ACEnergo.Checks --no-restore`: PASS včetně
+  148 Razor/HTTP kontrol, oprávnění, CSRF a existujících ukládacích handlerů.
+- Chromium: pracovní plocha 1440/1024/768/390 px bez vodorovného přesahu,
+  strom vlevo na desktopu, hledání a jeho prázdný stav, obnovení seznamu,
+  odeslané hodnoty koeficientu a ID beze změn. Žádná JS chyba při načtení.
+  Vlastní nový skript prošel parserem Acorn s ecmaVersion=5.
+- `tools/check-price-layout.cjs`: PASS při 1920/1440/1280/768/390 px
+  nad nově vykresleným HTML se společným Bootstrapem a AdminLTE.
+- `tools/check-tariff-cycle.cjs`: PASS nad novým HTML, včetně 168 hodnot,
+  kliknutí a klávesnice.
+- `dotnet publish src/ACEnergo.Web -p:PublishProfile=WinX86Folder --nologo`:
+  PASS. Po přidání build dependency bylo nutné znovu obnovit závislosti pro
+  win-x86; první pokus s --no-restore skončil NETSDK1047, opakování s restore
+  úspěšně vytvořilo publikaci.
+
+Použitý SDK v prostředí: /workspace/dotnet/dotnet. Nativní ACE na Windows
+není k dispozici; funkčnost jeho dotazů ani odstranění lokální chyby 404
+nejsou touto validací potvrzené. Podrobnosti rozsahu: UI-ELEKTRINA.md.

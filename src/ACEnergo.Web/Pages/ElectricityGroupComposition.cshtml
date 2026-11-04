@@ -1,12 +1,13 @@
 @page "{kind}/{id:int}"
 @model ElectricityGroupCompositionModel
+@{Layout="/Pages/Shared/_GroupLayout.cshtml";ViewData["WorkspaceData"]=Model.Data;}
 @{ViewData["Title"]=(Model.Kind=="plants"?"Přiřazená střediska":"Přiřazené vstupy")+" · "+Model.Data?.Name;}
 @section Styles {
 <link rel="stylesheet" href="~/css/pages/group-composition.css" asp-append-version="true"/>
 }
 <p class="eyebrow">ELEKTŘINA · @Model.Heading</p>
 <h1>@(Model.Kind=="plants"?"Přiřazená střediska":"Přiřazené vstupy"): @(Model.Data?.Name??Model.Heading)</h1>
-<nav class="page-navigation"><a asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@Model.Id">Základní konfigurace</a><a asp-page="/ElectricityGroups" asp-route-kind="@Model.Kind">@Model.Heading</a><a asp-page="/Index">Přehled</a></nav>
+<nav class="page-navigation"><a class="btn btn-outline-primary btn-sm" asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@Model.Id">Základní konfigurace</a><a class="btn btn-outline-primary btn-sm" asp-page="/ElectricityGroups" asp-route-kind="@Model.Kind">@Model.Heading</a><a class="btn btn-outline-primary btn-sm" asp-page="/Index">Přehled</a></nav>
 @if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
 @if(TempData["CompositionSaved"] is string saved){<p class="message-success" role="status">@saved</p>}
 @if(Model.Data is not null&&Model.Snapshot is not null){
@@ -14,7 +15,7 @@
 @if(Model.Snapshot.Rows.Length==0){<p>Konfigurace nemá přiřazené žádné položky.</p>}
 @foreach(var row in Model.Snapshot.Rows){
  var definition=Model.Data.Components.FirstOrDefault(component=>component.Input==row.Id);
- <article class="composition-item">
+ <article class="composition-item" id="component-@row.Id">
  <h3>@ElectricityGroupCompositionEditor.ComponentLabel(Model.Kind!,row.Id) · @(definition?.Name??"Nedefinováno")</h3>
  <p>Výkon: @(definition?.PowerUnit??"Neuvedeno") · Energie: @(definition?.EnergyUnit??"Neuvedeno")</p>
  @if(Model.CanEdit){

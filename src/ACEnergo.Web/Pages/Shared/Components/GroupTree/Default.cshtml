@@ -1,0 +1,22 @@
+@model ACEnergo.Web.ViewComponents.GroupTreeModel
+<div class="card workspace-tree">
+<div class="card-header"><h2 class="card-title"><i class="fa-solid fa-sitemap" aria-hidden="true"></i> Výběr měření</h2></div>
+<div class="card-body">
+<label for="measurement-search" class="form-label">Hledat v seznamu</label>
+<input id="measurement-search" type="search" class="form-control" data-tree-search placeholder="Název nebo ID"/>
+@if(Model.Error is not null){<p class="message-error" role="alert">@Model.Error</p>}
+<ul class="measurement-tree" data-measurement-tree>
+@foreach(var group in Model.Groups){
+ var selected=group.Id==Model.SelectedId;
+ var displayId=Model.Kind=="fictitious"?group.Id-ElectricityGroupCompositionEditor.FictitiousOffset:group.Id;
+ <li data-tree-item data-search-text="@group.Id @displayId @group.Name">
+ <details open="@selected">
+ <summary class="@(selected?"tree-selected":"")"><a asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@group.Id" aria-current="@(selected?"page":null)"><span class="tree-id">@displayId.ToString("D4")</span> @group.Name</a></summary>
+ @if(selected&&Model.Selected is not null){
+ <ul class="tree-components">@foreach(var child in Model.Selected.Components){<li><a asp-page="/ElectricityGroupComposition" asp-route-kind="@Model.Kind" asp-route-id="@Model.SelectedId" asp-fragment="@("component-"+child.Input)"><i class="fa-solid fa-gauge" aria-hidden="true"></i> @child.Name</a> <small>@ElectricityGroupCompositionEditor.ComponentLabel(Model.Kind,child.Input)</small></li>}</ul>
+ }else{<a class="tree-open" asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@group.Id">Otevřít vstup a jeho položky</a>}
+ </details>
+ </li>
+}
+</ul><p data-tree-empty hidden>Žádné měření neodpovídá hledání.</p>
+</div></div>

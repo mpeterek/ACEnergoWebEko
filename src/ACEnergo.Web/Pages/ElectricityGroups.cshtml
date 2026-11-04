@@ -1,5 +1,6 @@
 @page "{kind}"
 @model ElectricityGroupsModel
+@{Layout="/Pages/Shared/_GroupLayout.cshtml";}
 @{ViewData["Title"]=Model.Heading;}
 @section Styles {
 <link rel="stylesheet" href="~/lib/datatables/dataTables.dataTables.min.css" asp-append-version="true"/>
@@ -11,13 +12,13 @@
 <script src="~/js/pages/prices.js" asp-append-version="true" defer></script>
 }
 <p class="eyebrow">ELEKTŘINA</p><h1>@Model.Heading</h1>
-<nav class="page-navigation"><a asp-page="/Index">Přehled</a><a asp-page="/Electricity">Hlavní měření</a></nav>
+<nav class="page-navigation"><a class="btn btn-outline-primary btn-sm" asp-page="/Index">Přehled</a><a class="btn btn-outline-primary btn-sm" asp-page="/Electricity">Hlavní měření</a></nav>
 @if(!ViewData.ModelState.IsValid){<div asp-validation-summary="All" class="message-error" role="alert"></div>}
 @if(Model.Loaded){
 <section class="panel table-scroll"><table class="data-table price-table" data-price-table>
 <caption>@Model.Heading – uložená konfigurace elektřiny</caption>
 <thead><tr><th scope="col">ID</th><th scope="col">Název</th><th scope="col">Jednotka výkonu</th><th scope="col">Jednotka energie</th><th scope="col">Akce</th></tr></thead>
-<tbody>@foreach(var row in Model.Rows){<tr><td>@row.Id</td><td><a asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@row.Id">@row.Name</a></td><td>@row.PowerUnit</td><td>@row.EnergyUnit</td><td><a asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@row.Id">Název a jednotky</a> · <a asp-page="/ElectricityGroupComposition" asp-route-kind="@Model.Kind" asp-route-id="@row.Id">@(Model.Kind=="plants"?"Přiřazená střediska":"Přiřazené vstupy")</a></td></tr>}</tbody>
+<tbody>@foreach(var row in Model.Rows){<tr><td>@row.Id</td><td><a class="btn btn-outline-primary btn-sm" asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@row.Id">@row.Name</a></td><td>@row.PowerUnit</td><td>@row.EnergyUnit</td><td><a class="btn btn-outline-primary btn-sm" asp-page="/ElectricityGroup" asp-route-kind="@Model.Kind" asp-route-id="@row.Id">Název a jednotky</a> · <a class="btn btn-outline-primary btn-sm" asp-page="/ElectricityGroupComposition" asp-route-kind="@Model.Kind" asp-route-id="@row.Id">@(Model.Kind=="plants"?"Přiřazená střediska":"Přiřazené vstupy")</a></td></tr>}</tbody>
 </table></section>
 <p>Název a jednotky slouží k úpravě základních údajů. Přiřazené vstupy (u závodů střediska) určují, ze kterých měření je skupina sestavena. Změny názvu a jednotek jsou dostupné uživatelům s právem konfigurace elektřiny.</p>
 }

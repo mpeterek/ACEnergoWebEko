@@ -1,0 +1,34 @@
+@{
+ Layout="/Pages/Shared/_Layout.cshtml";
+ var kind=Convert.ToString(ViewContext.RouteData.Values["kind"])??"fictitious";
+ var id=Convert.ToInt32(ViewContext.RouteData.Values["id"]);
+ var page=Convert.ToString(ViewContext.RouteData.Values["page"]);
+ var selected=ViewData["WorkspaceData"] as GroupConfiguration;
+ ViewData["WideContent"]=true;
+}
+<div class="measurement-workspace">
+<aside aria-label="Strom měření">@await Component.InvokeAsync("GroupTree",new{kind,selectedId=id,selected})</aside>
+<div class="workspace-content">
+<div class="card">
+<div class="card-header workspace-heading"><strong><i class="fa-solid fa-bolt" aria-hidden="true"></i> Elektřina · @ElectricityGroupCatalog.Definition(kind).Title</strong><a class="btn btn-outline-secondary btn-sm" asp-page="/Index"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Přehled</a></div>
+<div class="card-body workspace-toolbar" role="navigation" aria-label="Činnosti vybraného měření">
+<button class="btn btn-outline-secondary" disabled title="Vyhodnocení tohoto oddílu dosud není převedeno"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Vyhodnocení</button>
+<button class="btn btn-outline-secondary" disabled title="Ceny tohoto oddílu dosud nejsou převedeny"><i class="fa-solid fa-coins" aria-hidden="true"></i> Konfigurace ceny</button>
+@if(id!=0){
+<a class="btn @(page=="/ElectricityGroup"?"btn-primary":"btn-outline-primary")" asp-page="/ElectricityGroup" asp-route-kind="@kind" asp-route-id="@id"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Konfigurace vstupu</a>
+<a class="btn @(page=="/ElectricityGroupComposition"?"btn-primary":"btn-outline-primary")" asp-page="/ElectricityGroupComposition" asp-route-kind="@kind" asp-route-id="@id"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> @(kind=="plants"?"Položky závodu":"Položky vstupu")</a>
+}else{<span class="text-secondary">Vyberte měření v levém panelu.</span>}
+<p class="workspace-pending">Vyhodnocení a ceny tohoto oddílu zatím nejsou převedeny. Konfigurace vstupu a jeho položek jsou dostupné.</p>
+</div></div>
+@RenderBody()
+</div></div>
+@section Styles {
+@await RenderSectionAsync("Styles",required:false)
+<environment include="Development"><link rel="stylesheet" href="~/css/pages/measurement-workspace.css" asp-append-version="true"/></environment>
+<environment exclude="Development"><link rel="stylesheet" href="~/generated/measurement-workspace.min.css" asp-append-version="true"/></environment>
+}
+@section Scripts {
+@await RenderSectionAsync("Scripts",required:false)
+<environment include="Development"><script src="~/js/pages/measurement-workspace.js" asp-append-version="true" defer></script></environment>
+<environment exclude="Development"><script src="~/generated/measurement-workspace.min.js" asp-append-version="true" defer></script></environment>
+}
